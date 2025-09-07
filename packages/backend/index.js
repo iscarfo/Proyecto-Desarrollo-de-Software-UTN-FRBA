@@ -16,6 +16,14 @@ app.get("/hello", (req, res) => {
   res.json({ message: "hello world" });
 });
 
-app.listen(process.env.SERVER_PORT, () => {
-  console.log(`Backend escuchando en puerto ${process.env.SERVER_PORT}`);
+app.get("/health", (req, res) => {
+  res.json({
+    status: "ok",
+    timestamp: new Date()
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Backend corriendo en puerto ${PORT}`);
 });
