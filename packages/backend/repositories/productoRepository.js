@@ -22,7 +22,7 @@ export class ProductoRepository {
     async findByPage(numeroPagina, elementosXPagina, filtros) {
         const offset = (numeroPagina - 1) * elementosXPagina
         return await this.collection
-            .find(filtros)
+            .find(filtros) //TODO
             .skip(skip)
             .limit(elementosXPagina)
             .toArray();
@@ -34,7 +34,7 @@ export class ProductoRepository {
         const query = { ...filtros, vendedorId: new ObjectId(vendedorId) };
 
         return await this.collection
-            .find(query)
+            .find(query) //TODO
             .skip(offset)
             .limit(elementosXPagina)
             .toArray();

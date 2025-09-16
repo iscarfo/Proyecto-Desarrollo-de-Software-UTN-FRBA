@@ -3,6 +3,25 @@ export class ProductoController {
     this.productoService = productoService;
   }
 
+  // POST: Crear producto
+  async crearProducto(req, res) {
+    try {
+      const productoData = req.body;
+
+      // Llamamos al servicio para crear el producto.
+      // "await" espera a que la promesa se resuelva.
+      const productoCreado = await this.productoService.crearProducto(productoData);
+
+      if (!productoCreado) {
+        return res.status(204).send();
+      }
+      res.status(201).json(productoCreado);
+
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+
   // GET: todos los productos paginados + filtros
   async buscarTodos(req, res) {
     try {
@@ -34,7 +53,7 @@ export class ProductoController {
         return res.status(204).send();
       }
       res.status(200).json(productosPaginados);
-      
+
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

@@ -8,6 +8,11 @@ export class ProductoService {
         this.productoRepository = productoRepository
     }
 
+    // ===== Crear producto nuevo =====
+    async crearProducto(productoData) {
+        return await this.productoRepository.crearProducto(productoData);
+    }
+
     // ===== Buscar todos los productos con filtros y paginación =====
     async buscarTodos(page, limit, filtros) {
         try {
