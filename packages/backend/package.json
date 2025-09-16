@@ -4,7 +4,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch domain/domain.js"
+    "dev": "node --watch domain/domain.js",
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
   },
   "keywords": [],
   "author": "",
@@ -15,5 +16,8 @@
     "dotenv": "^17.2.0",
     "express": "^5.1.0"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "jest": "^30.1.3"
+  }
 }
