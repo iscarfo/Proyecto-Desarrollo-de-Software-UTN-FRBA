@@ -83,11 +83,11 @@ export class ProductoService {
     }
 
     ordernarPorVentas(productos){
-        const idOrdenado = productoRepository.productosOrdenadosPorVentas(productos);
+        const idOrdenado = this.productoRepository.productosOrdenadosPorVentas(productos);
         const productosOrdenados = new Array(productos.length);
 
         for (let i = 0; i < productosOrdenados.length; i++) {
-            productosOrdenados[i] = productos.find(p => p.id === idOrdenado[i].id);
+            productosOrdenados[i] = productos.find(p => p.getId() === idOrdenado[i].id);            
         }
         
         return productosOrdenados;
