@@ -74,4 +74,22 @@ export class ProductoService {
 
     }
 
+    ordernarPorPrecioAsc(productos){
+        return productos.sort((a,b) => a.getPrecio() - b.getPrecio());
+    }
+
+    ordernarPorPrecioDesc(productos){
+        return productos.sort((a,b) => b.getPrecio() - a.getPrecio());
+    }
+
+    ordernarPorVentas(productos){
+        const idOrdenado = productoRepository.productosOrdenadosPorVentas(productos);
+        const productosOrdenados = new Array(productos.length);
+
+        for (let i = 0; i < productosOrdenados.length; i++) {
+            productosOrdenados[i] = productos.find(p => p.id === idOrdenado[i].id);
+        }
+        
+        return productosOrdenados;
+    }
 }
