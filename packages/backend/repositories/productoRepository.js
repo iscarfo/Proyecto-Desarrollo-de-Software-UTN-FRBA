@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 export class ProductoRepository {
     constructor(db) {
         this.collection = db.collection("productos");
+        this.collectionItemPedidos = db.collection("itemPedidos");
     }
 
     // ===== Crear producto =====
@@ -50,5 +51,16 @@ export class ProductoRepository {
             ...filtros,
             vendedorId: new ObjectId(vendedorId),
         });
+    }
+
+    async productosOrdenadosPorVentas(productos) {
+
+        const productosId = productos.map(producto => producto.getId())
+        return await this.collectionItemPedidos.aggregate([
+            { $match: { "producto.id": { $in: productosId } } },
+            { $group: { _id: "$producto.id", total: { $sum: "$cantidad" } } },
+            { $project: { id: "$_id", total: 1, _id: 0 } },
+            { $sort: { total: -1 } }
+        ]).toArray()
     }
 }
