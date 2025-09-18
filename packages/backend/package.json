@@ -1,10 +1,13 @@
 {
   "name": "backend",
   "version": "1.0.0",
+  "type": "module",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch domain/domain.js"
+    "dev": "node --watch index.js",
+    "dev:backend": "npm run dev",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -14,6 +17,5 @@
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
     "express": "^5.1.0"
-  },
-  "type": "module"
+  }
 }

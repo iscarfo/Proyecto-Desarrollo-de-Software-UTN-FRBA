@@ -110,6 +110,10 @@ export class Pedido {
   }
 
   actualizarEstado(nuevoEstado, quien, motivo) {
+    // No permitir cancelar un pedido ya cancelado
+    if (this.#estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
+      throw new Error("El pedido ya fue cancelado previamente.");
+    }
     const cambio = new CambioEstadoPedido(
       new Date(),
       nuevoEstado,
@@ -180,6 +184,33 @@ export class Pedido {
   getEstado() { return this.#estado; }
   getFechaCreacion() { return this.#fechaCreacion; }
   getHistorialEstados() { return this.#historialEstados; }
+
+  toJSONResumen() {
+    return {
+      id: this.#id,
+      items: this.#items.map(item => ({
+        producto: {
+          id: item.getProducto().getId(),
+          titulo: item.getProducto().getTitulo()
+        },
+        cantidad: item.getCantidad(),
+        precioUnitario: item.getPrecioUnitario()
+      })),
+      estado: this.#estado,
+      direccionEntrega: {
+        calle: this.#direccionEntrega.getCalle(),
+        altura: this.#direccionEntrega.getAltura(),
+        piso: this.#direccionEntrega.getPiso(),
+        departamento: this.#direccionEntrega.getDepartamento(),
+        codPostal: this.#direccionEntrega.getCodPostal(),
+        ciudad: this.#direccionEntrega.getCiudad(),
+        provincia: this.#direccionEntrega.getProvincia(),
+        pais: this.#direccionEntrega.getPais()
+      },
+      fechaCreacion: this.#fechaCreacion,
+      total: this.calcularTotal()
+    };
+  }
 }
 
 export class CambioEstadoPedido {
