@@ -207,6 +207,7 @@ export class Pedido {
         provincia: this.#direccionEntrega.getProvincia(),
         pais: this.#direccionEntrega.getPais()
       },
+      comprador: this.#comprador,
       fechaCreacion: this.#fechaCreacion,
       total: this.calcularTotal()
     };

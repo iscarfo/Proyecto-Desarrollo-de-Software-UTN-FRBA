@@ -92,4 +92,83 @@ describe("API Pedidos", () => {
 
     expect(res.body).toHaveProperty("error", "No autorizado: solo el comprador puede cancelar su pedido");
   });
+
+  test("Obtener pedidos de un usuario - GET /pedidos/usuario/:id", async () => {
+  // Creamos un pedido nuevo primero
+  const resCrear = await request(app)
+    .post("/pedidos")
+    .send(payloadCrearPedido)
+    .expect(201);
+
+  const compradorId = payloadCrearPedido.comprador.id;
+
+  // Hacemos el GET por usuario
+  const resGet = await request(app)
+    .get(`/pedidos/usuario/${compradorId}`)
+    .expect(200);
+
+  expect(Array.isArray(resGet.body)).toBe(true);
+  expect(resGet.body.length).toBeGreaterThan(0);
+  expect(resGet.body[0]).toHaveProperty("id");
+  expect(resGet.body[0]).toHaveProperty("comprador");
+  expect(resGet.body[0].comprador.id).toBe(compradorId);
+});
+
+test("Marcar pedido como enviado - PATCH /pedidos/:id/enviar", async () => {
+  // Creamos un pedido
+  const resCrear = await request(app)
+    .post("/pedidos")
+    .send(payloadCrearPedido)
+    .expect(201);
+
+  const pedidoId = resCrear.body.pedido.id;
+
+  // PATCH con vendedor autorizado
+  const patchBody = {
+    vendedor: {
+      id: 2,
+      nombre: "Juan",
+      email: "juan@email.com",
+      telefono: "0987654321",
+      tipoUsuario: "VENDEDOR"
+    }
+  };
+
+  const resPatch = await request(app)
+    .patch(`/pedidos/${pedidoId}/enviar`)
+    .send(patchBody)
+    .expect(200);
+
+  expect(resPatch.body).toHaveProperty("message", "Pedido marcado como enviado");
+  expect(resPatch.body.pedido).toHaveProperty("estado", "ENVIADO");
+  expect(resPatch.body.pedido.id).toBe(pedidoId);
+});
+
+test("Marcar pedido como enviado no autorizado - PATCH /pedidos/:id/enviar", async () => {
+  // Creamos un pedido
+  const resCrear = await request(app)
+    .post("/pedidos")
+    .send(payloadCrearPedido)
+    .expect(201);
+
+  const pedidoId = resCrear.body.pedido.id;
+
+  // PATCH con vendedor NO autorizado
+  const patchBody = {
+    vendedor: {
+      id: 999, // id que no coincide con el vendedor real
+      nombre: "Pedro",
+      email: "pedro@email.com",
+      telefono: "111111111",
+      tipoUsuario: "VENDEDOR"
+    }
+  };
+
+  const resPatch = await request(app)
+    .patch(`/pedidos/${pedidoId}/enviar`)
+    .send(patchBody)
+    .expect(400);
+
+  expect(resPatch.body).toHaveProperty("error", "No autorizado para marcar este pedido como enviado");
+});
 });
