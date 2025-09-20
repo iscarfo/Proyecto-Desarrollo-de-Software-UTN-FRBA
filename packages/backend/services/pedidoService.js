@@ -1,7 +1,8 @@
-import { Pedido } from "../domain/Pedido.js";
-import { Producto } from "../domain/Producto.js";
-import { ItemPedido, DireccionEntrega } from "../domain/Pedido.js";
-import { Usuario } from "../domain/Usuario.js";
+import { Pedido } from "../domain/pedido/Pedido.js";
+import { Producto } from "../domain/producto/Producto.js";
+import { ItemPedido } from "../domain/pedido/ItemPedido.js";
+import { DireccionEntrega } from "../domain/pedido/DireccionEntrega.js";
+import { Usuario } from "../domain/usuario/Usuario.js";
 
 export class PedidoService {
   constructor(pedidoRepository, productoRepository) {
@@ -99,11 +100,20 @@ export class PedidoService {
   }
 
   // Obtener pedidos de un usuario
+  /*
   async obtenerPedidosDeUsuario(usuarioId) {
     return this.pedidoRepository.findAll().filter(
       p => p.getComprador().getId().toString() === usuarioId.toString()
     );
-  }
+  }*/
+
+  async obtenerPedidosDeUsuario(usuarioId) {
+  const todos = await this.pedidoRepository.findAll(); // ← faltaba el await
+  return todos.filter(
+    p => p.getComprador().getId().toString() === usuarioId.toString()
+  );
+}
+
 
   // Marcar pedido como enviado
   async marcarComoEnviado(pedidoId, vendedor) {

@@ -1,13 +1,18 @@
 import express from "express";
-import { PedidoController } from "../controllers/pedidoController.js";
 
-const router = express.Router();
-const pedidoController = new PedidoController();
+export function createPedidoRouter(pedidoController) {
+  const router = express.Router();
 
-router.post("/", pedidoController.crearPedido);
-router.get("/", pedidoController.listarPedidos);
-router.post("/:id/cancelar", pedidoController.cancelarPedido);
-router.get("/usuario/:usuarioId", pedidoController.historialPedidosUsuario);
-router.patch("/:id/enviar", pedidoController.marcarPedidoEnviado);
+  // POST /pedidos
+  router.post("/", pedidoController.crearPedido);
+  // GET /pedidos
+  router.get("/", pedidoController.listarPedidos);
+  // PATCH /pedidos/:id/cancelar
+  router.patch("/:id/cancelar", pedidoController.cancelarPedido);
+  // GET /pedidos/usuario/:usuarioId
+  router.get("/usuario/:usuarioId", pedidoController.historialPedidosUsuario);
+  // PATCH /pedidos/:id/enviar
+  router.patch("/:id/enviar", pedidoController.marcarPedidoEnviado);
 
-export default router;
+  return router;
+}

@@ -2,8 +2,8 @@ import { PedidoService } from "../services/pedidoService.js";
 import { PedidoRepository } from "../repositories/pedidoRepository.js";
 
 export class PedidoController {
-  constructor() {
-    this.pedidoService = new PedidoService(new PedidoRepository());
+  constructor(pedidoService) {
+    this.pedidoService = pedidoService;
   }
 
   crearPedido = async (req, res) => {
@@ -82,8 +82,12 @@ historialPedidosUsuario = async (req, res) => {
     res.json(response);
 
   } catch (err) {
+    console.error("Error en historialPedidosUsuario:", err.message);
     res.status(400).json({ error: err.message });
   }
+  console.log("usuarioId recibido:", usuarioId);
+  console.log("pedidos encontrados:", pedidos);
+
 };
 
   marcarPedidoEnviado = async (req, res) => {

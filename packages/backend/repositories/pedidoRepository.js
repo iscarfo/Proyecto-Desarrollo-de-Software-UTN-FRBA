@@ -1,18 +1,25 @@
 export class PedidoRepository {
   constructor() {
-    this.pedidos = []; // array para guardar todos los pedidos
+    this.pedidos = [];
   }
 
-  save(pedido) {
-    this.pedidos.push(pedido);
-    return pedido;
+  async save(pedido) {
+    const index = this.pedidos.findIndex(p => p.getId() === pedido.getId());
+    if (index >= 0) {
+      this.pedidos[index] = pedido;
+    } else {
+      this.pedidos.push(pedido);
+      console.log("Guardando pedido:", pedido.getId());
+    }
+    
+    return pedido; // <-- importante: devolver la misma instancia
   }
 
-  findAll() {
+  async findAll() {
     return this.pedidos;
   }
 
-  findById(id) {
+  async findById(id) {
     return this.pedidos.find(p => p.getId() === id);
   }
 }
