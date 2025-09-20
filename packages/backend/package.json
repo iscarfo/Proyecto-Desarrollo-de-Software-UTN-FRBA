@@ -5,7 +5,7 @@
   "scripts": {
     "start": "node index.js",
     "dev": "node --watch domain/domain.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --coverage"
+    "test": "jest --coverage"
   },
   "keywords": [],
   "author": "",

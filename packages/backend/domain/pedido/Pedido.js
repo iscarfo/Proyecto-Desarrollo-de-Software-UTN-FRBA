@@ -28,6 +28,10 @@ export class Pedido {
   }
 
   actualizarEstado(nuevoEstado, quien, motivo) {
+    // No permitir cancelar un pedido ya cancelado
+    if (this.#estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
+      throw new Error("El pedido ya fue cancelado previamente.");
+    }
     const cambio = new CambioEstadoPedido(
       new Date(),
       nuevoEstado,
@@ -60,9 +64,11 @@ export class Pedido {
   }
 
   obtenerVendedores() {
-    return [...new Set(
-      this.#items.map(item => item.getProducto().getVendedor())
-    )];
+    const vendedores = new Set();
+    this.#items.forEach((item) => {
+      vendedores.add(item.getProducto().getVendedor());
+    });
+    return Array.from(vendedores);
   }
 
   crearPedido() {
@@ -96,4 +102,47 @@ export class Pedido {
   getEstado() { return this.#estado; }
   getFechaCreacion() { return this.#fechaCreacion; }
   getHistorialEstados() { return this.#historialEstados; }
+
+  toJSONResumen() {
+    return {
+      id: this.#id,
+      items: this.#items.map(item => ({
+        producto: {
+          id: item.getProducto().getId(),
+          titulo: item.getProducto().getTitulo(),
+          vendedor: {
+            id: item.getProducto().getVendedor().getId(),
+            nombre: item.getProducto().getVendedor().getNombre(),
+            email: item.getProducto().getVendedor().getEmail(),
+            telefono: item.getProducto().getVendedor().getTelefono(),
+            tipoUsuario: item.getProducto().getVendedor().getTipoUsuario()
+          }
+        },
+        cantidad: item.getCantidad(),
+        precioUnitario: item.getPrecioUnitario()
+      })),
+      estado: this.#estado,
+      direccionEntrega: {
+        calle: this.#direccionEntrega.getCalle(),
+        altura: this.#direccionEntrega.getAltura(),
+        piso: this.#direccionEntrega.getPiso(),
+        departamento: this.#direccionEntrega.getDepartamento(),
+        codPostal: this.#direccionEntrega.getCodPostal(),
+        ciudad: this.#direccionEntrega.getCiudad(),
+        provincia: this.#direccionEntrega.getProvincia(),
+        pais: this.#direccionEntrega.getPais()
+      },
+      comprador: {
+        id: this.#comprador.getId(),
+        nombre: this.#comprador.getNombre(),
+        email: this.#comprador.getEmail(),
+        telefono: this.#comprador.getTelefono(),
+        tipoUsuario: this.#comprador.getTipoUsuario()
+      },
+      fechaCreacion: this.#fechaCreacion,
+      total: this.calcularTotal()
+    };
+  }
 }
+
+
