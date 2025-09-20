@@ -5,6 +5,13 @@ import { createPedidoRouter } from "./routes/pedidoRoutes.js";
 import { PedidoRepository } from "./repositories/pedidoRepository.js";
 import { PedidoService } from "./services/pedidoService.js";
 import { PedidoController } from "./controllers/pedidoController.js";
+import swaggerUi from "swagger-ui-express";
+import YAML from "yamljs";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 app.use(express.json());
@@ -23,6 +30,11 @@ const pedidoController = new PedidoController(pedidoService);
 
 // Usar router con controller inyectado
 app.use("/pedidos", createPedidoRouter(pedidoController));
+
+const swaggerDocument = YAML.load(path.join(__dirname, "docs", "api-docs.yaml"));
+
+// Servir Swagger UI en /api-docs
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

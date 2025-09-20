@@ -4,7 +4,7 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --watch domain/domain.js",
+    "dev": "node --watch index.js",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "keywords": [],
@@ -14,7 +14,9 @@
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.0",
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "type": "module",
   "devDependencies": {
