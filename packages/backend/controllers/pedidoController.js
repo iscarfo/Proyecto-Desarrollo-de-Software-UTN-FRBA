@@ -1,6 +1,3 @@
-import { PedidoService } from "../services/pedidoService.js"; 
-import { PedidoRepository } from "../repositories/pedidoRepository.js";
-
 export class PedidoController {
   constructor(pedidoService) {
     this.pedidoService = pedidoService;
@@ -85,8 +82,6 @@ historialPedidosUsuario = async (req, res) => {
     console.error("Error en historialPedidosUsuario:", err.message);
     res.status(400).json({ error: err.message });
   }
-  console.log("usuarioId recibido:", usuarioId);
-  console.log("pedidos encontrados:", pedidos);
 
 };
 
