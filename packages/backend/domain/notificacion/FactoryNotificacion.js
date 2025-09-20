@@ -1,3 +1,5 @@
+import { Notificacion } from "./Notificacion.js";
+
 export class FactoryNotificacion {
   static crearSegunEstadoPedido(estadoPedido) {
     return `El pedido pasó al estado: ${estadoPedido}`;
