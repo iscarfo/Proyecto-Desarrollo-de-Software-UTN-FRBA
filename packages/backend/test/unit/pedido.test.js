@@ -1,17 +1,19 @@
 import request from "supertest";
 import express from "express";
 import bodyParser from "body-parser";
-import { createPedidoRouter } from "../routes/pedidoRoutes.js";
-import { PedidoController } from "../controllers/pedidoController.js";
-import { PedidoRepository  } from "../repositories/pedidoRepository.js";
-import { PedidoService } from "../services/pedidoService.js";
-import { Usuario } from "../domain/usuario/Usuario.js";
-import { Producto } from "../domain/producto/Producto.js";
-import { ItemPedido } from "../domain/pedido/ItemPedido.js";
-import { DireccionEntrega } from "../domain/pedido/DireccionEntrega.js";
+import { createPedidoRouter } from "../../routes/pedidoRoutes.js";
+import { PedidoController } from "../../controllers/pedidoController.js";
+import { PedidoRepository  } from "../../repositories/pedidoRepository.js";
+import { PedidoService } from "../../services/pedidoService.js";
+import { jest } from '@jest/globals';
+import { describe, test, expect, beforeEach, beforeAll } from '@jest/globals';
+import { Usuario } from "../../domain/usuario/Usuario.js";
+import { Producto } from "../../domain/producto/Producto.js";
+import { ItemPedido } from "../../domain/pedido/ItemPedido.js";
+import { DireccionEntrega } from "../../domain/pedido/DireccionEntrega.js";
 
 // Mock de FactoryNotificacion para no enviar nada real
-jest.mock("../domain/notificacion/FactoryNotificacion.js", () => ({
+jest.mock("../../domain/notificacion/FactoryNotificacion.js", () => ({
   FactoryNotificacion: {
     crearNotificacionNuevoPedido: jest.fn(),
     crearNotificacionCancelacion: jest.fn(),
@@ -33,6 +35,10 @@ beforeEach(() => {
   //pedidoController = new PedidoController();
   app._router = undefined; // reset router
   app.use("/pedidos", createPedidoRouter(pedidoController));
+});
+
+beforeAll(() => {
+  jest.spyOn(console, 'log').mockImplementation(() => {});
 });
 
 // Helper para crear payload
