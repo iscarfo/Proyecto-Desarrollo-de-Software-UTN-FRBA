@@ -1,5 +1,5 @@
-import { Producto } from "../domain/producto/Producto.js";
-import { ProductoService } from "../services/productoService.js";
+import { Producto } from "../../domain/producto/Producto.js";
+import { ProductoService } from "../../services/productoService.js";
 import {jest} from '@jest/globals';
 
 // Ejemplos de instancias de Producto para pruebas
