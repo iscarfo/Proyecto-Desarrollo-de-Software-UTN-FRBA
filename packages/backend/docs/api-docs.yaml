@@ -13,6 +13,8 @@ tags:
     description: Endpoints para gestión de pedidos
   - name: Productos
     description: Endpoints para gestión de productos
+  - name: Notificaciones
+    description: Endpoints para gestión de notificaciones
 
 paths:
   ############################
@@ -338,6 +340,145 @@ paths:
         '404':
           description: Producto no encontrado
 
+  ############################
+  # NOTIFICACIONES
+  ############################
+  /notificaciones/unread/{usuarioId}:
+    get:
+      summary: Obtener notificaciones sin leer de un usuario con paginación
+      tags:
+        - Notificaciones
+      parameters:
+        - in: path
+          name: usuarioId
+          required: true
+          schema:
+            type: string
+          description: ID del usuario
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Número de página
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Número de elementos por página
+      responses:
+        '200':
+          description: Lista paginada de notificaciones sin leer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagina: { type: integer }
+                  perPage: { type: integer }
+                  totalColecciones: { type: integer }
+                  totalPaginas: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notificacion'
+        '400':
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+
+  /notificaciones/read/{usuarioId}:
+    get:
+      summary: Obtener notificaciones leídas de un usuario con paginación
+      tags:
+        - Notificaciones
+      parameters:
+        - in: path
+          name: usuarioId
+          required: true
+          schema:
+            type: string
+          description: ID del usuario
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+          description: Número de página
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+          description: Número de elementos por página
+      responses:
+        '200':
+          description: Lista paginada de notificaciones leídas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagina: { type: integer }
+                  perPage: { type: integer }
+                  totalColecciones: { type: integer }
+                  totalPaginas: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notificacion'
+        '400':
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+
+  /notificaciones/{id}/read:
+    patch:
+      summary: Marcar notificación como leída
+      tags:
+        - Notificaciones
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: ID de la notificación
+      responses:
+        '200':
+          description: Notificación marcada como leída
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  notificacion:
+                    $ref: '#/components/schemas/Notificacion'
+        '400':
+          description: Error en la solicitud
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error: { type: string }
+
 components:
   schemas:
     ############################
@@ -461,3 +602,18 @@ components:
           items: { $ref: '#/components/schemas/ItemPedido' }
         moneda: { type: string }
         direccionEntrega: { $ref: '#/components/schemas/DireccionEntrega' }
+
+    ############################
+    # NOTIFICACIONES
+    ############################
+    Notificacion:
+      type: object
+      properties:
+        id: { type: string }
+        usuarioId: { type: string }
+        titulo: { type: string }
+        mensaje: { type: string }
+        tipo: { type: string, enum: [pedido, producto, envio, sistema] }
+        leida: { type: boolean }
+        fechaCreacion: { type: string, format: date-time }
+        fechaLectura: { type: string, format: date-time, nullable: true }
