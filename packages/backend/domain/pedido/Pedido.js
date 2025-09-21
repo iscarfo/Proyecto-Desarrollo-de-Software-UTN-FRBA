@@ -1,88 +1,6 @@
 import { EstadoPedido } from "./enums.js";
-import { FactoryNotificacion } from "./Notificacion.js";
-
-export class ItemPedido {
-  #producto
-  #cantidad
-  #precioUnitario
-
-  constructor(producto, cantidad, precioUnitario) {
-    this.#producto = producto;
-    this.#cantidad = cantidad;
-    this.#precioUnitario = precioUnitario;
-  }
-
-  subTotal() {
-    return this.#cantidad * this.#precioUnitario;
-  }
-
-  getProducto() {
-    return this.#producto;
-  }
-
-  getCantidad() {
-    return this.#cantidad;
-  }
-
-  // No usados pero los agrego para futuras funcionalidades:
-  getPrecioUnitario() { return this.#precioUnitario; }
-}
-
-export class DireccionEntrega {
-  #calle
-  #altura
-  #piso
-  #departamento
-  #codPostal
-  #ciudad
-  #provincia
-  #pais
-  #lat
-  #lon
-
-
-  constructor(
-    calle,
-    altura,
-    piso,
-    departamento,
-    codPostal,
-    ciudad,
-    provincia,
-    pais,
-    lat,
-    lon,
-  ) {
-    this.#calle = calle;
-    this.#altura = altura;
-    this.#piso = piso;
-    this.#departamento = departamento;
-    this.#codPostal = codPostal;
-    this.#ciudad = ciudad;
-    this.#provincia = provincia;
-    this.#pais = pais;
-    this.#lat = lat;
-    this.#lon = lon;
-  }
-
-  getCalle() {
-    return this.#calle;
-  }
-
-  getAltura() {
-    return this.#altura;
-  }
-
-  // No usados pero los agrego para futuras funcionalidades:
-  getPiso() { return this.#piso; }
-  getDepartamento() { return this.#departamento; }
-  getCodPostal() { return this.#codPostal; }
-  getCiudad() { return this.#ciudad; }
-  getProvincia() { return this.#provincia; }
-  getPais() { return this.#pais; }
-  getLat() { return this.#lat; }
-  getLon() { return this.#lon; }
-}
+import { FactoryNotificacion } from "../notificacion/FactoryNotificacion.js";
+import { CambioEstadoPedido } from "./CambioEstadoPedido.js";
 
 export class Pedido {
   #id
@@ -110,6 +28,10 @@ export class Pedido {
   }
 
   actualizarEstado(nuevoEstado, quien, motivo) {
+    // No permitir cancelar un pedido ya cancelado
+    if (this.#estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
+      throw new Error("El pedido ya fue cancelado previamente.");
+    }
     const cambio = new CambioEstadoPedido(
       new Date(),
       nuevoEstado,
@@ -180,27 +102,47 @@ export class Pedido {
   getEstado() { return this.#estado; }
   getFechaCreacion() { return this.#fechaCreacion; }
   getHistorialEstados() { return this.#historialEstados; }
-}
 
-export class CambioEstadoPedido {
-  #fecha
-  #estado
-  #pedido
-  #usuario
-  #motivo
-
-  constructor(fecha, estado, pedido, usuario, motivo) {
-    this.#fecha = fecha;
-    this.#estado = estado;
-    this.#pedido = pedido;
-    this.#usuario = usuario;
-    this.#motivo = motivo;
+  toJSONResumen() {
+    return {
+      id: this.#id,
+      items: this.#items.map(item => ({
+        producto: {
+          id: item.getProducto().getId(),
+          titulo: item.getProducto().getTitulo(),
+          vendedor: {
+            id: item.getProducto().getVendedor().getId(),
+            nombre: item.getProducto().getVendedor().getNombre(),
+            email: item.getProducto().getVendedor().getEmail(),
+            telefono: item.getProducto().getVendedor().getTelefono(),
+            tipoUsuario: item.getProducto().getVendedor().getTipoUsuario()
+          }
+        },
+        cantidad: item.getCantidad(),
+        precioUnitario: item.getPrecioUnitario()
+      })),
+      estado: this.#estado,
+      direccionEntrega: {
+        calle: this.#direccionEntrega.getCalle(),
+        altura: this.#direccionEntrega.getAltura(),
+        piso: this.#direccionEntrega.getPiso(),
+        departamento: this.#direccionEntrega.getDepartamento(),
+        codPostal: this.#direccionEntrega.getCodPostal(),
+        ciudad: this.#direccionEntrega.getCiudad(),
+        provincia: this.#direccionEntrega.getProvincia(),
+        pais: this.#direccionEntrega.getPais()
+      },
+      comprador: {
+        id: this.#comprador.getId(),
+        nombre: this.#comprador.getNombre(),
+        email: this.#comprador.getEmail(),
+        telefono: this.#comprador.getTelefono(),
+        tipoUsuario: this.#comprador.getTipoUsuario()
+      },
+      fechaCreacion: this.#fechaCreacion,
+      total: this.calcularTotal()
+    };
   }
-
-  // Getters si es necesario
-  getFecha() { return this.#fecha; }
-  getEstado() { return this.#estado; }
-  getPedido() { return this.#pedido; }
-  getUsuario() { return this.#usuario; }
-  getMotivo() { return this.#motivo; }
 }
+
+

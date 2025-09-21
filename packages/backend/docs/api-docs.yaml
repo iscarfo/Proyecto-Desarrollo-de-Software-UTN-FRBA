@@ -1,0 +1,266 @@
+openapi: 3.0.3
+info:
+  title: API de Pedidos (Facu y Nacho S.)
+  version: 1.0.0
+  description: API para gestión de pedidos
+
+servers:
+  - url: http://localhost:3000
+    description: Servidor local
+
+paths:
+  /pedidos:
+    post:
+      summary: Crear un pedido
+      tags:
+        - Pedidos
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - comprador
+                - items
+                - moneda
+                - direccionEntrega
+              properties:
+                comprador:
+                  type: object
+                  properties:
+                    id: { type: integer }
+                    nombre: { type: string }
+                    email: { type: string }
+                    telefono: { type: string }
+                    tipoUsuario: { type: string }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      producto:
+                        type: object
+                        properties:
+                          id: { type: integer }
+                          vendedor:
+                            type: object
+                            properties:
+                              id: { type: integer }
+                              nombre: { type: string }
+                              email: { type: string }
+                              telefono: { type: string }
+                              tipoUsuario: { type: string }
+                          titulo: { type: string }
+                          status: { type: string }
+                          descripcion: { type: string }
+                          categorias:
+                            type: array
+                            items: { type: string }
+                          precio: { type: number }
+                          moneda: { type: string }
+                          stock: { type: integer }
+                          fotos:
+                            type: array
+                            items: { type: string }
+                          activo: { type: boolean }
+                      cantidad: { type: integer }
+                      precioUnitario: { type: number }
+                moneda: { type: string }
+                direccionEntrega:
+                  type: object
+                  properties:
+                    calle: { type: string }
+                    altura: { type: integer }
+                    piso: { type: string }
+                    departamento: { type: string }
+                    codPostal: { type: string }
+                    ciudad: { type: string }
+                    provincia: { type: string }
+                    pais: { type: string }
+                    lat: { type: number }
+                    lon: { type: number }
+      responses:
+        '201':
+          description: Pedido creado con éxito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  pedido:
+                    $ref: '#/components/schemas/Pedido'
+
+  /pedidos:
+    get:
+      summary: Obtener todos los pedidos
+      tags:
+        - Pedidos
+      responses:
+        '200':
+          description: Lista de pedidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Pedido'
+
+  /pedidos/usuario/{usuarioId}:
+    get:
+      summary: Obtener pedidos de un usuario
+      tags:
+        - Pedidos
+      parameters:
+        - in: path
+          name: usuarioId
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Lista de pedidos del usuario
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PedidoResumido'
+
+  /pedidos/{id}/cancelar:
+    patch:
+      summary: Cancelar un pedido
+      tags:
+        - Pedidos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                comprador:
+                  type: object
+                  properties:
+                    id: { type: integer }
+                    nombre: { type: string }
+      responses:
+        '200':
+          description: Pedido cancelado con éxito
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  pedido:
+                    $ref: '#/components/schemas/Pedido'
+
+  /pedidos/{id}/enviar:
+    patch:
+      summary: Marcar pedido como enviado
+      tags:
+        - Pedidos
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                vendedor:
+                  type: object
+                  properties:
+                    id: { type: integer }
+                    nombre: { type: string }
+                    email: { type: string }
+                    telefono: { type: string }
+                    tipoUsuario: { type: string }
+      responses:
+        '200':
+          description: Pedido marcado como enviado
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message: { type: string }
+                  pedido:
+                    $ref: '#/components/schemas/Pedido'
+
+components:
+  schemas:
+    Pedido:
+      type: object
+      properties:
+        id: { type: integer }
+        estado: { type: string }
+        comprador:
+          type: object
+          properties:
+            id: { type: integer }
+            nombre: { type: string }
+            email: { type: string }
+            telefono: { type: string }
+            tipoUsuario: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              producto:
+                type: object
+                properties:
+                  id: { type: integer }
+                  titulo: { type: string }
+              cantidad: { type: integer }
+              precioUnitario: { type: number }
+        direccionEntrega:
+          type: object
+          properties:
+            calle: { type: string }
+            altura: { type: integer }
+            piso: { type: string }
+            departamento: { type: string }
+            codPostal: { type: string }
+            ciudad: { type: string }
+            provincia: { type: string }
+            pais: { type: string }
+            lat: { type: number }
+            lon: { type: number }
+
+    PedidoResumido:
+      type: object
+      properties:
+        id: { type: integer }
+        estado: { type: string }
+        comprador:
+          type: object
+          properties:
+            id: { type: integer }
+            nombre: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              producto:
+                type: object
+                properties:
+                  id: { type: integer }
+                  titulo: { type: string }
+              cantidad: { type: integer }
+              precioUnitario: { type: number }
