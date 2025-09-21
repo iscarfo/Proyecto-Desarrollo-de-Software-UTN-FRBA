@@ -1,14 +1,23 @@
 openapi: 3.0.3
 info:
-  title: API de Pedidos (Facu y Nacho S.)
-  version: 1.0.0
-  description: API para gestión de pedidos
+  title: API de Tienda Sol
+  version: 1.0.1
+  description: API para gestión de pedidos y productos
 
 servers:
   - url: http://localhost:3000
     description: Servidor local
 
+tags:
+  - name: Pedidos
+    description: Endpoints para gestión de pedidos
+  - name: Productos
+    description: Endpoints para gestión de productos
+
 paths:
+  ############################
+  # PEDIDOS
+  ############################
   /pedidos:
     post:
       summary: Crear un pedido
@@ -200,58 +209,179 @@ paths:
                   message: { type: string }
                   pedido:
                     $ref: '#/components/schemas/Pedido'
+ 
+  ############################
+  # PRODUCTOS
+  ############################
+  /productos:
+    post:
+      summary: Crear un producto
+      tags: [Productos]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProductoCrear' }
+      responses:
+        '201':
+          description: Producto creado con éxito
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Producto' }
+    get:
+      summary: Listar productos
+      tags: [Productos]
+      parameters:
+        - name: page
+          in: query
+          schema: { type: integer }
+        - name: limit
+          in: query
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Lista de productos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Producto' }
+
+  /productos/vendedor:
+    get:
+      summary: Buscar productos por vendedor
+      tags: [Productos]
+      parameters:
+        - name: vendedorId
+          in: query
+          required: true
+          schema: { type: string }
+          description: ID del vendedor
+      responses:
+        '200':
+          description: Lista de productos del vendedor
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Producto' }
+
+  /productos/{id}:
+    delete:
+      summary: Eliminar producto
+      tags: [Productos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+          description: ID del producto
+      responses:
+        '200':
+          description: Producto eliminado correctamente
+        '404':
+          description: Producto no encontrado
 
 components:
   schemas:
+    ############################
+    # USUARIOS
+    ############################
+    Usuario:
+      type: object
+      properties:
+        id: { type: integer }
+        nombre: { type: string }
+        email: { type: string }
+        telefono: { type: string }
+        tipoUsuario: { type: string }
+
+    UsuarioResumido:
+      type: object
+      properties:
+        id: { type: integer }
+        nombre: { type: string }
+
+    ############################
+    # PRODUCTOS
+    ############################
+    Producto:
+      type: object
+      properties:
+        id: { type: integer }
+        vendedor: { $ref: '#/components/schemas/Usuario' }
+        titulo: { type: string }
+        status: { type: string }
+        descripcion: { type: string }
+        categorias:
+          type: array
+          items: { type: string }
+        precio: { type: number }
+        moneda: { type: string }
+        stock: { type: integer }
+        fotos:
+          type: array
+          items: { type: string }
+        activo: { type: boolean }
+
+    ProductoCrear:
+      type: object
+      required: [titulo, precio, vendedorId]
+      properties:
+        titulo: { type: string }
+        descripcion: { type: string }
+        categorias:
+          type: array
+          items: { type: string }
+        precio: { type: number }
+        moneda: { type: string }
+        stock: { type: integer }
+        vendedorId: { type: string }
+        fotos:
+          type: array
+          items: { type: string }
+
+    ############################
+    # PEDIDOS
+    ############################
+    ItemPedido:
+      type: object
+      properties:
+        producto: { $ref: '#/components/schemas/Producto' }
+        cantidad: { type: integer }
+        precioUnitario: { type: number }
+
+    DireccionEntrega:
+      type: object
+      properties:
+        calle: { type: string }
+        altura: { type: integer }
+        piso: { type: string }
+        departamento: { type: string }
+        codPostal: { type: string }
+        ciudad: { type: string }
+        provincia: { type: string }
+        pais: { type: string }
+        lat: { type: number }
+        lon: { type: number }
+
     Pedido:
       type: object
       properties:
         id: { type: integer }
         estado: { type: string }
-        comprador:
-          type: object
-          properties:
-            id: { type: integer }
-            nombre: { type: string }
-            email: { type: string }
-            telefono: { type: string }
-            tipoUsuario: { type: string }
+        comprador: { $ref: '#/components/schemas/Usuario' }
         items:
           type: array
-          items:
-            type: object
-            properties:
-              producto:
-                type: object
-                properties:
-                  id: { type: integer }
-                  titulo: { type: string }
-              cantidad: { type: integer }
-              precioUnitario: { type: number }
-        direccionEntrega:
-          type: object
-          properties:
-            calle: { type: string }
-            altura: { type: integer }
-            piso: { type: string }
-            departamento: { type: string }
-            codPostal: { type: string }
-            ciudad: { type: string }
-            provincia: { type: string }
-            pais: { type: string }
-            lat: { type: number }
-            lon: { type: number }
+          items: { $ref: '#/components/schemas/ItemPedido' }
+        direccionEntrega: { $ref: '#/components/schemas/DireccionEntrega' }
 
     PedidoResumido:
       type: object
       properties:
         id: { type: integer }
         estado: { type: string }
-        comprador:
-          type: object
-          properties:
-            id: { type: integer }
-            nombre: { type: string }
+        comprador: { $ref: '#/components/schemas/UsuarioResumido' }
         items:
           type: array
           items:
@@ -264,3 +394,14 @@ components:
                   titulo: { type: string }
               cantidad: { type: integer }
               precioUnitario: { type: number }
+
+    PedidoCrear:
+      type: object
+      required: [comprador, items, moneda, direccionEntrega]
+      properties:
+        comprador: { $ref: '#/components/schemas/Usuario' }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/ItemPedido' }
+        moneda: { type: string }
+        direccionEntrega: { $ref: '#/components/schemas/DireccionEntrega' }
