@@ -13,7 +13,7 @@ export class ProductoService {
     }
 
     // ===== Buscar todos los productos con filtros y paginación =====
-    async listarProductos(page, limit, filtros) {
+    async listarProductos(page, limit) {
         try {
             const numeroPagina = Math.max(Number(page), 1)
             const elementosXPagina = Math.min(Math.max(Number(limit), 1), 100)
@@ -27,8 +27,8 @@ export class ProductoService {
             // contienen los resultados reales (no promesas).
 
             const [productos, total] = await Promise.all([
-                this.productoRepository.findByPage(numeroPagina, elementosXPagina, filtros),
-                this.productoRepository.contarTodos(filtros),
+                this.productoRepository.findByPage(numeroPagina, elementosXPagina,{}),
+                this.productoRepository.contarTodos({}),
             ]);
 
             const totalPaginas = Math.ceil(total / elementosXPagina)
@@ -62,7 +62,7 @@ export class ProductoService {
             return {
                 pagina: numeroPagina,
                 perPage: elementosXPagina,
-                total: total,
+                totalColecciones: total,
                 totalPaginas: totalPaginas,
                 data: productos
             }

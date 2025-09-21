@@ -28,7 +28,7 @@ export class ProductoRepositoryMemoria {
         return true;
     }
 
-    // ===== Buscar todos con filtros + paginación =====
+    // ===== Buscar todos con paginación + filtros =====
     async findByPage(numeroPagina, elementosXPagina, filtros = {}) {
         const offset = (numeroPagina - 1) * elementosXPagina;
 
@@ -43,11 +43,38 @@ export class ProductoRepositoryMemoria {
     async findByVendedor(numeroPagina = 1, elementosXPagina = 10, filtros = {}, vendedorId) {
         const offset = (numeroPagina - 1) * elementosXPagina;
 
-        const filtrados = this.productos.filter(
-            p =>
-                p.vendedorId === vendedorId &&
-                Object.entries(filtros).every(([k, v]) => p[k] === v)
-        );
+        //BUSCAR POR VENDEDOR
+        let filtrados = this.productos.filter(p => p.vendedor?.id === vendedorId);
+
+        //FILTRO POR NOMBRE
+        if (filtros.nombre) {
+            filtrados = filtrados.filter(p =>
+                p.titulo.toLowerCase().includes(filtros.nombre.toLowerCase())
+            );
+        }
+
+        //FILTRO POR DESCRIPCION
+        if (filtros.descripcion) {
+            filtrados = filtrados.filter(p =>
+                p.descripcion.toLowerCase().includes(filtros.descripcion.toLowerCase())
+            );
+        }
+
+        //FILTRO POR CATEGORIA
+        if (filtros.categoria) {
+            filtrados = filtrados.filter(p =>
+                p.categorias.some(c => c.toLowerCase().includes(filtros.categoria.toLowerCase()))
+            );
+        }
+
+        //FILTRO RANGO DE PRECIOS
+        if (filtros.precioMin) {
+            filtrados = filtrados.filter(p => p.precio >= filtros.precioMin);
+        }
+
+        if (filtros.precioMax) {
+            filtrados = filtrados.filter(p => p.precio <= filtros.precioMax);
+        }
 
         return filtrados.slice(offset, offset + elementosXPagina);
     }
@@ -60,11 +87,8 @@ export class ProductoRepositoryMemoria {
     }
 
     async contarDeVendedor(vendedorId, filtros = {}) {
-        return this.productos.filter(
-            p =>
-                p.vendedorId === vendedorId &&
-                Object.entries(filtros).every(([k, v]) => p[k] === v)
-        ).length;
+        const productos = await this.findByVendedor(1, Number.MAX_SAFE_INTEGER, filtros, vendedorId);
+        return productos.length;
     }
 
     // ===== Productos ordenados por ventas =====

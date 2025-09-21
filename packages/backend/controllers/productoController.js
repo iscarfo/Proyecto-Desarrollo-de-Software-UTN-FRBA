@@ -21,12 +21,12 @@ export class ProductoController {
       res.status(500).json({ error: err.message });
     }
   }
-
-  // GET: todos los productos paginados + filtros
+  
+  // GET: todos los productos paginados
   async listarProductos(req, res) {
     try {
-      const { page = 1, limit = 10, ...filtros } = req.query;
-      const productosPaginados = await this.productoService.listarProductos(page, limit, filtros);
+      const { page = 1, limit = 10 } = req.query;
+      const productosPaginados = await this.productoService.listarProductos(page, limit);
 
       if (!productosPaginados || productosPaginados.length === 0) {
         return res.status(204).send();
@@ -41,13 +41,18 @@ export class ProductoController {
   // GET: productos de un vendedor paginados + filtros
   async buscarProductoPorVendedor(req, res) {
     try {
-      const { page = 1, limit = 10, vendedorId, ...filtros } = req.query;
-      const productosPaginados = await this.productoService.buscarProductosVendedor(
-        page,
-        limit,
-        filtros,
-        vendedorId
-      );
+      const { page = 1, limit = 10, nombre, descripcion, categoria, precioMin, precioMax } = req.query;
+      const { vendedorId } = req.params;
+
+      const filtros = {
+            nombre,
+            descripcion,
+            categoria,
+            precioMin: precioMin ? Number(precioMin) : undefined,
+            precioMax: precioMax ? Number(precioMax) : undefined
+      };
+
+      const productosPaginados = await this.productoService.buscarProductosVendedor(page, limit, filtros,vendedorId);
 
       if (!productosPaginados || productosPaginados.length === 0) {
         return res.status(204).send();

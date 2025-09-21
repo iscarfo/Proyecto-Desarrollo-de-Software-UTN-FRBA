@@ -247,7 +247,63 @@ paths:
                 type: array
                 items: { $ref: '#/components/schemas/Producto' }
 
-  /productos/vendedor:
+  /productos/vendedor/{vendedorId}:
+    get:
+      summary: Listar productos de un vendedor con filtros y paginación
+      tags:
+        - Productos
+      parameters:
+        - in: path
+          name: vendedorId
+          required: true
+          schema:
+            type: integer
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+        - in: query
+          name: nombre
+          schema:
+            type: string
+        - in: query
+          name: descripcion
+          schema:
+            type: string
+        - in: query
+          name: categoria
+          schema:
+            type: string
+        - in: query
+          name: precioMin
+          schema:
+            type: number
+        - in: query
+          name: precioMax
+          schema:
+            type: number
+      responses:
+        '200':
+          description: Lista de productos filtrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagina: { type: integer }
+                  perPage: { type: integer }
+                  total: { type: integer }
+                  totalPaginas: { type: integer }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Producto'
     get:
       summary: Buscar productos por vendedor
       tags: [Productos]
