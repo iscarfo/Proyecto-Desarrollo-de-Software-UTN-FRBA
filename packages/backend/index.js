@@ -5,10 +5,14 @@ import { createPedidoRouter } from "./routes/pedidoRoutes.js";
 import { PedidoRepository } from "./repositories/pedidoRepository.js";
 import { PedidoService } from "./services/pedidoService.js";
 import { PedidoController } from "./controllers/pedidoController.js";
+import {ProductoRepositoryMemoria} from "./repositories/productoRepository.js";
+import { createProductoRouter } from "./routes/productoRoutes.js";
+import {ProductoService} from "./services/productoService.js";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { ProductoController } from "./controllers/productoController.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -28,8 +32,13 @@ const pedidoRepository = new PedidoRepository();
 const pedidoService = new PedidoService(pedidoRepository);
 const pedidoController = new PedidoController(pedidoService);
 
+const productoRepository = new ProductoRepositoryMemoria();
+const productoService = new ProductoService(productoRepository);
+const productoController = new ProductoController(productoService);
+
 // Usar router con controller inyectado
 app.use("/pedidos", createPedidoRouter(pedidoController));
+app.use("/productos", createProductoRouter(productoController));
 
 const swaggerDocument = YAML.load(path.join(__dirname, "docs", "api-docs.yaml"));
 

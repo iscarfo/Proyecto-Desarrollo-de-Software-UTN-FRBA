@@ -23,10 +23,10 @@ export class ProductoController {
   }
 
   // GET: todos los productos paginados + filtros
-  async buscarTodos(req, res) {
+  async listarProductos(req, res) {
     try {
       const { page = 1, limit = 10, ...filtros } = req.query;
-      const productosPaginados = await this.productoService.buscarTodos(page, limit, filtros);
+      const productosPaginados = await this.productoService.listarProductos(page, limit, filtros);
 
       if (!productosPaginados || productosPaginados.length === 0) {
         return res.status(204).send();
@@ -39,7 +39,7 @@ export class ProductoController {
   }
 
   // GET: productos de un vendedor paginados + filtros
-  async buscarPorVendedor(req, res) {
+  async buscarProductoPorVendedor(req, res) {
     try {
       const { page = 1, limit = 10, vendedorId, ...filtros } = req.query;
       const productosPaginados = await this.productoService.buscarProductosVendedor(
@@ -58,4 +58,21 @@ export class ProductoController {
       res.status(500).json({ error: err.message });
     }
   }
+
+  // PUT: Actualizar producto
+
+  //DELETE producto by Id
+  async eliminarProducto(req, res) {
+    try {
+      const { id } = req.params;
+      const eliminado = await this.productoService.eliminarProducto(id);
+
+      if (!eliminado) return res.status(404).json({ message: "Producto no encontrado" });
+
+      res.status(200).json({ message: "Producto eliminado correctamente" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+
 }

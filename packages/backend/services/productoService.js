@@ -1,20 +1,19 @@
 export class ProductoService {
+    constructor(productoRepository) {
+        this.productoRepository = productoRepository
+    }
 
     // Representa la capa de servicio para Productos.
     // Se encarga de aplicar reglas de negocio, paginar resultados
     // y delegar las operaciones de BD al repository.
 
-    constructor(productoRepository) {
-        this.productoRepository = productoRepository
-    }
-
     // ===== Crear producto nuevo =====
     async crearProducto(productoData) {
-        return await this.productoRepository.crearProducto(productoData);
+        return await this.productoRepository.save(productoData);
     }
 
     // ===== Buscar todos los productos con filtros y paginación =====
-    async buscarTodos(page, limit, filtros) {
+    async listarProductos(page, limit, filtros) {
         try {
             const numeroPagina = Math.max(Number(page), 1)
             const elementosXPagina = Math.min(Math.max(Number(limit), 1), 100)
@@ -37,7 +36,7 @@ export class ProductoService {
             return {
                 pagina: numeroPagina,           // Página actual
                 perPage: elementosXPagina,      // Cantidad de elementos por página
-                total: total,                   // Total de registros que cumplen los filtros
+                totalColecciones: total,        // Total de registros que cumplen los filtros
                 totalPaginas: totalPaginas,     // Total de páginas disponibles
                 data: productos                 // Lista de productos de esta página
             }
@@ -74,22 +73,30 @@ export class ProductoService {
 
     }
 
-    ordernarPorPrecioAsc(productos){
-        return productos.sort((a,b) => a.getPrecio() - b.getPrecio());
+    ordernarPorPrecioAsc(productos) {
+        return productos.sort((a, b) => a.getPrecio() - b.getPrecio());
     }
 
-    ordernarPorPrecioDesc(productos){
-        return productos.sort((a,b) => b.getPrecio() - a.getPrecio());
+    ordernarPorPrecioDesc(productos) {
+        return productos.sort((a, b) => b.getPrecio() - a.getPrecio());
     }
 
-    ordernarPorVentas(productos){
+    ordernarPorVentas(productos) {
         const idOrdenado = this.productoRepository.productosOrdenadosPorVentas(productos);
         const productosOrdenados = new Array(productos.length);
 
         for (let i = 0; i < productosOrdenados.length; i++) {
-            productosOrdenados[i] = productos.find(p => p.getId() === idOrdenado[i].id);            
+            productosOrdenados[i] = productos.find(p => p.getId() === idOrdenado[i].id);
         }
-        
+
         return productosOrdenados;
+    }
+
+    async eliminarProducto(productoId) {
+        try {
+            return await this.productoRepository.delete(productoId);
+        } catch (error) {
+            throw new Error(`Error al eliminar producto: ${error.message}`);
+        }
     }
 }
