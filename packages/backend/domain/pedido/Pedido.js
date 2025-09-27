@@ -3,33 +3,33 @@ import { FactoryNotificacion } from "../notificacion/FactoryNotificacion.js";
 import { CambioEstadoPedido } from "./CambioEstadoPedido.js";
 
 export class Pedido {
-  #id
-  #comprador
-  #items
-  #moneda
-  #direccionEntrega
-  #estado
-  #fechaCreacion
-  #historialEstados
+  id
+  comprador
+  items
+  moneda
+  direccionEntrega
+  estado
+  fechaCreacion
+  historialEstados
 
   constructor(id, comprador, items, moneda, direccionEntrega) {
-    this.#id = id;
-    this.#comprador = comprador; // Usuario
-    this.#items = items || []; // [ItemPedido]
-    this.#moneda = moneda;
-    this.#direccionEntrega = direccionEntrega; // DireccionEntrega
-    this.#estado = EstadoPedido.PENDIENTE;
-    this.#fechaCreacion = new Date();
-    this.#historialEstados = [];
+    this.id = id;
+    this.comprador = comprador; // Usuario
+    this.items = items || []; // [ItemPedido]
+    this.moneda = moneda;
+    this.direccionEntrega = direccionEntrega; // DireccionEntrega
+    this.estado = EstadoPedido.PENDIENTE;
+    this.fechaCreacion = new Date();
+    this.historialEstados = [];
   }
 
   calcularTotal() {
-    return this.#items.reduce((acc, item) => acc + item.subTotal(), 0);
+    return this.items.reduce((acc, item) => acc + item.subTotal(), 0);
   }
 
   actualizarEstado(nuevoEstado, quien, motivo) {
     // No permitir cancelar un pedido ya cancelado
-    if (this.#estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
+    if (this.estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
       throw new Error("El pedido ya fue cancelado previamente.");
     }
     const cambio = new CambioEstadoPedido(
@@ -39,8 +39,8 @@ export class Pedido {
       quien,
       motivo,
     );
-    this.#historialEstados.push(cambio);
-    this.#estado = nuevoEstado;
+    this.historialEstados.push(cambio);
+    this.estado = nuevoEstado;
 
     if (nuevoEstado === EstadoPedido.ENVIADO) {
       const notificacion = FactoryNotificacion.crearNotificacionEnvio(this);
@@ -58,14 +58,14 @@ export class Pedido {
   }
 
   validarStock() {
-    return this.#items.every((item) =>
+    return this.items.every((item) =>
       item.getProducto().estaDisponible(item.getCantidad()),
     );
   }
 
   obtenerVendedores() {
     const vendedores = new Set();
-    this.#items.forEach((item) => {
+    this.items.forEach((item) => {
       vendedores.add(item.getProducto().getVendedor());
     });
     return Array.from(vendedores);
@@ -82,31 +82,31 @@ export class Pedido {
   }
 
   getComprador() {
-    return this.#comprador;
+    return this.comprador;
   }
 
   getItems() {
-    return this.#items;
+    return this.items;
   }
 
   getDireccionEntrega() {
-    return this.#direccionEntrega;
+    return this.direccionEntrega;
   }
 
   getId() {
-    return this.#id;
+    return this.id;
   }
 
   // No usados pero los agrego para futuras funcionalidades:
-  getMoneda() { return this.#moneda; }
-  getEstado() { return this.#estado; }
-  getFechaCreacion() { return this.#fechaCreacion; }
-  getHistorialEstados() { return this.#historialEstados; }
+  getMoneda() { return this.moneda; }
+  getEstado() { return this.estado; }
+  getFechaCreacion() { return this.fechaCreacion; }
+  getHistorialEstados() { return this.historialEstados; }
 
   toJSONResumen() {
     return {
-      id: this.#id,
-      items: this.#items.map(item => ({
+      id: this.id,
+      items: this.items.map(item => ({
         producto: {
           id: item.getProducto().getId(),
           titulo: item.getProducto().getTitulo(),
@@ -121,25 +121,25 @@ export class Pedido {
         cantidad: item.getCantidad(),
         precioUnitario: item.getPrecioUnitario()
       })),
-      estado: this.#estado,
+      estado: this.estado,
       direccionEntrega: {
-        calle: this.#direccionEntrega.getCalle(),
-        altura: this.#direccionEntrega.getAltura(),
-        piso: this.#direccionEntrega.getPiso(),
-        departamento: this.#direccionEntrega.getDepartamento(),
-        codPostal: this.#direccionEntrega.getCodPostal(),
-        ciudad: this.#direccionEntrega.getCiudad(),
-        provincia: this.#direccionEntrega.getProvincia(),
-        pais: this.#direccionEntrega.getPais()
+        calle: this.direccionEntrega.getCalle(),
+        altura: this.direccionEntrega.getAltura(),
+        piso: this.direccionEntrega.getPiso(),
+        departamento: this.direccionEntrega.getDepartamento(),
+        codPostal: this.direccionEntrega.getCodPostal(),
+        ciudad: this.direccionEntrega.getCiudad(),
+        provincia: this.direccionEntrega.getProvincia(),
+        pais: this.direccionEntrega.getPais()
       },
       comprador: {
-        id: this.#comprador.getId(),
-        nombre: this.#comprador.getNombre(),
-        email: this.#comprador.getEmail(),
-        telefono: this.#comprador.getTelefono(),
-        tipoUsuario: this.#comprador.getTipoUsuario()
+        id: this.comprador.getId(),
+        nombre: this.comprador.getNombre(),
+        email: this.comprador.getEmail(),
+        telefono: this.comprador.getTelefono(),
+        tipoUsuario: this.comprador.getTipoUsuario()
       },
-      fechaCreacion: this.#fechaCreacion,
+      fechaCreacion: this.fechaCreacion,
       total: this.calcularTotal()
     };
   }
