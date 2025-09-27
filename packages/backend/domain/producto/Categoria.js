@@ -1,11 +1,11 @@
 export class Categoria {
-  #nombre
+  nombre
 
   constructor(nombre) {
-    this.#nombre = nombre;
+    this.nombre = nombre;
   }
 
   getNombre() {
-    return this.#nombre;
+    return this.nombre;
   }
 }
