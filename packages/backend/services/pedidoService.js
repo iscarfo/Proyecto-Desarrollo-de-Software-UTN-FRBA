@@ -1,9 +1,6 @@
 import { Pedido } from "../domain/pedido/Pedido.js";
-import { Producto } from "../domain/producto/Producto.js";
 import { ItemPedido } from "../domain/pedido/ItemPedido.js";
 import { DireccionEntrega } from "../domain/pedido/DireccionEntrega.js";
-import { Usuario } from "../domain/usuario/Usuario.js";
-import { PedidoModel } from "../models/PedidoModel.js";
 
 export class PedidoService {
   constructor(pedidoRepository, productoRepository) {
@@ -100,12 +97,23 @@ export class PedidoService {
     /*
     // Validar que el vendedor esté en los productos de los items del pedido
     const productos = await Promise.all(
-      pedidoPlano.items.map(i => this.productoRepository.findById(i.productoId))
+      pedidoPlano.items.map(i => this.productoRepository.findById(i.productoId).lean())
     );
-    const vendedoresIds = productos.map(p => p.vendedor?.toString());
-    if (!vendedoresIds.includes(vendedorId.toString())) {
+    if (productos.some(p => !p)) {
+      throw new Error("Alguno de los productos del pedido no existe");
+    }
+
+    const vendedoresIds = productos.map(p => p.vendedor.toString());
+
+    // Si el pedido tiene productos de múltiples vendedores,
+    // obligás a que todos sean del vendedor actual.
+    const todosDelMismoVendedor = vendedoresIds.every(
+      id => id === vendedorId.toString()
+    );
+
+    if (!todosDelMismoVendedor) {
       throw new Error("No autorizado para marcar este pedido como enviado");
-    }*/ // TODO: ver esta validacion cuando los productos esten persistidos
+    }*/ // TODO: Revisar esta validación
 
     if (pedidoPlano.estado === "ENVIADO") {
       throw new Error("El pedido ya fue enviado");

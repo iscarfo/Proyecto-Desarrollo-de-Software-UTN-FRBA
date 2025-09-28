@@ -54,7 +54,7 @@ app.get("/health", (req, res) => {
 
 // Instancias compartidas
 const pedidoRepository = new PedidoRepository();
-const productoRepository = new ProductoRepositoryMemoria();
+const productoRepository = new ProductoRepository();
 
 const pedidoService = new PedidoService(pedidoRepository, productoRepository);
 const pedidoController = new PedidoController(pedidoService);

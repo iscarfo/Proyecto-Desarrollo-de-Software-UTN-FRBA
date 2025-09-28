@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 
 const ItemPedidoSchema = new mongoose.Schema({
-  //productoId: { type: String,  // TODO: es un String hasta que se persistan productos (que va a ser un ObjectId)required: true },
   productoId: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: "Producto", 

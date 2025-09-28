@@ -44,19 +44,6 @@ export class PedidoRepository {
         },
         { new: true }
       );
-
-      // Mapeo a instancia de Pedido
-      //const itemsInstancia = updated.items.map(i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario));
-      //return new Pedido(
-      //  updated._id.toString(),
-      //  updated.compradorId,
-      //  itemsInstancia,
-      //  updated.moneda,
-      //  updated.direccionEntrega,
-      //  updated.estado,
-      //  updated.fechaCreacion,
-      //  updated.historialEstados
-      //);
       return this.mapToPedidoDTO(updated);
     }
   }
