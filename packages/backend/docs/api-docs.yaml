@@ -325,6 +325,60 @@ paths:
                 items: { $ref: '#/components/schemas/Producto' }
 
   /productos/{id}:
+    put:
+      summary: Actualizar un producto existente
+      tags: [Productos]
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: ID del producto a actualizar
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                titulo:
+                  type: string
+                descripcion:
+                  type: string
+                categorias:
+                  type: array
+                  items: { type: string }
+                precio:
+                  type: number
+                moneda:
+                  type: string
+                  enum: [PESO_ARG, DOLAR_USA, REAL]
+                stock:
+                  type: integer
+                fotos:
+                  type: array
+                  items: { type: string }
+                activo:
+                  type: boolean
+      responses:
+        '200':
+          description: Producto actualizado correctamente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Producto'
+        '404':
+          description: Producto no encontrado
+        '500':
+          description: Error del servidor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
     delete:
       summary: Eliminar producto
       tags: [Productos]

@@ -5,7 +5,7 @@ import { createPedidoRouter } from "./routes/pedidoRoutes.js";
 import { PedidoRepository } from "./repositories/pedidoRepository.js";
 import { PedidoService } from "./services/pedidoService.js";
 import { PedidoController } from "./controllers/pedidoController.js";
-import {ProductoRepositoryMemoria} from "./repositories/productoRepository.js";
+import {ProductoRepository} from "./repositories/productoRepository.js";
 import { createProductoRouter } from "./routes/productoRoutes.js";
 import {ProductoService} from "./services/productoService.js";
 import { createNotificacionesRouter } from "./routes/notificacionesRoutes.js";

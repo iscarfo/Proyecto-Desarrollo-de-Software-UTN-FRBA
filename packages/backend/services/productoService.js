@@ -12,6 +12,11 @@ export class ProductoService {
         return await this.productoRepository.save(productoData);
     }
 
+    // ===== Actualizar producto =====
+    async actualizarProducto(id, datos) {
+        return await this.productoRepository.updateById(id, datos);
+    }
+
     // ===== Buscar todos los productos con filtros y paginación =====
     async listarProductos(page, limit) {
         try {
@@ -27,7 +32,7 @@ export class ProductoService {
             // contienen los resultados reales (no promesas).
 
             const [productos, total] = await Promise.all([
-                this.productoRepository.findByPage(numeroPagina, elementosXPagina,{}),
+                this.productoRepository.findByPage(numeroPagina, elementosXPagina, {}),
                 this.productoRepository.contarTodos({}),
             ]);
 
