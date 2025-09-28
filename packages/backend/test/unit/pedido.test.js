@@ -55,7 +55,7 @@ describe("Pedido - pruebas simples", () => {
 
   test("getters devuelven los datos pasados al constructor", () => {
     expect(pedido.getId()).toBe(1);
-    expect(pedido.getComprador()).toEqual({ nombre: "Pepe" });
+    expect(pedido.getCompradorId()).toEqual( "1");
     expect(pedido.getItems()).toHaveLength(2);
     expect(pedido.getDireccionEntrega()).toEqual({ calle: "Calle 123" });
     expect(pedido.getEstado()).toBe(EstadoPedido.PENDIENTE);

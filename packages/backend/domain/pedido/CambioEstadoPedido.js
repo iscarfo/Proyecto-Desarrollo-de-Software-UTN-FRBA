@@ -1,14 +1,14 @@
 export class CambioEstadoPedido {
   fecha
   estado
-  pedido
+  pedidoId
   usuario
   motivo
 
-  constructor(fecha, estado, pedido, usuario, motivo) {
+  constructor(fecha, estado, pedidoId, usuario, motivo) {
     this.fecha = fecha;
     this.estado = estado;
-    this.pedido = pedido;
+    this.pedidoId = pedidoId;
     this.usuario = usuario;
     this.motivo = motivo;
   }
@@ -16,7 +16,7 @@ export class CambioEstadoPedido {
   // Getters si es necesario
   getFecha() { return this.fecha; }
   getEstado() { return this.estado; }
-  getPedido() { return this.pedido; }
+  getPedidoId() { return this.pedidoId; }
   getUsuario() { return this.usuario; }
   getMotivo() { return this.motivo; }
 }

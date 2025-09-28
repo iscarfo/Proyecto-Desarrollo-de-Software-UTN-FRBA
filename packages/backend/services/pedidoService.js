@@ -3,6 +3,7 @@ import { Producto } from "../domain/producto/Producto.js";
 import { ItemPedido } from "../domain/pedido/ItemPedido.js";
 import { DireccionEntrega } from "../domain/pedido/DireccionEntrega.js";
 import { Usuario } from "../domain/usuario/Usuario.js";
+import { PedidoModel } from "../models/PedidoModel.js";
 
 export class PedidoService {
   constructor(pedidoRepository, productoRepository) {
@@ -11,36 +12,11 @@ export class PedidoService {
   }
 
   // Crear un nuevo pedido
-  async crearPedido(comprador, items, moneda, direccionEntrega) {
-    const compradorInstancia = new Usuario(
-      comprador.id,
-      comprador.nombre,
-      comprador.email,
-      comprador.telefono,
-      comprador.tipoUsuario
-    );
+  async crearPedido(compradorId, items, moneda, direccionEntrega) {
 
     const itemsInstancia = items.map(item =>
       new ItemPedido(
-        new Producto(
-          item.producto.id,
-          new Usuario(
-            item.producto.vendedor.id,
-            item.producto.vendedor.nombre,
-            item.producto.vendedor.email,
-            item.producto.vendedor.telefono,
-            item.producto.vendedor.tipoUsuario
-          ),
-          item.producto.titulo,
-          item.producto.status,
-          item.producto.descripcion,
-          item.producto.categorias,
-          item.producto.precio,
-          item.producto.moneda,
-          item.producto.stock,
-          item.producto.fotos,
-          item.producto.activo
-        ),
+        item.productoId, // ← Cambiado para que use productoId en vez de un objeto Producto
         item.cantidad,
         item.precioUnitario
       )
@@ -60,8 +36,7 @@ export class PedidoService {
     );
 
     const pedido = new Pedido(
-      Date.now().toString(), // ID como string
-      compradorInstancia,
+      compradorId,
       itemsInstancia,
       moneda,
       direccionEntregaInstancia
@@ -81,54 +56,73 @@ export class PedidoService {
   }
 
   // Cancelar pedido
-  async cancelarPedido(idPedido, comprador) {
-    const pedido = await this.pedidoRepository.findById(idPedido); 
-    if (!pedido) throw new Error("Pedido no encontrado");
+  async cancelarPedido(pedidoId, compradorId) {
+    const pedidoPlano = await this.pedidoRepository.findById(pedidoId);
+    if (!pedidoPlano) throw new Error("Pedido no encontrado");
 
-    if (Number(pedido.getComprador().getId()) !== Number(comprador.id)) {
-    throw new Error("No autorizado: solo el comprador puede cancelar su pedido");
-}
+    if (pedidoPlano.compradorId !== compradorId) {
+      throw new Error("No autorizado: solo el comprador puede cancelar su pedido");
+    }
 
-    if (pedido.getEstado() === "ENVIADO") {
+    if (pedidoPlano.estado === "ENVIADO") {
       throw new Error("El pedido ya fue enviado y no puede cancelarse");
-    } else if (pedido.getEstado() === "CANCELADO") {
+    } else if (pedidoPlano.estado === "CANCELADO") {
       throw new Error("El pedido fue anteriormente cancelado");
     }
 
-    pedido.actualizarEstado("CANCELADO", comprador, "Cancelación por el usuario");
-    return this.pedidoRepository.save(pedido);
+    const pedido = new Pedido(
+      pedidoPlano.compradorId,
+      pedidoPlano.items.map(i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)),
+      pedidoPlano.moneda,
+      pedidoPlano.direccionEntrega
+    );
+    pedido.id = pedidoPlano.id;
+    pedido.estado = pedidoPlano.estado;
+    pedido.historialEstados = pedidoPlano.historialEstados;
+
+    return await pedido.actualizarEstado("CANCELADO", compradorId, "Cancelación por el usuario", this.pedidoRepository);
   }
 
   // Obtener pedidos de un usuario
-  /*
   async obtenerPedidosDeUsuario(usuarioId) {
-    return this.pedidoRepository.findAll().filter(
-      p => p.getComprador().getId().toString() === usuarioId.toString()
+    const todos = await this.pedidoRepository.findAll();
+    return todos.filter(
+      p => p.compradorId.toString() === usuarioId.toString()
     );
-  }*/
-
-  async obtenerPedidosDeUsuario(usuarioId) {
-  const todos = await this.pedidoRepository.findAll(); // ← faltaba el await
-  return todos.filter(
-    p => p.getComprador().getId().toString() === usuarioId.toString()
-  );
-}
+  }
 
 
   // Marcar pedido como enviado
-  async marcarComoEnviado(pedidoId, vendedor) {
-    const pedido = await this.pedidoRepository.findById(pedidoId); // <-- string
-    if (!pedido) throw new Error("Pedido no encontrado");
+  async marcarComoEnviado(pedidoId, vendedorId) {
+    const pedidoPlano = await this.pedidoRepository.findById(pedidoId); 
+    if (!pedidoPlano) throw new Error("Pedido no encontrado");
 
-    const vendedoresIds = pedido.getItems().map(
-      i => i.getProducto().getVendedor().getId().toString()
+    /*
+    // Validar que el vendedor esté en los productos de los items del pedido
+    const productos = await Promise.all(
+      pedidoPlano.items.map(i => this.productoRepository.findById(i.productoId))
     );
-
-    if (!vendedoresIds.includes(vendedor.id.toString())) {
+    const vendedoresIds = productos.map(p => p.vendedor?.toString());
+    if (!vendedoresIds.includes(vendedorId.toString())) {
       throw new Error("No autorizado para marcar este pedido como enviado");
+    }*/ // TODO: ver esta validacion cuando los productos esten persistidos
+
+    if (pedidoPlano.estado === "ENVIADO") {
+      throw new Error("El pedido ya fue enviado");
+    } else if (pedidoPlano.estado === "CANCELADO") {
+      throw new Error("El pedido fue cancelado y no puede enviarse");
     }
 
-    pedido.actualizarEstado("ENVIADO", vendedor, "Pedido marcado como enviado");
-    return this.pedidoRepository.save(pedido);
+    const pedido = new Pedido(
+      pedidoPlano.compradorId,
+      pedidoPlano.items.map(i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)),
+      pedidoPlano.moneda,
+      pedidoPlano.direccionEntrega
+    );
+    pedido.id = pedidoPlano.id;
+    pedido.estado = pedidoPlano.estado;
+    pedido.historialEstados = pedidoPlano.historialEstados;
+
+    return await pedido.actualizarEstado("ENVIADO", vendedorId, "Pedido marcado como enviado", this.pedidoRepository);
   }
 }

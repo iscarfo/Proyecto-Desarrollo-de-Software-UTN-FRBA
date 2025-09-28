@@ -1,10 +1,11 @@
 import { EstadoPedido } from "./enums.js";
 import { FactoryNotificacion } from "../notificacion/FactoryNotificacion.js";
 import { CambioEstadoPedido } from "./CambioEstadoPedido.js";
+import { PedidoRepository } from "../../repositories/pedidoRepository.js";
 
 export class Pedido {
   id
-  comprador
+  compradorId
   items
   moneda
   direccionEntrega
@@ -12,10 +13,10 @@ export class Pedido {
   fechaCreacion
   historialEstados
 
-  constructor(id, comprador, items, moneda, direccionEntrega) {
-    this.id = id;
-    this.comprador = comprador; // Usuario
-    this.items = items || []; // [ItemPedido]
+  constructor(compradorId, items, moneda, direccionEntrega) {
+    this.id = null; // Se asigna al guardar en BD
+    this.compradorId = compradorId; // Id de usuario
+    this.items = Array.isArray(items) ? items : []; // [ItemPedido]
     this.moneda = moneda;
     this.direccionEntrega = direccionEntrega; // DireccionEntrega
     this.estado = EstadoPedido.PENDIENTE;
@@ -27,7 +28,7 @@ export class Pedido {
     return this.items.reduce((acc, item) => acc + item.subTotal(), 0);
   }
 
-  actualizarEstado(nuevoEstado, quien, motivo) {
+  async actualizarEstado(nuevoEstado, quien, motivo, pedidoRepository) {
     // No permitir cancelar un pedido ya cancelado
     if (this.estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
       throw new Error("El pedido ya fue cancelado previamente.");
@@ -55,20 +56,41 @@ export class Pedido {
         );
       });
     }
+
+    // Actualiza en la base de datos
+    const pedidoActualizado = await pedidoRepository.findByIdAndUpdateEstado(
+      this.id,
+      nuevoEstado,
+      quien,
+      motivo
+    );
+    return pedidoActualizado;
   }
 
+  /*
   validarStock() {
     return this.items.every((item) =>
-      item.getProducto().estaDisponible(item.getCantidad()),
+      item.getProductoId().estaDisponible(item.getCantidad()),
     );
+  }*/
+
+  validarStock() {
+    // TODO: implementar cuando se persistan productos
+    return true;
   }
 
+/*
   obtenerVendedores() {
     const vendedores = new Set();
     this.items.forEach((item) => {
-      vendedores.add(item.getProducto().getVendedor());
+      vendedores.add(item.getProductoId().getVendedor());
     });
     return Array.from(vendedores);
+  }*/ // TODO: dejo comentado hasta que persistamos los productos ya que el vendedor esta en el producto
+  
+  obtenerVendedores() {
+    // Placeholder temporal: no hay productos persistidos todavía
+    return [];
   }
 
   crearPedido() {
@@ -81,8 +103,8 @@ export class Pedido {
     });
   }
 
-  getComprador() {
-    return this.comprador;
+  getCompradorId() {
+    return this.compradorId;
   }
 
   getItems() {
@@ -106,43 +128,25 @@ export class Pedido {
   toJSONResumen() {
     return {
       id: this.id,
-      items: this.items.map(item => ({
-        producto: {
-          id: item.getProducto().getId(),
-          titulo: item.getProducto().getTitulo(),
-          vendedor: {
-            id: item.getProducto().getVendedor().getId(),
-            nombre: item.getProducto().getVendedor().getNombre(),
-            email: item.getProducto().getVendedor().getEmail(),
-            telefono: item.getProducto().getVendedor().getTelefono(),
-            tipoUsuario: item.getProducto().getVendedor().getTipoUsuario()
-          }
-        },
-        cantidad: item.getCantidad(),
-        precioUnitario: item.getPrecioUnitario()
-      })),
+      items: Array.isArray(this.items) ? this.items.map(item => ({
+        productoId: item.productoId || item.getProductoId(),
+        cantidad: item.cantidad || item.getCantidad(),
+        precioUnitario: item.precioUnitario || item.getPrecioUnitario()
+      })) : [],
       estado: this.estado,
       direccionEntrega: {
-        calle: this.direccionEntrega.getCalle(),
-        altura: this.direccionEntrega.getAltura(),
-        piso: this.direccionEntrega.getPiso(),
-        departamento: this.direccionEntrega.getDepartamento(),
-        codPostal: this.direccionEntrega.getCodPostal(),
-        ciudad: this.direccionEntrega.getCiudad(),
-        provincia: this.direccionEntrega.getProvincia(),
-        pais: this.direccionEntrega.getPais()
+        calle: this.direccionEntrega.calle,
+        altura: this.direccionEntrega.altura,
+        piso: this.direccionEntrega.piso,
+        departamento: this.direccionEntrega.departamento,
+        codPostal: this.direccionEntrega.codPostal,
+        ciudad: this.direccionEntrega.ciudad,
+        provincia: this.direccionEntrega.provincia,
+        pais: this.direccionEntrega.pais
       },
-      comprador: {
-        id: this.comprador.getId(),
-        nombre: this.comprador.getNombre(),
-        email: this.comprador.getEmail(),
-        telefono: this.comprador.getTelefono(),
-        tipoUsuario: this.comprador.getTipoUsuario()
-      },
+      compradorId: this.compradorId,
       fechaCreacion: this.fechaCreacion,
       total: this.calcularTotal()
     };
   }
 }
-
-

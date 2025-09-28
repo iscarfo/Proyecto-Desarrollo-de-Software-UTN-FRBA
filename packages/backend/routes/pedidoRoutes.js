@@ -8,11 +8,11 @@ export function createPedidoRouter(pedidoController) {
   // GET /pedidos
   router.get("/", pedidoController.listarPedidos);
   // PATCH /pedidos/:id/cancelar
-  router.patch("/:id/cancelar", pedidoController.cancelarPedido);
+  router.patch("/:pedidoId/cancelar", pedidoController.cancelarPedido);
   // GET /pedidos/usuario/:usuarioId
   router.get("/usuario/:usuarioId", pedidoController.historialPedidosUsuario);
   // PATCH /pedidos/:id/enviar
-  router.patch("/:id/enviar", pedidoController.marcarPedidoEnviado);
+  router.patch("/:pedidoId/enviar", pedidoController.marcarPedidoEnviado);
 
   return router;
 }

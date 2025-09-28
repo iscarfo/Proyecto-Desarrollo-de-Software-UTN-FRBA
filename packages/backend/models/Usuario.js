@@ -46,7 +46,6 @@ const usuarioSchema = new mongoose.Schema({
 });
 
 // Índices para optimizar consultas
-usuarioSchema.index({ email: 1 });
 usuarioSchema.index({ activo: 1 });
 
 export const Usuario = mongoose.model('Usuario', usuarioSchema);
