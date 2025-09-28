@@ -74,10 +74,15 @@ export class Pedido {
     );
   }*/
 
-  validarStock() {
-    // TODO: implementar cuando se persistan productos
-    return true;
+  async validarStock(productoRepository) {
+  for (const item of this.items) {
+    const producto = await productoRepository.findById(item.productoId);
+    if (!producto || producto.stock < item.cantidad) {
+      return false; // No hay suficiente stock para este producto
+    }
   }
+  return true; 
+}
 
 /*
   obtenerVendedores() {
@@ -86,7 +91,7 @@ export class Pedido {
       vendedores.add(item.getProductoId().getVendedor());
     });
     return Array.from(vendedores);
-  }*/ // TODO: dejo comentado hasta que persistamos los productos ya que el vendedor esta en el producto
+  }*/ // TODO: dejo comentada esta validacion 
   
   obtenerVendedores() {
     // Placeholder temporal: no hay productos persistidos todavía

@@ -39,7 +39,7 @@ export class PedidoService {
       direccionEntregaInstancia
     );
 
-    if (!pedido.validarStock()) {
+    if (!(await pedido.validarStock(this.productoRepository))) {
       throw new Error("Stock insuficiente para uno o más productos");
     }
 
