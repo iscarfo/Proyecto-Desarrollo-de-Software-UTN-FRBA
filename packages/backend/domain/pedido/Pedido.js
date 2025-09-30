@@ -67,12 +67,6 @@ export class Pedido {
     return pedidoActualizado;
   }
 
-  /*
-  validarStock() {
-    return this.items.every((item) =>
-      item.getProductoId().estaDisponible(item.getCantidad()),
-    );
-  }*/
 
   async validarStock(productoRepository) {
   for (const item of this.items) {
