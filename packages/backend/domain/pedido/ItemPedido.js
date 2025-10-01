@@ -1,10 +1,11 @@
 export class ItemPedido {
-  producto
+  //producto
+  productoId
   cantidad
   precioUnitario
 
-  constructor(producto, cantidad, precioUnitario) {
-    this.producto = producto;
+  constructor(productoId, cantidad, precioUnitario) {
+    this.productoId = productoId;
     this.cantidad = cantidad;
     this.precioUnitario = precioUnitario;
   }
@@ -13,8 +14,8 @@ export class ItemPedido {
     return this.cantidad * this.precioUnitario;
   }
 
-  getProducto() {
-    return this.producto;
+  getProductoId() {
+    return this.productoId;
   }
 
   getCantidad() {

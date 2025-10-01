@@ -1,179 +1,147 @@
-export class ProductoRepositoryMemoria {
-    constructor() {
-        this.productos = [];      // array con los productos
-        this._nextId = 1;         // autoincrement simple para los IDs
+import { Producto } from "../models/Producto.js";
+import { PedidoModel } from "../models/PedidoModel.js";
+
+export class ProductoRepository {
+
+    // ===== Crear o actualizar producto =====
+    async save(producto) {
+        try {
+            if (producto._id) {
+                // Actualizar producto existente
+                return await Producto.findByIdAndUpdate(
+                    producto._id,
+                    producto,
+                    { new: true, lean: true }
+                );
+            } else {
+                // Crear nuevo producto
+                const nuevoProducto = new Producto(producto);
+                return await nuevoProducto.save();
+            }
+        } catch (error) {
+            throw new Error(`Error al guardar producto: ${error.message}`);
+        }
     }
 
     // ===== Crear producto =====
-    async save(producto) {
-        const nuevo = { ...producto, _id: this._nextId.toString() };
-        this._nextId++;
-        this.productos.push(nuevo);
-        return nuevo;
-    }
-
-    async delete(id) {
-        const index = this.productos.findIndex(p => p._id === id);
-        if (index === -1) return false;
-
-        this.productos.splice(index, 1);   // elimina 1 elemento en la posición encontrada
-        return true;
+    async create(productoData) {
+        try {
+            const producto = new Producto(productoData);
+            return await producto.save();
+        } catch (error) {
+            throw new Error(`Error al crear Producto: ${error.message}`);
+        }
     }
 
     // ===== Actualizar producto =====
-    async actualizarProducto(id, datos) {
-        const index = this.productos.findIndex(p => p._id === id);
-        if (index === -1) return false;
-        this.productos[index] = { ...this.productos[index], ...datos };
-        return true;
+    async updateById(id, datos) {
+        try {
+            return await Producto.findByIdAndUpdate(id, datos, { new: true, lean: true });
+        } catch (error) {
+            throw new Error(`Error al actualizar producto: ${error.message}`);
+        }
+    }
+
+    // ===== Buscar producto por Id =====
+    async findById(id) {
+        try {
+            return await Producto.findById(id).lean();
+        } catch (error) {
+            throw new Error(`Error al buscar producto: ${error.message}`);
+        }
+    }
+
+    // ===== Eliminar producto =====
+    async delete(id) {
+        try {
+            return await Producto.findByIdAndDelete(id);
+        } catch (error) {
+            throw new Error(`Error al eliminar producto: ${error.message}`);
+        }
     }
 
     // ===== Buscar todos con paginación + filtros =====
-    async findByPage(numeroPagina, elementosXPagina, filtros = {}) {
-        const offset = (numeroPagina - 1) * elementosXPagina;
-
-        const filtrados = this.productos.filter(p =>
-            Object.entries(filtros).every(([k, v]) => p[k] === v)
-        );
-
-        return filtrados.slice(offset, offset + elementosXPagina);
+    async findByPage(numeroPagina = 1, elementosXPagina = 10, filtros = {}) {
+        const skip = (numeroPagina - 1) * elementosXPagina;
+        return await Producto.find(filtros)
+            .skip(skip)
+            .limit(elementosXPagina)
+            .lean();
     }
 
     // ===== Buscar por vendedor con filtros + paginación =====
     async findByVendedor(numeroPagina = 1, elementosXPagina = 10, filtros = {}, vendedorId) {
-        const offset = (numeroPagina - 1) * elementosXPagina;
+        const skip = (numeroPagina - 1) * elementosXPagina;
 
-        //BUSCAR POR VENDEDOR
-        let filtrados = this.productos.filter(p => p.vendedor?.id === vendedorId);
+        const query = { vendedor: vendedorId };
 
-        //FILTRO POR NOMBRE
         if (filtros.nombre) {
-            filtrados = filtrados.filter(p =>
-                p.titulo.toLowerCase().includes(filtros.nombre.toLowerCase())
-            );
+            query.titulo = { $regex: filtros.nombre, $options: "i" };
         }
-
-        //FILTRO POR DESCRIPCION
         if (filtros.descripcion) {
-            filtrados = filtrados.filter(p =>
-                p.descripcion.toLowerCase().includes(filtros.descripcion.toLowerCase())
-            );
+            query.descripcion = { $regex: filtros.descripcion, $options: "i" };
         }
-
-        //FILTRO POR CATEGORIA
         if (filtros.categoria) {
-            filtrados = filtrados.filter(p =>
-                p.categorias.some(c => c.toLowerCase().includes(filtros.categoria.toLowerCase()))
-            );
+            query.categorias = filtros.categoria; // espera ObjectId de Categoria
+        }
+        if (filtros.precioMin || filtros.precioMax) {
+            query.precio = {};
+            if (filtros.precioMin) query.precio.$gte = filtros.precioMin;
+            if (filtros.precioMax) query.precio.$lte = filtros.precioMax;
         }
 
-        //FILTRO RANGO DE PRECIOS
-        if (filtros.precioMin) {
-            filtrados = filtrados.filter(p => p.precio >= filtros.precioMin);
-        }
-
-        if (filtros.precioMax) {
-            filtrados = filtrados.filter(p => p.precio <= filtros.precioMax);
-        }
-
-        return filtrados.slice(offset, offset + elementosXPagina);
+        return await Producto.find(query)
+            .skip(skip)
+            .limit(elementosXPagina)
+            .lean();
     }
 
     // ===== Contadores =====
     async contarTodos(filtros = {}) {
-        return this.productos.filter(p =>
-            Object.entries(filtros).every(([k, v]) => p[k] === v)
-        ).length;
+        return await Producto.countDocuments(filtros);
     }
 
     async contarDeVendedor(vendedorId, filtros = {}) {
-        const productos = await this.findByVendedor(1, Number.MAX_SAFE_INTEGER, filtros, vendedorId);
-        return productos.length;
+        const query = { vendedor: vendedorId };
+
+        if (filtros.nombre) {
+            query.titulo = { $regex: filtros.nombre, $options: "i" };
+        }
+        if (filtros.descripcion) {
+            query.descripcion = { $regex: filtros.descripcion, $options: "i" };
+        }
+        if (filtros.categoria) {
+            query.categorias = filtros.categoria;
+        }
+        if (filtros.precioMin || filtros.precioMax) {
+            query.precio = {};
+            if (filtros.precioMin) query.precio.$gte = filtros.precioMin;
+            if (filtros.precioMax) query.precio.$lte = filtros.precioMax;
+        }
+
+        return await Producto.countDocuments(query);
     }
 
     // ===== Productos ordenados por ventas =====
     async productosOrdenadosPorVentas(productos) {
         const ids = productos.map(p => p._id);
 
-        const acumulado = {};
-        for (const item of this.itemPedidos) {
-            const id = item.producto?.id;
-            if (ids.includes(id)) {
-                acumulado[id] = (acumulado[id] || 0) + item.cantidad;
-            }
-        }
+        const resultados = await Pedido.aggregate([
+            { $unwind: "$items" }, // desarma el array de items
+            { $match: { "items.producto": { $in: ids } } }, // filtra los productos de interés
+            {
+                $group: {
+                    _id: "$items.producto",      // agrupa por producto
+                    totalVendido: { $sum: "$items.cantidad" }, // suma cantidades
+                },
+            },
+            { $sort: { totalVendido: -1 } }, // orden descendente
+        ]);
 
-        return Object.entries(acumulado)
-            .map(([id, total]) => ({ id, total }))
-            .sort((a, b) => b.total - a.total);
+        return resultados.map(r => ({
+            id: r._id,
+            total: r.totalVendido,
+        }));
     }
+
 }
-
-/*
-import { ObjectId } from "mongodb";
-
-export class ProductoRepository {
-    constructor(db) {
-        this.collection = db.collection("productos");
-        this.collectionItemPedidos = db.collection("itemPedidos");
-    }
-
-    // ===== Crear producto =====
-    async crearProducto(producto) {
-        const result = await this.collection.insertOne(producto);
-        return { ...producto, _id: result.insertedId };
-    }
-
-    // ===== Actualizar producto =====
-    async actualizarProducto(id, datos) {
-        const _id = new ObjectId(id);
-        const result = await this.collection.updateOne({ _id }, { $set: datos });
-        return result.modifiedCount > 0;
-    }
-
-    // ===== Buscar todos con filtros + paginación =====
-    async findByPage(numeroPagina, elementosXPagina, filtros) {
-        const offset = (numeroPagina - 1) * elementosXPagina
-        return await this.collection
-            .find(filtros) //TODO
-            .skip(skip)
-            .limit(elementosXPagina)
-            .toArray();
-    }
-
-    // ===== Buscar por vendedor con filtros + paginación =====
-    async findByVendedor(numeroPagina = 1, elementosXPagina = 10, filtros = {}, vendedorId) {
-        const offset = (numeroPagina - 1) * elementosXPagina;
-        const query = { ...filtros, vendedorId: new ObjectId(vendedorId) };
-
-        return await this.collection
-            .find(query) //TODO
-            .skip(offset)
-            .limit(elementosXPagina)
-            .toArray();
-    }
-
-    // ===== Contadores =====
-    async contarTodos(filtros = {}) {
-        return await this.collection.countDocuments(filtros);
-    }
-
-    async contarDeVendedor(vendedorId, filtros = {}) {
-        return await this.collection.countDocuments({
-            ...filtros,
-            vendedorId: new ObjectId(vendedorId),
-        });
-    }
-
-    async productosOrdenadosPorVentas(productos) {
-
-        const productosId = productos.map(producto => producto.getId())
-        return await this.collectionItemPedidos.aggregate([
-            { $match: { "producto.id": { $in: productosId } } },
-            { $group: { _id: "$producto.id", total: { $sum: "$cantidad" } } },
-            { $project: { id: "$_id", total: 1, _id: 0 } },
-            { $sort: { total: -1 } }
-        ]).toArray()
-    }
-}
-    */

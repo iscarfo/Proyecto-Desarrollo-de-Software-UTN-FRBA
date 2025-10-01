@@ -8,7 +8,7 @@ export class FactoryNotificacion {
     return new Notificacion(
       Date.now().toString(),
       pedido.getComprador(),
-      `Pedido realizado por ${pedido.getComprador().getNombre()}, total: ${pedido.calcularTotal()}, entrega en: ${pedido.direccionEntrega.calle} ${pedido.direccionEntrega.altura}`,
+      `Pedido realizado por ${pedido.getCompradorId().getNombre()}, total: ${pedido.calcularTotal()}, entrega en: ${pedido.direccionEntrega.calle} ${pedido.direccionEntrega.altura}`,
       new Date(),
     );
   }
@@ -34,7 +34,7 @@ export class FactoryNotificacion {
 
     return new Notificacion(
       Date.now().toString(),
-      pedido.getComprador(),
+      pedido.getCompradorId(),
       mensaje,
       new Date(),
     );

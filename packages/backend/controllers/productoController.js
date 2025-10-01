@@ -6,11 +6,8 @@ export class ProductoController {
   // POST: Crear producto
   async crearProducto(req, res) {
     try {
-      const productoData = req.body;
-
-      // Llamamos al servicio para crear el producto.
-      // "await" espera a que la promesa se resuelva.
-      const productoCreado = await this.productoService.crearProducto(productoData);
+      const { usuarioId, ...productoData } = req.body;
+      const productoCreado = await this.productoService.crearProducto(productoData, usuarioId);
 
       if (!productoCreado) {
         return res.status(204).send();
@@ -21,7 +18,7 @@ export class ProductoController {
       res.status(500).json({ error: err.message });
     }
   }
-  
+
   // GET: todos los productos paginados
   async listarProductos(req, res) {
     try {
@@ -45,14 +42,14 @@ export class ProductoController {
       const { vendedorId } = req.params;
 
       const filtros = {
-            nombre,
-            descripcion,
-            categoria,
-            precioMin: precioMin ? Number(precioMin) : undefined,
-            precioMax: precioMax ? Number(precioMax) : undefined
+        nombre,
+        descripcion,
+        categoria,
+        precioMin: precioMin ? Number(precioMin) : undefined,
+        precioMax: precioMax ? Number(precioMax) : undefined
       };
 
-      const productosPaginados = await this.productoService.buscarProductosVendedor(page, limit, filtros,vendedorId);
+      const productosPaginados = await this.productoService.buscarProductosVendedor(page, limit, filtros, vendedorId);
 
       if (!productosPaginados || productosPaginados.length === 0) {
         return res.status(204).send();
@@ -65,6 +62,23 @@ export class ProductoController {
   }
 
   // PUT: Actualizar producto
+  async actualizarProducto(req, res) {
+    try {
+      const { id } = req.params;
+      const datos = req.body;
+
+      const productoActualizado = await this.productoService.actualizarProducto(id, datos);
+
+      if (!productoActualizado) {
+        return res.status(404).json({ message: "Producto no encontrado" });
+      }
+
+      res.status(200).json(productoActualizado);
+
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
 
   //DELETE producto by Id
   async eliminarProducto(req, res) {

@@ -2,7 +2,6 @@ export class Producto {
   id
   vendedor
   titulo
-  status
   descripcion
   categorias
   precio
@@ -15,7 +14,6 @@ export class Producto {
     id,
     vendedor,
     titulo,
-    status,
     descripcion,
     categorias,
     precio,
@@ -27,7 +25,6 @@ export class Producto {
     this.id = id;
     this.vendedor = vendedor; // Usuario
     this.titulo = titulo;
-    this.status = status;
     this.descripcion = descripcion;
     this.categorias = categorias; // Categoria
     this.precio = precio;
@@ -67,7 +64,6 @@ export class Producto {
 
   //No usados pero los agrego para futuras funcionalidades:
   getId() { return this.id; }
-  getStatus() { return this.status; }
   getDescripcion() { return this.descripcion; }
   getCategorias() { return this.categorias; }
   getPrecio() { return this.precio; }

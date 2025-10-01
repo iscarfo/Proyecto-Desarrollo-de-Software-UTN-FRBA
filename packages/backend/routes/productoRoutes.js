@@ -13,10 +13,11 @@ export function createProductoRouter(productoController) {
     // GET /productos
     router.get("/", (req, res) => productoController.listarProductos(req, res));
 
-    // GET /productos/vendedor (with query params)
+    // GET /productos/vendedor/:idVendedor (filtros con query params)
     router.get("/vendedor/:vendedorId", (req, res) => productoController.buscarProductoPorVendedor(req, res));
 
     // PUT /productos
+     router.put("/:id", (req, res) => productoController.actualizarProducto(req, res));
 
     // DELETE /productos/:id
     router.delete("/:id", (req, res) => productoController.eliminarProducto(req, res));
