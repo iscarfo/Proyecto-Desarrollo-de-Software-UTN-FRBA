@@ -1,5 +1,6 @@
 import { Usuario } from '../models/Usuario.js';
 import { Notificacion } from '../models/Notificacion.js';
+import { Categoria } from '../models/Producto.js';
 
 // TODO: REMOVER ESTE ARCHIVO EN PRODUCCIÓN
 // Esta función crea datos de prueba y debe ser eliminada cuando se implemente autenticación real
@@ -45,6 +46,19 @@ export const initTestData = async () => {
       console.log('✅ Notificación de prueba creada para usuario:', testUser.email);
     } else {
       console.log('ℹ️  Notificación de prueba ya existe para usuario:', testUser.email);
+    }
+
+    // ===== Categorías por default =====
+    const categoriasDefault = ['running', 'calzado', 'indumentaria'];
+    for (const nombre of categoriasDefault) {
+      const existing = await Categoria.findOne({ nombre });
+      if (!existing) {
+        const categoria = new Categoria({ nombre });
+        await categoria.save();
+        console.log('✅ Categoría creada:', nombre);
+      } else {
+        console.log('ℹ️  Categoría ya existe:', nombre);
+      }
     }
 
     return testUser;

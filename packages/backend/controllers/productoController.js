@@ -6,11 +6,8 @@ export class ProductoController {
   // POST: Crear producto
   async crearProducto(req, res) {
     try {
-      const productoData = req.body;
-
-      // Llamamos al servicio para crear el producto.
-      // "await" espera a que la promesa se resuelva.
-      const productoCreado = await this.productoService.crearProducto(productoData);
+      const { usuarioId, ...productoData } = req.body;
+      const productoCreado = await this.productoService.crearProducto(productoData, usuarioId);
 
       if (!productoCreado) {
         return res.status(204).send();
@@ -77,7 +74,7 @@ export class ProductoController {
       }
 
       res.status(200).json(productoActualizado);
-      
+
     } catch (err) {
       res.status(500).json({ error: err.message });
     }
