@@ -1,3 +1,4 @@
+import { Notificacion } from "./Notificacion.js";
 export class FactoryNotificacion {
   static crearSegunEstadoPedido(estadoPedido) {
     return `El pedido pasó al estado: ${estadoPedido}`;
@@ -38,7 +39,7 @@ export class FactoryNotificacion {
     const mensaje = `Tu pedido está en camino hacia la dirección ${direccion}`;
     return new Notificacion(
       Date.now().toString(),
-      pedido.getComprador(),
+      pedido.getCompradorId(),
       mensaje,
       new Date(),
     );

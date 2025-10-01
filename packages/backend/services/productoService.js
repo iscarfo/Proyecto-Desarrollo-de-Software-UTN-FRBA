@@ -1,20 +1,50 @@
+import mongoose from 'mongoose';
+import { Usuario } from '../models/Usuario.js';
+import { InvalidIdError, NotFoundError, ConflictError } from '../errors/AppError.js';
+
 export class ProductoService {
+    constructor(productoRepository) {
+        this.productoRepository = productoRepository
+    }
 
     // Representa la capa de servicio para Productos.
     // Se encarga de aplicar reglas de negocio, paginar resultados
     // y delegar las operaciones de BD al repository.
 
-    constructor(productoRepository) {
-        this.productoRepository = productoRepository
+    // ===== Crear producto nuevo =====
+    async crearProducto(productoData, usuarioId) {
+        if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+            throw new InvalidIdError('Usuario ID');
+        }
+
+        // Verificar que el usuario existe
+        const usuario = await Usuario.findById(usuarioId);
+        if (!usuario) {
+            throw new NotFoundError('Usuario', usuarioId);
+        }
+
+        return this.productoRepository.create({
+            ...productoData,
+            vendedor: usuarioId
+        });
     }
 
-    // ===== Crear producto nuevo =====
-    async crearProducto(productoData) {
-        return await this.productoRepository.crearProducto(productoData);
+    // ===== Actualizar producto =====
+    async actualizarProducto(id, datos) {
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            throw new InvalidIdError('Producto ID');
+        }
+
+        const producto = await this.productoRepository.findById(id);
+        if (!producto) {
+            throw new NotFoundError('Producto', id);
+        }
+
+        return await this.productoRepository.save(datos);
     }
 
     // ===== Buscar todos los productos con filtros y paginación =====
-    async buscarTodos(page, limit, filtros) {
+    async listarProductos(page, limit) {
         try {
             const numeroPagina = Math.max(Number(page), 1)
             const elementosXPagina = Math.min(Math.max(Number(limit), 1), 100)
@@ -28,8 +58,8 @@ export class ProductoService {
             // contienen los resultados reales (no promesas).
 
             const [productos, total] = await Promise.all([
-                this.productoRepository.findByPage(numeroPagina, elementosXPagina, filtros),
-                this.productoRepository.contarTodos(filtros),
+                this.productoRepository.findByPage(numeroPagina, elementosXPagina, {}),
+                this.productoRepository.contarTodos({}),
             ]);
 
             const totalPaginas = Math.ceil(total / elementosXPagina)
@@ -37,7 +67,7 @@ export class ProductoService {
             return {
                 pagina: numeroPagina,           // Página actual
                 perPage: elementosXPagina,      // Cantidad de elementos por página
-                total: total,                   // Total de registros que cumplen los filtros
+                totalColecciones: total,        // Total de registros que cumplen los filtros
                 totalPaginas: totalPaginas,     // Total de páginas disponibles
                 data: productos                 // Lista de productos de esta página
             }
@@ -49,6 +79,16 @@ export class ProductoService {
 
     // ===== Buscar productos de un vendedor con filtros y paginación =====
     async buscarProductosVendedor(page, limit, filtros, vendedorId) {
+        if (!mongoose.Types.ObjectId.isValid(vendedorId)) {
+            throw new InvalidIdError('Usuario ID');
+        }
+
+        // Verificar que el usuario existe
+        const usuario = await Usuario.findById(vendedorId);
+        if (!usuario) {
+            throw new NotFoundError('Usuario', vendedorId);
+        }
+
         try {
             const numeroPagina = Math.max(Number(page), 1)
             const elementosXPagina = Math.min(Math.max(Number(limit), 1), 100)
@@ -63,7 +103,7 @@ export class ProductoService {
             return {
                 pagina: numeroPagina,
                 perPage: elementosXPagina,
-                total: total,
+                totalColecciones: total,
                 totalPaginas: totalPaginas,
                 data: productos
             }
@@ -74,22 +114,34 @@ export class ProductoService {
 
     }
 
-    ordernarPorPrecioAsc(productos){
-        return productos.sort((a,b) => a.getPrecio() - b.getPrecio());
+    ordernarPorPrecioAsc(productos) {
+        return productos.sort((a, b) => a.getPrecio() - b.getPrecio());
     }
 
-    ordernarPorPrecioDesc(productos){
-        return productos.sort((a,b) => b.getPrecio() - a.getPrecio());
+    ordernarPorPrecioDesc(productos) {
+        return productos.sort((a, b) => b.getPrecio() - a.getPrecio());
     }
 
-    ordernarPorVentas(productos){
+    ordernarPorVentas(productos) {
         const idOrdenado = this.productoRepository.productosOrdenadosPorVentas(productos);
         const productosOrdenados = new Array(productos.length);
 
         for (let i = 0; i < productosOrdenados.length; i++) {
-            productosOrdenados[i] = productos.find(p => p.getId() === idOrdenado[i].id);            
+            productosOrdenados[i] = productos.find(p => p.getId() === idOrdenado[i].id);
         }
-        
+
         return productosOrdenados;
+    }
+
+    async eliminarProducto(productoId) {
+        if (!mongoose.Types.ObjectId.isValid(productoId)) {
+            throw new InvalidIdError('Producto ID');
+        }
+
+        try {
+            return await this.productoRepository.delete(productoId);
+        } catch (error) {
+            throw new Error(`Error al eliminar producto: ${error.message}`);
+        }
     }
 }
