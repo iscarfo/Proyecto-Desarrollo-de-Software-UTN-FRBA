@@ -43,14 +43,33 @@ export class Pedido {
     this.historialEstados.push(cambio);
     this.estado = nuevoEstado;
 
+    if (nuevoEstado === EstadoPedido.CONFIRMADO) {
+      const notificacionCliente = FactoryNotificacion.crearNotificacionConfirmadoCliente(this);
+      const vendedores = this.obtenerVendedores();
+      vendedores.forEach((vendedor) => {
+        const notificacionVendedor = FactoryNotificacion.crearNotificacionConfirmadoVendedor(
+          this,
+          vendedor,
+        );
+      });
+    }
+
     if (nuevoEstado === EstadoPedido.ENVIADO) {
-      const notificacion = FactoryNotificacion.crearNotificacionEnvio(this);
+      const notificacionCliente = FactoryNotificacion.crearNotificacionEnviadoCliente(this);
+      const vendedores = this.obtenerVendedores();
+      vendedores.forEach((vendedor) => {
+        const notificacionVendedor = FactoryNotificacion.crearNotificacionEnviadoVendedor(
+          this,
+          vendedor,
+        );
+      });
     }
 
     if (nuevoEstado === EstadoPedido.CANCELADO) {
+      const notificacionCliente = FactoryNotificacion.crearNotificacionCanceladoCliente(this);
       const vendedores = this.obtenerVendedores();
       vendedores.forEach((vendedor) => {
-        const notificacion = FactoryNotificacion.crearNotificacionCancelacion(
+        const notificacionVendedor = FactoryNotificacion.crearNotificacionCanceladoVendedor(
           this,
           vendedor,
         );
