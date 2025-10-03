@@ -1,5 +1,5 @@
 import { Producto } from "../models/Producto.js";
-import { PedidoModel } from "../models/PedidoModel.js";
+import mongoose from 'mongoose';
 
 export class ProductoRepository {
 
@@ -78,12 +78,15 @@ export class ProductoRepository {
         if (filtros.nombre) {
             query.titulo = { $regex: filtros.nombre, $options: "i" };
         }
+
         if (filtros.descripcion) {
             query.descripcion = { $regex: filtros.descripcion, $options: "i" };
         }
+
         if (filtros.categoria) {
-            query.categorias = filtros.categoria; // espera ObjectId de Categoria
+            query.categorias = new mongoose.Types.ObjectId(filtros.categoria);
         }
+
         if (filtros.precioMin || filtros.precioMax) {
             query.precio = {};
             if (filtros.precioMin) query.precio.$gte = filtros.precioMin;

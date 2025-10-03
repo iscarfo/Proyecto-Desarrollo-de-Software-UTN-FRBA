@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { Usuario } from '../models/Usuario.js';
-import { InvalidIdError, NotFoundError, ConflictError } from '../errors/AppError.js';
+import { InvalidIdError, NotFoundError } from '../errors/AppError.js';
 
 export class ProductoService {
     constructor(productoRepository) {
