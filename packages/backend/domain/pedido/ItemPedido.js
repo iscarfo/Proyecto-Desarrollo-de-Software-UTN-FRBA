@@ -22,6 +22,10 @@ export class ItemPedido {
     return this.cantidad;
   }
 
+  getProducto() {
+    return this.productoId;
+  }
+
   // No usados pero los agrego para futuras funcionalidades:
   getPrecioUnitario() { return this.precioUnitario; }
 }
