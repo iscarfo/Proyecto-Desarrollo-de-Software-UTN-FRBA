@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
-import { Usuario } from '../models/Usuario.js';
 import { InvalidIdError, NotFoundError, ConflictError } from '../errors/AppError.js';
 
 export class NotificacionesService {
-  constructor(notificacionesRepository) {
+  constructor(notificacionesRepository, usuarioRepository) {
     this.notificacionesRepository = notificacionesRepository;
+    this.usuarioRepository = usuarioRepository;
   }
 
   async obtenerNotificacionesNoLeidas(usuarioDestinoId, page = 1, limit = 10) {
@@ -13,7 +13,7 @@ export class NotificacionesService {
     }
 
     // Verificar que el usuario existe
-    const usuario = await Usuario.findById(usuarioDestinoId);
+    const usuario = await this.usuarioRepository.findById(usuarioId);
     if (!usuario) {
       throw new NotFoundError('Usuario', usuarioDestinoId);
     }
@@ -31,7 +31,7 @@ export class NotificacionesService {
     }
 
     // Verificar que el usuario existe
-    const usuario = await Usuario.findById(usuarioDestinoId);
+    const usuario = await this.usuarioRepository.findById(usuarioId);
     if (!usuario) {
       throw new NotFoundError('Usuario', usuarioDestinoId);
     }
@@ -73,7 +73,7 @@ export class NotificacionesService {
     }
 
     // Verificar que el usuario existe
-    const usuario = await Usuario.findById(usuarioDestinoId);
+    const usuario = await this.usuarioRepository.findById(usuarioId);
     if (!usuario) {
       throw new NotFoundError('Usuario', usuarioDestinoId);
     }

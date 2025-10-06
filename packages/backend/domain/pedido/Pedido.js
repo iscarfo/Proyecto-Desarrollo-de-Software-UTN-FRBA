@@ -97,6 +97,10 @@ export class Pedido {
     return this.compradorId;
   }
 
+  getComprador() {
+    return this.compradorId;
+  }
+
   getItems() {
     return this.items;
   }

@@ -10,6 +10,7 @@ import { createProductoRouter } from "./routes/productoRoutes.js";
 import {ProductoService} from "./services/productoService.js";
 import { createNotificacionesRouter } from "./routes/notificacionesRoutes.js";
 import { NotificacionesRepository } from "./repositories/notificacionesRepository.js";
+import { UsuarioRepository } from "./repositories/usuarioRepository.js";
 import { NotificacionesService } from "./services/notificacionesService.js";
 import { NotificacionesController } from "./controllers/notificacionesController.js";
 import { connectDB } from "./config/database.js";
@@ -59,11 +60,9 @@ const productoRepository = new ProductoRepository();
 const productoService = new ProductoService(productoRepository);
 const productoController = new ProductoController(productoService);
 
-const pedidoService = new PedidoService(pedidoRepository, productoRepository);
-const pedidoController = new PedidoController(pedidoService);
-
+const usuarioRepository = new UsuarioRepository();
 const notificacionesRepository = new NotificacionesRepository();
-const notificacionesService = new NotificacionesService(notificacionesRepository);
+const notificacionesService = new NotificacionesService(notificacionesRepository, usuarioRepository);
 const notificacionesController = new NotificacionesController(notificacionesService);
 
 // Usar router con controller inyectado
