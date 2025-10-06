@@ -33,7 +33,7 @@ export class ProductoRepository {
         }
     }
 
-    // ===== Actualizar producto =====
+    // ===== Actualizar producto por Id =====
     async updateById(id, datos) {
         try {
             return await Producto.findByIdAndUpdate(id, datos, { new: true, lean: true });
@@ -60,10 +60,29 @@ export class ProductoRepository {
         }
     }
 
-    // ===== Buscar todos con paginación + filtros =====
-    async findByPage(numeroPagina = 1, elementosXPagina = 10, filtros = {}) {
+    // ===== Buscar todos con paginación + filtros + orden =====
+    async findByPage(numeroPagina = 1, elementosXPagina = 10, filtros = {}, sortParam  = null) {
         const skip = (numeroPagina - 1) * elementosXPagina;
+        const sortOptions = {};
+
+        // Mapeo de posibles ordenamientos
+        switch (sortParam) {
+            case 'precio_asc':
+                sortOptions.precio = 1; // ascendente
+                break;
+            case 'precio_desc':
+                sortOptions.precio = -1; // descendente
+                break;
+            case 'mas_vendidos':
+                sortOptions.totalVendido = -1;
+                break;
+            default:
+                // sin ordenamiento
+                break;
+        }
+
         return await Producto.find(filtros)
+            .sort(sortOptions)
             .skip(skip)
             .limit(elementosXPagina)
             .lean();
@@ -121,7 +140,7 @@ export class ProductoRepository {
             if (filtros.precioMin) query.precio.$gte = filtros.precioMin;
             if (filtros.precioMax) query.precio.$lte = filtros.precioMax;
         }
-
+        
         return await Producto.countDocuments(query);
     }
 

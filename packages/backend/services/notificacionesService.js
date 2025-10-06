@@ -7,40 +7,40 @@ export class NotificacionesService {
     this.usuarioRepository = usuarioRepository;
   }
 
-  async obtenerNotificacionesNoLeidas(usuarioId, page = 1, limit = 10) {
-    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+  async obtenerNotificacionesNoLeidas(usuarioDestinoId, page = 1, limit = 10) {
+    if (!mongoose.Types.ObjectId.isValid(usuarioDestinoId)) {
       throw new InvalidIdError('Usuario ID');
     }
 
     // Verificar que el usuario existe
     const usuario = await this.usuarioRepository.findById(usuarioId);
     if (!usuario) {
-      throw new NotFoundError('Usuario', usuarioId);
+      throw new NotFoundError('Usuario', usuarioDestinoId);
     }
 
     // Validar parámetros de paginación siguiendo la convención existente
     const numeroPagina = Math.max(Number(page), 1);
     const elementosXPagina = Math.min(Math.max(Number(limit), 1), 100);
 
-    return await this.notificacionesRepository.findByUsuarioAndLeida(usuarioId, false, numeroPagina, elementosXPagina);
+    return await this.notificacionesRepository.findByUsuarioAndLeida(usuarioDestinoId, false, numeroPagina, elementosXPagina);
   }
 
-  async obtenerNotificacionesLeidas(usuarioId, page = 1, limit = 10) {
-    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+  async obtenerNotificacionesLeidas(usuarioDestinoId, page = 1, limit = 10) {
+    if (!mongoose.Types.ObjectId.isValid(usuarioDestinoId)) {
       throw new InvalidIdError('Usuario ID');
     }
 
     // Verificar que el usuario existe
     const usuario = await this.usuarioRepository.findById(usuarioId);
     if (!usuario) {
-      throw new NotFoundError('Usuario', usuarioId);
+      throw new NotFoundError('Usuario', usuarioDestinoId);
     }
 
     // Validar parámetros de paginación siguiendo la convención existente
     const numeroPagina = Math.max(Number(page), 1);
     const elementosXPagina = Math.min(Math.max(Number(limit), 1), 100);
 
-    return await this.notificacionesRepository.findByUsuarioAndLeida(usuarioId, true, numeroPagina, elementosXPagina);
+    return await this.notificacionesRepository.findByUsuarioAndLeida(usuarioDestinoId, true, numeroPagina, elementosXPagina);
   }
 
   async marcarComoLeida(notificacionId) {
@@ -67,19 +67,19 @@ export class NotificacionesService {
     return await this.notificacionesRepository.save(notificacionActualizada);
   }
 
-  async crearNotificacion(usuarioId, titulo, mensaje, tipo = 'sistema') {
-    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+  async crearNotificacion(usuarioDestinoId, titulo, mensaje, tipo = 'sistema') {
+    if (!mongoose.Types.ObjectId.isValid(usuarioDestinoId)) {
       throw new InvalidIdError('Usuario ID');
     }
 
     // Verificar que el usuario existe
     const usuario = await this.usuarioRepository.findById(usuarioId);
     if (!usuario) {
-      throw new NotFoundError('Usuario', usuarioId);
+      throw new NotFoundError('Usuario', usuarioDestinoId);
     }
 
     const notificacionData = {
-      usuarioId,
+      usuarioDestinoId,
       titulo,
       mensaje,
       tipo

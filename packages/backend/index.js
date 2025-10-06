@@ -57,10 +57,6 @@ app.get("/health", (req, res) => {
 const pedidoRepository = new PedidoRepository();
 const productoRepository = new ProductoRepository();
 
-const pedidoService = new PedidoService(pedidoRepository, productoRepository);
-const pedidoController = new PedidoController(pedidoService);
-
-//const productoRepository = new ProductoRepositoryMemoria();
 const productoService = new ProductoService(productoRepository);
 const productoController = new ProductoController(productoService);
 

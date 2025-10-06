@@ -2,17 +2,17 @@ import { Notificacion } from '../models/Notificacion.js';
 
 export class NotificacionesRepository {
 
-  async findByUsuarioAndLeida(usuarioId, leida, page = 1, limit = 10) {
+  async findByUsuarioAndLeida(usuarioDestinoId, leida, page = 1, limit = 10) {
     try {
       const skip = (page - 1) * limit;
 
       const [notificaciones, total] = await Promise.all([
-        Notificacion.find({ usuarioId, leida })
+        Notificacion.find({ usuarioDestinoId, leida })
           .sort({ fechaCreacion: -1 })
           .skip(skip)
           .limit(limit)
           .lean(),
-        Notificacion.countDocuments({ usuarioId, leida })
+        Notificacion.countDocuments({ usuarioDestinoId, leida })
       ]);
 
       const totalPages = Math.ceil(total / limit);
@@ -49,6 +49,7 @@ export class NotificacionesRepository {
       } else {
         // Crear nueva notificación
         const nuevaNotificacion = new Notificacion(notificacion);
+
         return await nuevaNotificacion.save();
       }
     } catch (error) {
@@ -65,17 +66,17 @@ export class NotificacionesRepository {
     }
   }
 
-  async findByUsuario(usuarioId, page = 1, limit = 10) {
+  async findByUsuario(usuarioDestinoId, page = 1, limit = 10) {
     try {
       const skip = (page - 1) * limit;
 
       const [notificaciones, total] = await Promise.all([
-        Notificacion.find({ usuarioId })
+        Notificacion.find({ usuarioDestinoId })
           .sort({ fechaCreacion: -1 })
           .skip(skip)
           .limit(limit)
           .lean(),
-        Notificacion.countDocuments({ usuarioId })
+        Notificacion.countDocuments({ usuarioDestinoId })
       ]);
 
       const totalPages = Math.ceil(total / limit);

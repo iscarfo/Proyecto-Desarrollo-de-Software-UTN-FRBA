@@ -1,6 +1,8 @@
 import { Pedido } from "../domain/pedido/Pedido.js";
 import { ItemPedido } from "../domain/pedido/ItemPedido.js";
 import { DireccionEntrega } from "../domain/pedido/DireccionEntrega.js";
+import { ProductoService } from "./productoService.js";
+import { ProductoRepository } from "../repositories/productoRepository.js";
 
 export class PedidoService {
   constructor(pedidoRepository, productoRepository) {
@@ -44,6 +46,13 @@ export class PedidoService {
     }
 
     pedido.crearPedido(); // notifica a vendedores
+
+    //SI SE CREA EL PEDIDO, EL VENDEDOR BAJA EL STOCK (BAJAR STOCK)
+    const productoService = new ProductoService(new ProductoRepository());
+    for (const item of items) {
+      await productoService.disminuirStock(item.productoId, item.cantidad);
+    }
+
     return this.pedidoRepository.save(pedido);
   }
 
@@ -67,15 +76,34 @@ export class PedidoService {
       throw new Error("El pedido fue anteriormente cancelado");
     }
 
+    const direccionEntregaInstancia = new DireccionEntrega(
+      pedidoPlano.direccionEntrega.calle,
+      pedidoPlano.direccionEntrega.altura,
+      pedidoPlano.direccionEntrega.piso,
+      pedidoPlano.direccionEntrega.departamento,
+      pedidoPlano.direccionEntrega.codPostal,
+      pedidoPlano.direccionEntrega.ciudad,
+      pedidoPlano.direccionEntrega.provincia,
+      pedidoPlano.direccionEntrega.pais,
+      pedidoPlano.direccionEntrega.lat,
+      pedidoPlano.direccionEntrega.lon
+    );
+
     const pedido = new Pedido(
       pedidoPlano.compradorId,
       pedidoPlano.items.map(i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)),
       pedidoPlano.moneda,
-      pedidoPlano.direccionEntrega
+      direccionEntregaInstancia
     );
     pedido.id = pedidoPlano.id;
     pedido.estado = pedidoPlano.estado;
     pedido.historialEstados = pedidoPlano.historialEstados;
+
+    //SI SE CANCELA EL PEDIDO, EL VENDEDOR RECUPERA EL STOCK (AUMENTAR STOCK)
+    const productoService = new ProductoService(new ProductoRepository());
+    for (const item of pedido.items) {
+      await productoService.aumentarStock(item.productoId, item.cantidad);
+    }
 
     return await pedido.actualizarEstado("CANCELADO", compradorId, "Cancelación por el usuario", this.pedidoRepository);
   }
@@ -91,7 +119,7 @@ export class PedidoService {
 
   // Marcar pedido como enviado
   async marcarComoEnviado(pedidoId, vendedorId) {
-    const pedidoPlano = await this.pedidoRepository.findById(pedidoId); 
+    const pedidoPlano = await this.pedidoRepository.findById(pedidoId);
     if (!pedidoPlano) throw new Error("Pedido no encontrado");
 
     /*
@@ -121,15 +149,34 @@ export class PedidoService {
       throw new Error("El pedido fue cancelado y no puede enviarse");
     }
 
+    const direccionEntregaInstancia = new DireccionEntrega(
+      pedidoPlano.direccionEntrega.calle,
+      pedidoPlano.direccionEntrega.altura,
+      pedidoPlano.direccionEntrega.piso,
+      pedidoPlano.direccionEntrega.departamento,
+      pedidoPlano.direccionEntrega.codPostal,
+      pedidoPlano.direccionEntrega.ciudad,
+      pedidoPlano.direccionEntrega.provincia,
+      pedidoPlano.direccionEntrega.pais,
+      pedidoPlano.direccionEntrega.lat,
+      pedidoPlano.direccionEntrega.lon
+    );
+
     const pedido = new Pedido(
       pedidoPlano.compradorId,
       pedidoPlano.items.map(i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)),
       pedidoPlano.moneda,
-      pedidoPlano.direccionEntrega
+      direccionEntregaInstancia
     );
     pedido.id = pedidoPlano.id;
     pedido.estado = pedidoPlano.estado;
     pedido.historialEstados = pedidoPlano.historialEstados;
+
+    // Aumentar total vendido
+    const productoService = new ProductoService(new ProductoRepository());
+    for (const item of pedido.items) {
+      await productoService.aumentarCantidadVentas(item.productoId, item.cantidad);
+    }
 
     return await pedido.actualizarEstado("ENVIADO", vendedorId, "Pedido marcado como enviado", this.pedidoRepository);
   }
