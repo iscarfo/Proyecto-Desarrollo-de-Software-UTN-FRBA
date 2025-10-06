@@ -22,8 +22,8 @@ export class ProductoController {
   // GET: todos los productos paginados
   async listarProductos(req, res) {
     try {
-      const { page = 1, limit = 10 } = req.query;
-      const productosPaginados = await this.productoService.listarProductos(page, limit);
+      const { page = 1, limit = 10, sort } = req.query;
+      const productosPaginados = await this.productoService.listarProductos(page, limit, sort);
 
       if (!productosPaginados || productosPaginados.length === 0) {
         return res.status(204).send();

@@ -1,27 +1,16 @@
 import mongoose from 'mongoose';
 
 const notificacionSchema = new mongoose.Schema({
-  usuarioId: {
+  usuarioDestinoId: {
     type: mongoose.Schema.Types.ObjectId,
     required: true,
     ref: 'Usuario',
     index: true
   },
-  titulo: {
-    type: String,
-    required: true,
-    trim: true
-  },
   mensaje: {
     type: String,
     required: true,
     trim: true
-  },
-  tipo: {
-    type: String,
-    required: true,
-    enum: ['pedido', 'producto', 'envio', 'sistema'],
-    default: 'sistema'
   },
   leida: {
     type: Boolean,
@@ -43,7 +32,7 @@ const notificacionSchema = new mongoose.Schema({
 });
 
 // Índice compuesto para consultas frecuentes
-notificacionSchema.index({ usuarioId: 1, leida: 1 });
-notificacionSchema.index({ usuarioId: 1, fechaCreacion: -1 });
+notificacionSchema.index({ usuarioDestinoId: 1, leida: 1 });
+notificacionSchema.index({ usuarioDestinoId: 1, fechaCreacion: -1 });
 
 export const Notificacion = mongoose.model('Notificacion', notificacionSchema);

@@ -2,6 +2,7 @@ import { EstadoPedido } from "./enums.js";
 import { FactoryNotificacion } from "../notificacion/FactoryNotificacion.js";
 import { CambioEstadoPedido } from "./CambioEstadoPedido.js";
 import { PedidoRepository } from "../../repositories/pedidoRepository.js";
+import { NotificacionesRepository } from "../../repositories/notificacionesRepository.js";
 
 export class Pedido {
   id
@@ -33,6 +34,7 @@ export class Pedido {
     if (this.estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
       throw new Error("El pedido ya fue cancelado previamente.");
     }
+
     const cambio = new CambioEstadoPedido(
       new Date(),
       nuevoEstado,
@@ -43,38 +45,8 @@ export class Pedido {
     this.historialEstados.push(cambio);
     this.estado = nuevoEstado;
 
-    if (nuevoEstado === EstadoPedido.CONFIRMADO) {
-      const notificacionCliente = FactoryNotificacion.crearNotificacionConfirmadoCliente(this);
-      const vendedores = this.obtenerVendedores();
-      vendedores.forEach((vendedor) => {
-        const notificacionVendedor = FactoryNotificacion.crearNotificacionConfirmadoVendedor(
-          this,
-          vendedor,
-        );
-      });
-    }
-
-    if (nuevoEstado === EstadoPedido.ENVIADO) {
-      const notificacionCliente = FactoryNotificacion.crearNotificacionEnviadoCliente(this);
-      const vendedores = this.obtenerVendedores();
-      vendedores.forEach((vendedor) => {
-        const notificacionVendedor = FactoryNotificacion.crearNotificacionEnviadoVendedor(
-          this,
-          vendedor,
-        );
-      });
-    }
-
-    if (nuevoEstado === EstadoPedido.CANCELADO) {
-      const notificacionCliente = FactoryNotificacion.crearNotificacionCanceladoCliente(this);
-      const vendedores = this.obtenerVendedores();
-      vendedores.forEach((vendedor) => {
-        const notificacionVendedor = FactoryNotificacion.crearNotificacionCanceladoVendedor(
-          this,
-          vendedor,
-        );
-      });
-    }
+    //Crear notificacion segun estado
+    FactoryNotificacion.crearNotificacion(this, nuevoEstado);
 
     // Actualiza en la base de datos
     const pedidoActualizado = await pedidoRepository.findByIdAndUpdateEstado(
@@ -83,19 +55,19 @@ export class Pedido {
       quien,
       motivo
     );
+
     return pedidoActualizado;
   }
 
-
   async validarStock(productoRepository) {
-  for (const item of this.items) {
-    const producto = await productoRepository.findById(item.productoId);
-    if (!producto || producto.stock < item.cantidad) {
-      return false; // No hay suficiente stock para este producto
+    for (const item of this.items) {
+      const producto = await productoRepository.findById(item.productoId);
+      if (!producto || producto.stock < item.cantidad) {
+        return false; // No hay suficiente stock para este producto
+      }
     }
+    return true; 
   }
-  return true; 
-}
 
 /*
   obtenerVendedores() {

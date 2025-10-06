@@ -7,6 +7,7 @@ export class Producto {
   precio
   moneda
   stock
+  totalVendido
   fotos
   activo
 
@@ -30,6 +31,7 @@ export class Producto {
     this.precio = precio;
     this.moneda = moneda; // Moneda
     this.stock = stock;
+    this.totalVendido = 0;
     this.fotos = fotos || [];
     this.activo = activo;
   }
@@ -48,6 +50,10 @@ export class Producto {
 
   aumentarStock(cantidad) {
     this.stock += cantidad;
+  }
+
+  aumentarVendido(cantidad) {
+    this.totalVendido += cantidad;
   }
 
   agregarFoto(foto) {
@@ -69,6 +75,7 @@ export class Producto {
   getPrecio() { return this.precio; }
   getMoneda() { return this.moneda; }
   getStock() { return this.stock; }
+  getTotalVendido() { return this.totalVendido; }
   getFotos() { return this.fotos; }
   isActivo() { return this.activo; }
 }
