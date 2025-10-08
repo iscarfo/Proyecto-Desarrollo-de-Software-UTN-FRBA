@@ -17,7 +17,7 @@ export function createProductoRouter(productoController) {
     router.get("/vendedor/:vendedorId", (req, res) => productoController.buscarProductoPorVendedor(req, res));
 
     // PUT /productos
-     router.put("/:id", (req, res) => productoController.actualizarProducto(req, res));
+    router.put("/:id", (req, res) => productoController.actualizarProducto(req, res));
 
     // DELETE /productos/:id
     router.delete("/:id", (req, res) => productoController.eliminarProducto(req, res));

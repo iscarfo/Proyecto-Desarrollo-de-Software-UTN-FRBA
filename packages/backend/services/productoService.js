@@ -40,7 +40,8 @@ export class ProductoService {
             throw new NotFoundError('Producto', id);
         }
 
-        return await this.productoRepository.save(datos);
+        const productoConId = { ...datos, _id: id };
+        return await this.productoRepository.save(productoConId);
     }
 
     // ===== Buscar todos los productos con filtros y paginación =====

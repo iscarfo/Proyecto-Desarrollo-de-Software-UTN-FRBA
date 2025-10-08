@@ -8,11 +8,16 @@ export class ProductoRepository {
         try {
             if (producto._id) {
                 // Actualizar producto existente
-                return await Producto.findByIdAndUpdate(
-                    producto._id,
-                    producto,
-                    { new: true, lean: true }
-                );
+                const productoExistente = await Producto.findById(producto._id);
+                if (!productoExistente) {
+                    throw new Error(`Producto con ID ${producto._id} no encontrado`);
+                }
+
+                // Fusionar solo los campos enviados
+                Object.assign(productoExistente, producto);
+
+                // Guardar conservando los campos no enviados
+                return await productoExistente.save();
             } else {
                 // Crear nuevo producto
                 const nuevoProducto = new Producto(producto);
@@ -87,7 +92,7 @@ export class ProductoRepository {
     }
 
     // ===== Contadores =====
-   async contarTodos(filtros = {}) {
+    async contarTodos(filtros = {}) {
         try {
             const query = buildQuery(filtros);
             return await Producto.countDocuments(query);
