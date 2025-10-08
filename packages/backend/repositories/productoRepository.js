@@ -61,27 +61,12 @@ export class ProductoRepository {
     }
 
     // ===== Buscar todos con paginación + filtros + orden =====
-    async findByPage(numeroPagina = 1, elementosXPagina = 10, filtros = {}, sortParam  = null) {
+    async findByPage(numeroPagina = 1, elementosXPagina = 10, filtros = {}, sortParam = null) {
         const skip = (numeroPagina - 1) * elementosXPagina;
-        const sortOptions = {};
+        const query = buildQuery(filtros, null);
+        const sortOptions = buildSort(sortParam);
 
-        // Mapeo de posibles ordenamientos
-        switch (sortParam) {
-            case 'precio_asc':
-                sortOptions.precio = 1; // ascendente
-                break;
-            case 'precio_desc':
-                sortOptions.precio = -1; // descendente
-                break;
-            case 'mas_vendidos':
-                sortOptions.totalVendido = -1;
-                break;
-            default:
-                // sin ordenamiento
-                break;
-        }
-
-        return await Producto.find(filtros)
+        return await Producto.find(query)
             .sort(sortOptions)
             .skip(skip)
             .limit(elementosXPagina)
@@ -89,59 +74,35 @@ export class ProductoRepository {
     }
 
     // ===== Buscar por vendedor con filtros + paginación =====
-    async findByVendedor(numeroPagina = 1, elementosXPagina = 10, filtros = {}, vendedorId) {
+    async findByVendedor(numeroPagina = 1, elementosXPagina = 10, filtros = {}, sortParam = null, vendedorId) {
         const skip = (numeroPagina - 1) * elementosXPagina;
-
-        const query = { vendedor: vendedorId };
-
-        if (filtros.nombre) {
-            query.titulo = { $regex: filtros.nombre, $options: "i" };
-        }
-
-        if (filtros.descripcion) {
-            query.descripcion = { $regex: filtros.descripcion, $options: "i" };
-        }
-
-        if (filtros.categoria) {
-            query.categorias = new mongoose.Types.ObjectId(filtros.categoria);
-        }
-
-        if (filtros.precioMin || filtros.precioMax) {
-            query.precio = {};
-            if (filtros.precioMin) query.precio.$gte = filtros.precioMin;
-            if (filtros.precioMax) query.precio.$lte = filtros.precioMax;
-        }
+        const query = buildQuery(filtros, vendedorId);
+        const sortOptions = buildSort(sortParam);
 
         return await Producto.find(query)
+            .sort(sortOptions)
             .skip(skip)
             .limit(elementosXPagina)
             .lean();
     }
 
     // ===== Contadores =====
-    async contarTodos(filtros = {}) {
-        return await Producto.countDocuments(filtros);
+   async contarTodos(filtros = {}) {
+        try {
+            const query = buildQuery(filtros);
+            return await Producto.countDocuments(query);
+        } catch (error) {
+            throw new Error(`Error al contar productos: ${error.message}`);
+        }
     }
 
     async contarDeVendedor(vendedorId, filtros = {}) {
-        const query = { vendedor: vendedorId };
-
-        if (filtros.nombre) {
-            query.titulo = { $regex: filtros.nombre, $options: "i" };
+        try {
+            const query = buildQuery(filtros, vendedorId);
+            return await Producto.countDocuments(query);
+        } catch (error) {
+            throw new Error(`Error al contar productos del vendedor: ${error.message}`);
         }
-        if (filtros.descripcion) {
-            query.descripcion = { $regex: filtros.descripcion, $options: "i" };
-        }
-        if (filtros.categoria) {
-            query.categorias = filtros.categoria;
-        }
-        if (filtros.precioMin || filtros.precioMax) {
-            query.precio = {};
-            if (filtros.precioMin) query.precio.$gte = filtros.precioMin;
-            if (filtros.precioMax) query.precio.$lte = filtros.precioMax;
-        }
-        
-        return await Producto.countDocuments(query);
     }
 
     // ===== Productos ordenados por ventas =====
@@ -166,4 +127,33 @@ export class ProductoRepository {
         }));
     }
 
+}
+
+//funciones auxiliares para evitar repeticion al filtrar
+
+//FILTROS
+function buildQuery(filtros, vendedorId = null) {
+    const query = {};
+    if (vendedorId) query.vendedor = vendedorId;
+    if (filtros.nombre) query.titulo = { $regex: filtros.nombre, $options: "i" };
+    if (filtros.descripcion) query.descripcion = { $regex: filtros.descripcion, $options: "i" };
+    if (filtros.categoria) query.categorias = new mongoose.Types.ObjectId(filtros.categoria);
+    if (filtros.precioMin || filtros.precioMax) {
+        query.precio = {};
+        if (filtros.precioMin) query.precio.$gte = filtros.precioMin;
+        if (filtros.precioMax) query.precio.$lte = filtros.precioMax;
+    }
+    return query;
+}
+
+
+//ORDENAMIENTO
+function buildSort(sortParam) {
+    switch (sortParam) {
+        // Mapeo de posibles ordenamientos
+        case 'precio_asc': return { precio: 1 };    //ASC
+        case 'precio_desc': return { precio: -1 };  //DESC
+        case 'mas_vendidos': return { totalVendido: -1 };
+        default: return {};
+    }
 }

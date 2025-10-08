@@ -22,8 +22,17 @@ export class ProductoController {
   // GET: todos los productos paginados
   async listarProductos(req, res) {
     try {
-      const { page = 1, limit = 10, sort } = req.query;
-      const productosPaginados = await this.productoService.listarProductos(page, limit, sort);
+      const { page = 1, limit = 10, nombre, descripcion, categoria, precioMin, precioMax, sort } = req.query;
+      
+      const filtros = {
+        nombre,
+        descripcion,
+        categoria,
+        precioMin: precioMin ? Number(precioMin) : undefined,
+        precioMax: precioMax ? Number(precioMax) : undefined
+      };
+      
+      const productosPaginados = await this.productoService.listarProductos(page, limit, filtros, sort);
 
       if (!productosPaginados || productosPaginados.length === 0) {
         return res.status(204).send();
@@ -38,7 +47,7 @@ export class ProductoController {
   // GET: productos de un vendedor paginados + filtros
   async buscarProductoPorVendedor(req, res) {
     try {
-      const { page = 1, limit = 10, nombre, descripcion, categoria, precioMin, precioMax } = req.query;
+      const { page = 1, limit = 10, nombre, descripcion, categoria, precioMin, precioMax, sort } = req.query;
       const { vendedorId } = req.params;
 
       const filtros = {
@@ -49,7 +58,7 @@ export class ProductoController {
         precioMax: precioMax ? Number(precioMax) : undefined
       };
 
-      const productosPaginados = await this.productoService.buscarProductosVendedor(page, limit, filtros, vendedorId);
+      const productosPaginados = await this.productoService.buscarProductosVendedor(page, limit, filtros, sort, vendedorId);
 
       if (!productosPaginados || productosPaginados.length === 0) {
         return res.status(204).send();

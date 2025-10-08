@@ -44,7 +44,7 @@ export class ProductoService {
     }
 
     // ===== Buscar todos los productos con filtros y paginación =====
-    async listarProductos(page, limit, sortParam) {
+    async listarProductos(page, limit, filtros, sortParam) {
         try {
             const numeroPagina = Math.max(Number(page), 1)
             const elementosXPagina = Math.min(Math.max(Number(limit), 1), 100)
@@ -58,8 +58,8 @@ export class ProductoService {
             // contienen los resultados reales (no promesas).
 
             const [productos, total] = await Promise.all([
-                this.productoRepository.findByPage(numeroPagina, elementosXPagina, {}, sortParam),
-                this.productoRepository.contarTodos({}),
+                this.productoRepository.findByPage(numeroPagina, elementosXPagina, filtros, sortParam),
+                this.productoRepository.contarTodos(filtros),
             ]);
 
             const totalPaginas = Math.ceil(total / elementosXPagina)
@@ -78,7 +78,7 @@ export class ProductoService {
     }
 
     // ===== Buscar productos de un vendedor con filtros y paginación =====
-    async buscarProductosVendedor(page, limit, filtros, vendedorId) {
+    async buscarProductosVendedor(page, limit, filtros, sortParam, vendedorId) {
         if (!mongoose.Types.ObjectId.isValid(vendedorId)) {
             throw new InvalidIdError('Usuario ID');
         }
@@ -94,7 +94,7 @@ export class ProductoService {
             const elementosXPagina = Math.min(Math.max(Number(limit), 1), 100)
 
             const [productos, total] = await Promise.all([
-                this.productoRepository.findByVendedor(numeroPagina, elementosXPagina, filtros, vendedorId),
+                this.productoRepository.findByVendedor(numeroPagina, elementosXPagina, filtros, sortParam, vendedorId),
                 this.productoRepository.contarDeVendedor(vendedorId, filtros),
             ]);
 
