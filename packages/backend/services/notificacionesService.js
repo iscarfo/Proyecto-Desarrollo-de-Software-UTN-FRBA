@@ -13,7 +13,7 @@ export class NotificacionesService {
     }
 
     // Verificar que el usuario existe
-    const usuario = await this.usuarioRepository.findById(usuarioId);
+    const usuario = await this.usuarioRepository.findById(usuarioDestinoId);
     if (!usuario) {
       throw new NotFoundError('Usuario', usuarioDestinoId);
     }
@@ -31,7 +31,7 @@ export class NotificacionesService {
     }
 
     // Verificar que el usuario existe
-    const usuario = await this.usuarioRepository.findById(usuarioId);
+    const usuario = await this.usuarioRepository.findById(usuarioDestinoId);
     if (!usuario) {
       throw new NotFoundError('Usuario', usuarioDestinoId);
     }
@@ -73,7 +73,7 @@ export class NotificacionesService {
     }
 
     // Verificar que el usuario existe
-    const usuario = await this.usuarioRepository.findById(usuarioId);
+    const usuario = await this.usuarioRepository.findById(usuarioDestinoId);
     if (!usuario) {
       throw new NotFoundError('Usuario', usuarioDestinoId);
     }
