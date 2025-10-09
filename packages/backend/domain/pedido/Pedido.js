@@ -1,8 +1,6 @@
 import { EstadoPedido } from "./enums.js";
 import { FactoryNotificacion } from "../notificacion/FactoryNotificacion.js";
 import { CambioEstadoPedido } from "./CambioEstadoPedido.js";
-import { PedidoRepository } from "../../repositories/pedidoRepository.js";
-import { NotificacionesRepository } from "../../repositories/notificacionesRepository.js";
 
 export class Pedido {
   id
@@ -29,7 +27,8 @@ export class Pedido {
     return this.items.reduce((acc, item) => acc + item.subTotal(), 0);
   }
 
-  async actualizarEstado(nuevoEstado, quien, motivo, pedidoRepository) {
+  /*
+  async actualizarEstado(nuevoEstado, quien, motivo) {
     // No permitir cancelar un pedido ya cancelado
     if (this.estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
       throw new Error("El pedido ya fue cancelado previamente.");
@@ -57,32 +56,22 @@ export class Pedido {
     );
 
     return pedidoActualizado;
-  }
+  }*/
 
-  async validarStock(productoRepository) {
-    for (const item of this.items) {
-      const producto = await productoRepository.findById(item.productoId);
-      if (!producto || producto.stock < item.cantidad) {
-        return false; // No hay suficiente stock para este producto
-      }
-    }
-    return true; 
-  }
-
-/*
   obtenerVendedores() {
+    // Validar que existan items
+    if (!Array.isArray(this.items) || this.items.length === 0) {
+      return [];
+    }
+
     const vendedores = new Set();
     this.items.forEach((item) => {
       vendedores.add(item.getProductoId().getVendedor());
     });
     return Array.from(vendedores);
-  }*/ // TODO: dejo comentada esta validacion 
-  
-  obtenerVendedores() {
-    // Placeholder temporal: no hay productos persistidos todavía
-    return [];
   }
 
+  /*
   crearPedido() {
     const vendedores = this.obtenerVendedores();
     vendedores.forEach((vendedor) => {
@@ -91,7 +80,7 @@ export class Pedido {
         vendedor,
       );
     });
-  }
+  }*/
 
   getCompradorId() {
     return this.compradorId;

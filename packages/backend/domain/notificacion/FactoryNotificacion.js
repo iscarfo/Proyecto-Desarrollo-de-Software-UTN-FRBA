@@ -1,27 +1,19 @@
 import { EstadoPedido } from "../pedido/enums.js";
 import { Notificacion } from "./Notificacion.js";
-import { ProductoRepository } from "../../repositories/productoRepository.js";
-import { NotificacionesRepository } from "../../repositories/notificacionesRepository.js";
 
 export class FactoryNotificacion {
-  repoProducto
-  repoNotificaciones
-  static {
-    this.repoProducto = new ProductoRepository(); // se ejecuta una sola vez
-    this.repoNotificaciones = new NotificacionesRepository();
-  }
-
-  static async crearNotificacion(pedido, nuevoEstado) {
+  
+  static crearNotificacion(pedido, estado) {
     try {
-      switch (nuevoEstado) {
+      switch (estado) {
         case EstadoPedido.CONFIRMADO:
-          await this.crearNotificacionConfirmado(pedido);
+          return this.crearNotificacionConfirmado(pedido);
           break;
         case EstadoPedido.ENVIADO:
-          await this.crearNotificacionEnviado(pedido);
+          return this.crearNotificacionEnviado(pedido);
           break;
         case EstadoPedido.CANCELADO:
-          await this.crearNotificacionCancelado(pedido);
+          return this.crearNotificacionCancelado(pedido);
           break;
         default:
           throw new Error("Estado desconocido para notificación");
@@ -31,35 +23,75 @@ export class FactoryNotificacion {
     }
   }
 
-  static crearSegunEstadoPedido(estadoPedido) {
-    return `El pedido pasó al estado: ${estadoPedido}`;
-  }
+  static crearNotificacionConfirmado(pedido) {
+    const notificaciones = [];
 
-  static crearInstanciaNotificacion(usuarioDestinoId, mensaje) {
-    return new Notificacion(null, usuarioDestinoId, mensaje);
-  }
+    //MENSAJE A COMPRADOR
+    notificaciones.push(
+      new Notificacion(
+        pedido.compradorId, //destinatarioId
 
-  static async obtenerProductosPedido(pedido) {
-    const items = pedido.getItems();
-    const productosPromesas = items.map(item => this.repoProducto.findById(item.getProductoId()));
-    const productos = await Promise.all(productosPromesas);
-    return productos;
-  }
+        `Felicidades, tu pedido ha sido confirmado! Te avisaremos cuando esté en camino.`
+      )
+    );
 
-  static obtenerProductosxCantidad(productos, cantidades) {
-    const productosStr = [];
-    for (let i = 0; i < productos.length; i++) {
-      productosStr.push(`${productos[i].titulo} (x${cantidades[i]})`);
+    //MENSAJE A VENDEDORES
+    for (const vendedor of pedido.obtenerVendedores()) {
+      notificaciones.push(
+        new Notificacion(
+          vendedor.id,
+          `Se ha confirmado un pedido con los productos: Recuerda preparar el envío.`
+        )
+      );
     }
-    return productosStr;
+    return notificaciones;
   }
 
-  static async guardarNotificaciones(notificaciones) {
-    for (const notificacion of notificaciones) {
-      await this.repoNotificaciones.save(notificacion);
+  static crearNotificacionCancelado() {
+    const notificaciones = [];
+
+
+    notificaciones.push(
+      new Notificacion(
+        pedido.compradorId,
+        `Tu pedido ha sido cancelado.`
+      )
+    );
+
+    for (const vendedor of pedido.obtenerVendedores()) {
+      notificaciones.push(
+        new Notificacion(
+          vendedor.id,
+          `El pedido fue cancelado por el comprador.`
+        )
+      );
+    }
+    return notificaciones;
+  }
+
+  static crearNotificacionEnviado() {
+    const notificaciones = [];
+
+    notificaciones.push(
+      new Notificacion(
+        null,
+        pedido.compradorId,
+        `Tu pedido ha sido enviado.`
+      )
+    );
+
+    for (const vendedor of pedido.obtenerVendedores()) {
+      notificaciones.push(
+        new Notificacion(
+          null,
+          vendedor,
+          `El pedido ha sido marcado como enviado.`
+        )
+      );
     }
   }
 
+  /*
   // Notificación de pedido confirmado para el cliente
   static async crearNotificacionConfirmado(pedido) {
     const notificaciones = [];
@@ -87,6 +119,7 @@ export class FactoryNotificacion {
 
     await this.guardarNotificaciones(notificaciones);
   }
+
 
   static async crearNotificacionCancelado(pedido) {
     const notificaciones = [];
@@ -134,5 +167,36 @@ export class FactoryNotificacion {
     }
 
     await this.guardarNotificaciones(notificaciones);
+  }*/
+
+
+  static crearSegunEstadoPedido(estadoPedido) {
+    return `El pedido pasó al estado: ${estadoPedido}`;
+  }
+
+  static crearInstanciaNotificacion(usuarioDestinoId, mensaje) {
+    return new Notificacion(null, usuarioDestinoId, mensaje);
+  }
+
+  /*
+  static async guardarNotificaciones(notificaciones) {
+    for (const notificacion of notificaciones) {
+      await this.repoNotificaciones.save(notificacion);
+    }
+  }
+
+  static async obtenerProductosPedido(pedido) {
+    const items = pedido.getItems();
+    const productosPromesas = items.map(item => this.repoProducto.findById(item.getProductoId()));
+    const productos = await Promise.all(productosPromesas);
+    return productos;
+  }*/
+
+  static obtenerProductosxCantidad(productos, cantidades) {
+    const productosStr = [];
+    for (let i = 0; i < productos.length; i++) {
+      productosStr.push(`${productos[i].titulo} (x${cantidades[i]})`);
+    }
+    return productosStr;
   }
 }

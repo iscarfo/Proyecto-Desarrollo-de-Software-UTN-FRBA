@@ -213,4 +213,18 @@ export class ProductoService {
             throw new Error(`Error al aumentar total vendido: ${error.message}`);
         }
     }
+
+    async tieneStockSuficiente(productoId, cantidad){
+        if (!mongoose.Types.ObjectId.isValid(productoId)) {
+            throw new InvalidIdError('Producto ID');
+        }
+
+        try {
+            const producto = await this.productoRepository.findById(productoId);
+            if (!producto) throw new Error('Producto no encontrado');
+            return producto.stock >= cantidad;
+        } catch (error) {
+            throw new Error(`Error al validar stock: ${error.message}`);
+        }
+    }
 }

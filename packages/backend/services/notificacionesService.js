@@ -87,4 +87,17 @@ export class NotificacionesService {
 
     return await this.notificacionesRepository.create(notificacionData);
   }
+
+  //Persiste notificaciones segun pedido y estado
+  //La logica de creacion es delegada al FACTORY segun cada estado
+  async despacharPorEstado(pedido, estado) {
+    const notificaciones = FactoryNotificacion.crearPorEstado(pedido, estado);
+    await this.despacharNotificaciones(notificaciones);
+  }
+
+  async despacharNotificaciones(notificaciones) {
+    for (const notif of notificaciones) {
+      await this.notificacionesRepository.save(notif);
+    }
+  }
 }

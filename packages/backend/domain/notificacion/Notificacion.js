@@ -6,8 +6,8 @@ export class Notificacion {
   fechaLeida
   leida
 
-  constructor(id, usuarioDestinoId, mensaje) {
-    this.id = id;
+  constructor(usuarioDestinoId, mensaje) {
+    this.id = null; // Se asigna al guardar en BD
     this.usuarioDestinoId = usuarioDestinoId; // Id de usuario
     this.mensaje = mensaje;
     this.fechaAlta = Date.now();

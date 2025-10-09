@@ -1,4 +1,6 @@
 import { PedidoModel } from "../models/PedidoModel.js";
+import mongoose from "mongoose";
+
 export class PedidoRepository {
   async save(pedido) {
     if (!pedido.id) {
@@ -83,7 +85,7 @@ export class PedidoRepository {
     const total = doc.items.reduce((sum, i) => sum + i.cantidad * i.precioUnitario, 0);
     return {
       id: doc._id.toString(),
-      compradorId: doc.compradorId,
+      compradorId: doc.compradorId?.toString(),
       items: doc.items.map(i => ({
         productoId: i.productoId,
         cantidad: i.cantidad,

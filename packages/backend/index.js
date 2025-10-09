@@ -54,19 +54,21 @@ app.get("/health", (req, res) => {
 });
 
 // Instancias compartidas
+//repository
 const pedidoRepository = new PedidoRepository();
 const productoRepository = new ProductoRepository();
-
-const pedidoService = new PedidoService(pedidoRepository,productoRepository);
-const pedidoController = new PedidoController(pedidoService);
-
-const productoService = new ProductoService(productoRepository);
-const productoController = new ProductoController(productoService);
-
 const usuarioRepository = new UsuarioRepository();
 const notificacionesRepository = new NotificacionesRepository();
+
+//service
+const productoService = new ProductoService(productoRepository);
 const notificacionesService = new NotificacionesService(notificacionesRepository, usuarioRepository);
+const pedidoService = new PedidoService(pedidoRepository, productoService, usuarioRepository, notificacionesService);
+
+//controller
+const productoController = new ProductoController(productoService);
 const notificacionesController = new NotificacionesController(notificacionesService);
+const pedidoController = new PedidoController(pedidoService);
 
 // Usar router con controller inyectado
 app.use("/pedidos", createPedidoRouter(pedidoController));
