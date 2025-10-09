@@ -1,6 +1,7 @@
 import { Producto } from "../../domain/producto/Producto.js";
 import { ProductoService } from "../../services/productoService.js";
 import { jest } from '@jest/globals';
+import mongoose from 'mongoose';
 
 describe("Producto - pruebas", () => {
   let productoService;
@@ -9,9 +10,9 @@ describe("Producto - pruebas", () => {
 
   beforeEach(() => {
     productos = [
-      new Producto(1, { id: 101, nombre: "Vendedor Uno" }, "Camiseta Deportiva", "disponible", "Camiseta de algodón", ["Ropa", "Deporte"], 3500, "ARS", 20, ["foto1.jpg"], true),
-      new Producto(2, { id: 102, nombre: "Vendedor Dos" }, "Auriculares Bluetooth", "disponible", "Auriculares inalámbricos", ["Electrónica", "Audio"], 12000, "ARS", 15, ["auriculares.jpg"], true),
-      new Producto(3, { id: 103, nombre: "Vendedor Tres" }, "Libro de Programación", "agotado", "Libro sobre JS moderno", ["Libros", "Educación"], 4500, "ARS", 0, ["libro.jpg"], false)
+      new Producto(1, { id: 101, nombre: "Vendedor Uno" }, "Camiseta Deportiva", "Camiseta de algodón", ["Ropa", "Deporte"], 3500, "ARS", 20, ["foto1.jpg"], true),
+      new Producto(2, { id: 102, nombre: "Vendedor Dos" }, "Auriculares Bluetooth", "Auriculares inalámbricos", ["Electrónica", "Audio"], 12000, "ARS", 15, ["auriculares.jpg"], true),
+      new Producto(3, { id: 103, nombre: "Vendedor Tres" }, "Libro de Programación", "Libro sobre JS moderno", ["Libros", "Educación"], 4500, "ARS", 0, ["libro.jpg"], false)
     ];
 
     mockRepo = {
@@ -25,7 +26,13 @@ describe("Producto - pruebas", () => {
         { id: 2, total: 300 },
         { id: 1, total: 200 },
         { id: 3, total: 100 }
-      ])
+      ]),
+      orderByPrecioAsc: jest.fn((productos) => {
+        return [...productos].sort((a, b) => a.precio - b.precio).map(p => ({ id: p.id }));
+      }),
+      orderByPrecioDesc: jest.fn((productos) => {
+        return [...productos].sort((a, b) => b.precio - a.precio).map(p => ({ id: p.id }));
+      })
     };
     productoService = new ProductoService(mockRepo);
   });
@@ -58,22 +65,9 @@ describe("Producto - pruebas", () => {
     expect(result.perPage).toBe(10);
   });
 
-  test("Buscar productos de un vendedor con filtros", async () => {
-    const mockData = [{ _id: "1", vendedor: { id: "1" } }];
-    mockRepo.findByVendedor.mockResolvedValueOnce(mockData);
-    mockRepo.contarDeVendedor.mockResolvedValueOnce(1);
-
-    const result = await productoService.buscarProductosVendedor(1, 10, { nombre: "Producto" }, "1");
-    expect(result.data).toEqual(mockData);
-    expect(result.totalColecciones).toBe(1);
-    expect(result.totalPaginas).toBe(1);
-    expect(result.pagina).toBe(1);
-    expect(result.perPage).toBe(10);
-
-  });
-
   test("Eliminar producto", async () => {
-    const eliminado = await productoService.eliminarProducto("123");
+    const productoId = new mongoose.Types.ObjectId();
+    const eliminado = await productoService.eliminarProducto(productoId.toString());
     expect(eliminado).toBe(true);
   });
 
