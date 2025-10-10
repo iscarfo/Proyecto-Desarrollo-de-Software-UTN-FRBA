@@ -74,8 +74,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/PedidoResumido'
 
-  /pedidos/{pedidoId}/cancelar:
-    patch:
+  /pedidos/{pedidoId}:
+    delete:
       summary: Cancelar un pedido
       tags: [Pedidos]
       parameters:
@@ -113,7 +113,7 @@ paths:
                 properties:
                   error: { type: string }
 
-  /pedidos/{pedidoId}/enviar:
+  /pedidos/{pedidoId}/enviado:
     patch:
       summary: Marcar pedido como enviado
       tags: [Pedidos]

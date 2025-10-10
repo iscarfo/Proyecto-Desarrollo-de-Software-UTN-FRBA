@@ -69,11 +69,11 @@ export class PedidoService {
     }
 
     // Guardar pedido en la base de datos
-    const pedidoCreado = await this.pedidoRepository.save(pedido);
+    const pedidoCreado = await this.pedidoRepository.create(pedido);
 
     //Despachar notificaciones tras creación del pedido (asincrónico)
     await this.notificacionesService
-      .despacharPorEstado(pedidoCreado, EstadoPedido.CONFIRMADO)
+      .despacharPorEstado(pedido, EstadoPedido.CONFIRMADO)
       .catch((err) => console.error("Error al notificar pedido:", err));
 
     return pedidoCreado;
@@ -89,140 +89,100 @@ export class PedidoService {
       throw new InvalidIdError('Pedido ID');
     }
 
-    const pedido = await this.pedidoRepository.findById(pedidoId);
-    if (!pedido) {
-      throw new Error(`Producto con ID ${producto._id} no encontrado`);
+    const pedidoDB = await this.pedidoRepository.findById(pedidoId);
+    if (!pedidoDB) {
+      throw new NotFoundError('Pedido', pedidoId);
     }
+
+    // reconstruir instancia del dominio
+    const pedido = rehidratarPedido(pedidoDB);
 
     // No permitir cancelar un pedido ya cancelado
     if (pedido.estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
       throw new Error("El pedido ya fue cancelado previamente.");
     }
 
-    //Actualizar pedido en BD
-    await this.pedidoRepository.findByIdAndUpdateEstado(pedidoId, nuevoEstado, quien, motivo)
-
     //Notificaciones por cambio de estado
     await this.notificacionesService.despacharPorEstado(pedido, nuevoEstado);
 
-    return pedido;
+    //Actualizar pedido en BD
+    return await this.pedidoRepository.findByIdAndUpdateEstado(pedidoId, nuevoEstado, quien, motivo);
   }
 
   // Cancelar pedido
   async cancelarPedido(pedidoId, compradorId) {
-    const pedidoPlano = await this.pedidoRepository.findById(pedidoId);
-    if (!pedidoPlano) throw new Error("Pedido no encontrado");
+    const pedido = await this.pedidoRepository.findById(pedidoId);
+    if (!pedido) throw new NotFoundError('Pedido', pedidoId);
 
-    if (pedidoPlano.compradorId !== compradorId) {
+    if (pedido.compradorId.toString() !== compradorId.toString()) {
       throw new Error("No autorizado: solo el comprador puede cancelar su pedido");
     }
 
-    if (pedidoPlano.estado === "ENVIADO") {
+    if (pedido.estado === "ENVIADO") {
       throw new Error("El pedido ya fue enviado y no puede cancelarse");
-    } else if (pedidoPlano.estado === "CANCELADO") {
+    } else if (pedido.estado === "CANCELADO") {
       throw new Error("El pedido fue anteriormente cancelado");
     }
-
-    const direccionEntregaInstancia = new DireccionEntrega(
-      pedidoPlano.direccionEntrega.calle,
-      pedidoPlano.direccionEntrega.altura,
-      pedidoPlano.direccionEntrega.piso,
-      pedidoPlano.direccionEntrega.departamento,
-      pedidoPlano.direccionEntrega.codPostal,
-      pedidoPlano.direccionEntrega.ciudad,
-      pedidoPlano.direccionEntrega.provincia,
-      pedidoPlano.direccionEntrega.pais,
-      pedidoPlano.direccionEntrega.lat,
-      pedidoPlano.direccionEntrega.lon
-    );
-
-    const pedido = new Pedido(
-      pedidoPlano.compradorId,
-      pedidoPlano.items.map(i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)),
-      pedidoPlano.moneda,
-      direccionEntregaInstancia
-    );
-
-    pedido.id = pedidoPlano.id;
-    pedido.estado = pedidoPlano.estado;
-    pedido.historialEstados = pedidoPlano.historialEstados;
 
     //SI SE CANCELA EL PEDIDO, EL VENDEDOR RECUPERA EL STOCK (AUMENTAR STOCK)
     for (const item of pedido.items) {
       await this.productoService.aumentarStock(item.productoId, item.cantidad);
     }
 
-    return await this.actualizarEstadoPedido(pedido.id, pedido.estado, compradorId, "Cancelación por el usuario");
+    return await this.actualizarEstadoPedido(pedido._id, EstadoPedido.CANCELADO, compradorId, "Cancelación por el usuario");
   }
 
   // Obtener pedidos de un usuario
   async obtenerPedidosDeUsuario(usuarioId) {
-    const todos = await this.pedidoRepository.findAll();
-    return todos.filter(
-      p => p.compradorId.toString() === usuarioId.toString()
-    );
+    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+      throw new InvalidIdError('Usuario ID');
+    }
+
+    const pedidos = await this.pedidoRepository.findByCompradorId(usuarioId);
+    return pedidos;
   }
 
   // Marcar pedido como enviado
   async marcarComoEnviado(pedidoId, vendedorId) {
-    const pedidoPlano = await this.pedidoRepository.findById(pedidoId);
-    if (!pedidoPlano) throw new Error("Pedido no encontrado");
+    const pedido = await this.pedidoRepository.findById(pedidoId);
+    if (!pedido) throw new NotFoundError('Pedido', pedidoId);
 
-    /*
     // Validar que el vendedor esté en los productos de los items del pedido
-    const productos = await Promise.all(
-      pedidoPlano.items.map(i => this.productoRepository.findById(i.productoId).lean())
-    );
-    if (productos.some(p => !p)) {
-      throw new Error("Alguno de los productos del pedido no existe");
-    }
-
-    const vendedoresIds = productos.map(p => p.vendedor.toString());
-
     // Si el pedido tiene productos de múltiples vendedores,
     // obligás a que todos sean del vendedor actual.
-    const todosDelMismoVendedor = vendedoresIds.every(
-      id => id === vendedorId.toString()
-    );
 
-    if (!todosDelMismoVendedor) {
-      throw new Error("No autorizado para marcar este pedido como enviado");
-    }*/ // TODO: Revisar esta validación
-
-    if (pedidoPlano.estado === "ENVIADO") {
+    if (pedido.estado === "ENVIADO") {
       throw new Error("El pedido ya fue enviado");
-    } else if (pedidoPlano.estado === "CANCELADO") {
+    } else if (pedido.estado === "CANCELADO") {
       throw new Error("El pedido fue cancelado y no puede enviarse");
     }
-
-    const direccionEntregaInstancia = new DireccionEntrega(
-      pedidoPlano.direccionEntrega.calle,
-      pedidoPlano.direccionEntrega.altura,
-      pedidoPlano.direccionEntrega.piso,
-      pedidoPlano.direccionEntrega.departamento,
-      pedidoPlano.direccionEntrega.codPostal,
-      pedidoPlano.direccionEntrega.ciudad,
-      pedidoPlano.direccionEntrega.provincia,
-      pedidoPlano.direccionEntrega.pais,
-      pedidoPlano.direccionEntrega.lat,
-      pedidoPlano.direccionEntrega.lon
-    );
-
-    const pedido = new Pedido(
-      pedidoPlano.compradorId,
-      pedidoPlano.items.map(i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)),
-      pedidoPlano.moneda,
-      direccionEntregaInstancia
-    );
-    pedido.id = pedidoPlano.id;
-    pedido.estado = pedidoPlano.estado;
-    pedido.historialEstados = pedidoPlano.historialEstados;
 
     // Aumentar total vendido
     for (const item of pedido.items) {
       await this.productoService.aumentarCantidadVentas(item.productoId, item.cantidad);
     }
 
-    return await this.actualizarEstadoPedido(pedido.id, pedido.estado, vendedorId, "Pedido marcado como enviado");
+    return await this.actualizarEstadoPedido(pedido._id, EstadoPedido.ENVIADO, vendedorId, "Pedido marcado como enviado");
   }
+
+}
+
+function rehidratarPedido(pedidoDb) {
+  
+  const items = pedidoDb.items.map(
+    i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)
+  );
+
+  const pedido = new Pedido(
+    pedidoDb.compradorId,
+    items,
+    pedidoDb.moneda,
+    pedidoDb.direccionEntrega
+  );
+
+  pedido.id = pedidoDb._id;
+  pedido.estado = pedidoDb.estado;
+  pedido.historialEstados = pedidoDb.historialEstados ?? [];
+
+  return pedido;
 }

@@ -18,7 +18,7 @@ export class Pedido {
     this.items = Array.isArray(items) ? items : []; // [ItemPedido]
     this.moneda = moneda;
     this.direccionEntrega = direccionEntrega; // DireccionEntrega
-    this.estado = EstadoPedido.PENDIENTE;
+    this.estado = EstadoPedido.CONFIRMADO;
     this.fechaCreacion = new Date();
     this.historialEstados = [];
   }
@@ -27,60 +27,14 @@ export class Pedido {
     return this.items.reduce((acc, item) => acc + item.subTotal(), 0);
   }
 
-  /*
-  async actualizarEstado(nuevoEstado, quien, motivo) {
-    // No permitir cancelar un pedido ya cancelado
-    if (this.estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
-      throw new Error("El pedido ya fue cancelado previamente.");
-    }
-
-    const cambio = new CambioEstadoPedido(
-      new Date(),
-      nuevoEstado,
-      this,
-      quien,
-      motivo,
-    );
-    this.historialEstados.push(cambio);
-    this.estado = nuevoEstado;
-
-    //Crear notificacion segun estado
-    FactoryNotificacion.crearNotificacion(this, nuevoEstado);
-
-    // Actualiza en la base de datos
-    const pedidoActualizado = await pedidoRepository.findByIdAndUpdateEstado(
-      this.id,
-      nuevoEstado,
-      quien,
-      motivo
-    );
-
-    return pedidoActualizado;
-  }*/
-
   obtenerVendedores() {
-    // Validar que existan items
-    if (!Array.isArray(this.items) || this.items.length === 0) {
-      return [];
+    const vendedores = new Map();
+    for (const item of this.items) {
+      const vendedor = item.productoId.vendedorId;
+      if (vendedor) vendedores.set(vendedor._id.toString(), vendedor);
     }
-
-    const vendedores = new Set();
-    this.items.forEach((item) => {
-      vendedores.add(item.getProductoId().getVendedor());
-    });
-    return Array.from(vendedores);
+    return Array.from(vendedores.values());
   }
-
-  /*
-  crearPedido() {
-    const vendedores = this.obtenerVendedores();
-    vendedores.forEach((vendedor) => {
-      const notificacion = FactoryNotificacion.crearNotificacionNuevoPedido(
-        this,
-        vendedor,
-      );
-    });
-  }*/
 
   getCompradorId() {
     return this.compradorId;

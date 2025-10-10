@@ -33,7 +33,7 @@ const HistorialEstadoSchema = new mongoose.Schema({
 const PedidoSchema = new mongoose.Schema({
   compradorId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: "Usuario",
+    ref: 'Usuario',
     required: true
   },
   items: [ItemPedidoSchema],

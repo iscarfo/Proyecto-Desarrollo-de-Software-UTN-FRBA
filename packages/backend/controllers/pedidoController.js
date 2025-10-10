@@ -28,11 +28,11 @@ export class PedidoController {
   cancelarPedido = async (req, res) => {
     try {
       const { pedidoId } = req.params;
-      const compradorId = req.body.compradorId;
+      const { compradorId } = req.body;
       const pedido = await this.pedidoService.cancelarPedido(pedidoId, compradorId);
       res.json({
         message: "Pedido cancelado con éxito",
-        pedido:  pedido.id,
+        pedido: pedido.id,
         estado: pedido.estado
       });
     } catch (err) {
