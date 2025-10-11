@@ -30,7 +30,7 @@ export class PedidoController {
   listarPedidos = async (req, res) => { // lista todos los pedidos que existen en el sistema
     try {
       const pedidos = await this.pedidoService.listarPedidos();
-      res.json(pedidos.map(p => ({ id: p.id })));
+      res.json(pedidos.map(p => ({ id: p._id, estado: p.estado, fechaCreacion: p.fechaCreacion })));
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -57,8 +57,9 @@ export class PedidoController {
       const pedidos = await this.pedidoService.obtenerPedidosDeUsuario(usuarioId);
 
       const response = pedidos.map(pedido => ({
-        id: pedido.id,
-        estado: pedido.estado
+        id: pedido._id,
+        estado: pedido.estado,
+        fechaCreacion: pedido.fechaCreacion
       }));
 
       res.json(response);
@@ -89,14 +90,14 @@ export class PedidoController {
 const direccionSchema = z.object({
   calle: z.string({ required_error: "La calle es obligatoria" }).min(1, "La calle es obligatoria"),
   altura: z.number().int().positive(),
-  piso: z.string().optional(),
-  departamento: z.string().optional(),
   codPostal: z.string().min(1, "El código postal es obligatorio"),
   ciudad: z.string().min(1, "La ciudad es obligatoria"),
   provincia: z.string().min(1, "La provincia es obligatoria"),
   pais: z.string().min(1, "El país es obligatorio"),
-  lat: z.number().refine(v => v >= -90 && v <= 90, "Latitud inválida"),
-  lon: z.number().refine(v => v >= -180 && v <= 180, "Longitud inválida")
+  piso: z.string().optional(),
+  departamento: z.string().optional(),
+  lat: z.number().refine(v => v >= -90 && v <= 90, "Latitud inválida").optional(),
+  lon: z.number().refine(v => v >= -180 && v <= 180, "Longitud inválida").optional()
 });
 
 export const crearPedidoSchema = z.object({

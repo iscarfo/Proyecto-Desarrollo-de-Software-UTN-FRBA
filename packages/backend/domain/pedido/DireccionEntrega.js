@@ -59,12 +59,12 @@ export class DireccionEntrega {
     if (typeof this.pais !== 'string' || !this.pais.trim()) {
       throw new ValidationError('El país es obligatorio y debe ser un texto válido.', 'pais');
     }
-
-    // Campos opcionales: si existen, validar formato básico
-    if (this.codPostal != null && typeof this.codPostal !== 'string') {
-      throw new ValidationError('El código postal debe ser un texto.', 'codPostal');
+ 
+    if (typeof this.codPostal !== 'string' || !this.codPostal.trim()) {
+      throw new ValidationError('El código postal es obligatoria y debe ser un texto válido.', 'codPostal');
     }
 
+    // Campos opcionales: si existen, validar formato básico
     if (this.piso != null && typeof this.piso !== 'string') {
       throw new ValidationError('El piso debe ser texto.', 'piso');
     }
