@@ -1,4 +1,4 @@
-import { z } from "zod"
+import { z, ZodError } from "zod";
 
 export class PedidoController {
   constructor(pedidoService) {
@@ -17,13 +17,13 @@ export class PedidoController {
       });
       
     } catch (err) {
-      if (err instanceof z.ZodError) {
-        return res.status(400).json({
-          error: "Error de validación",
-          detalles: err.errors
-        });
-      }
-      res.status(500).json({ error: err.message });
+        if (err?.issues) {
+          return res.status(400).json({
+            error: "Error de validación",
+            detalles: err.issues
+          });
+        }
+        res.status(500).json({ error: err.message });
     }
   };
 
@@ -87,7 +87,7 @@ export class PedidoController {
 }
 
 const direccionSchema = z.object({
-  calle: z.string().min(1, "La calle es obligatoria"),
+  calle: z.string({ required_error: "La calle es obligatoria" }).min(1, "La calle es obligatoria"),
   altura: z.number().int().positive(),
   piso: z.string().optional(),
   departamento: z.string().optional(),
@@ -100,10 +100,12 @@ const direccionSchema = z.object({
 });
 
 export const crearPedidoSchema = z.object({
+  compradorId: z.string().regex(/^[a-fA-F0-9]{24}$/, "compradorId debe ser un ObjectId válido"),
   items: z.array(
     z.object({
       productoId: z.string().regex(/^[a-fA-F0-9]{24}$/, "productoId debe ser un ObjectId válido"),
       cantidad: z.number().int().positive("Cantidad debe ser positiva"),
+      //precioUnitario: z.number().positive("Precio unitario debe ser positivo")
     })
   ).min(1, "Debe incluir al menos un item"),
   moneda: z.enum(["DOLAR_USA", "PESO_ARG", "REAL"], { message: "Moneda inválida" }),

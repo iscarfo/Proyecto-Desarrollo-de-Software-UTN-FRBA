@@ -65,8 +65,8 @@ export class DireccionEntrega {
       throw new ValidationError('El código postal debe ser un texto.', 'codPostal');
     }
 
-    if (this.piso != null && (typeof this.piso !== 'number' || Number.isNaN(this.piso) || this.piso < 0)) {
-      throw new ValidationError('El piso debe ser un número positivo.', 'piso');
+    if (this.piso != null && typeof this.piso !== 'string') {
+      throw new ValidationError('El piso debe ser texto.', 'piso');
     }
 
     if (this.departamento != null && typeof this.departamento !== 'string') {

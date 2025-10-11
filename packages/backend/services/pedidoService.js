@@ -26,23 +26,14 @@ export class PedidoService {
     }
 
     //Instancio items con validacion interna
-    /*
     const itemsInstancia = await Promise.all(
-      pedido.items.map(async (item) => {
+      items.map(async (item) => {
         const precio = await this.productoService.buscarPrecioUnitario(item.productoId);
         return new ItemPedido(
             item.productoId, 
             item.cantidad, 
             precio);
       })
-    );*/
-
-    const itemsInstancia = items.map(item =>
-      new ItemPedido(
-        item.productoId, // referencia a Producto
-        item.cantidad,
-        item.precioUnitario
-      )
     );
 
     //Instancio direcc con validacion interna
