@@ -227,4 +227,18 @@ export class ProductoService {
             throw new Error(`Error al validar stock: ${error.message}`);
         }
     }
+
+    async buscarPrecioUnitario(productoId){
+        if (!mongoose.Types.ObjectId.isValid(productoId)) {
+            throw new InvalidIdError('Producto ID');
+        }
+
+        try {
+            const producto = await this.productoRepository.findById(productoId);
+            if (!producto) throw new Error('Producto no encontrado');
+            return producto.precio;
+        } catch (error) {
+            throw new Error(`Error al buscar precio: ${error.message}`);
+        }
+    }
 }

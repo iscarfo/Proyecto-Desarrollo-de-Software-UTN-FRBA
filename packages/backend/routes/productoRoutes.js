@@ -14,7 +14,7 @@ export function createProductoRouter(productoController) {
     router.get("/", (req, res) => productoController.listarProductos(req, res));
 
     // GET /productos/vendedor/:idVendedor (filtros con query params)
-    router.get("/vendedor/:vendedorId", (req, res) => productoController.buscarProductoPorVendedor(req, res));
+    //router.get("/vendedor/:vendedorId", (req, res) => productoController.buscarProductoPorVendedor(req, res));
 
     // PUT /productos
     router.put("/:id", (req, res) => productoController.actualizarProducto(req, res));

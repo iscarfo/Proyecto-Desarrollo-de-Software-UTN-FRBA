@@ -26,6 +26,17 @@ export class PedidoService {
     }
 
     //Instancio items con validacion interna
+    /*
+    const itemsInstancia = await Promise.all(
+      pedido.items.map(async (item) => {
+        const precio = await this.productoService.buscarPrecioUnitario(item.productoId);
+        return new ItemPedido(
+            item.productoId, 
+            item.cantidad, 
+            precio);
+      })
+    );*/
+
     const itemsInstancia = items.map(item =>
       new ItemPedido(
         item.productoId, // referencia a Producto
@@ -168,7 +179,7 @@ export class PedidoService {
 }
 
 function rehidratarPedido(pedidoDb) {
-  
+
   const items = pedidoDb.items.map(
     i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)
   );

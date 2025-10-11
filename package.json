@@ -27,6 +27,7 @@
     "prettier": "3.6.2"
   },
   "dependencies": {
-    "mongoose": "^8.18.3"
+    "mongoose": "^8.18.3",
+    "zod": "^4.1.12"
   }
 }

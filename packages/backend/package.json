@@ -17,7 +17,8 @@
     "express": "^5.1.0",
     "mongoose": "^8.18.2",
     "swagger-ui-express": "^5.0.1",
-    "yamljs": "^0.3.0"
+    "yamljs": "^0.3.0",
+    "zod": "^4.1.12"
   },
   "type": "module",
   "devDependencies": {

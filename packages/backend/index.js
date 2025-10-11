@@ -20,6 +20,7 @@ import YAML from "yamljs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { ProductoController } from "./controllers/productoController.js";
+import { createUsuarioRouter } from "./routes/usuarioRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -74,6 +75,7 @@ const pedidoController = new PedidoController(pedidoService);
 app.use("/pedidos", createPedidoRouter(pedidoController));
 app.use("/productos", createProductoRouter(productoController));
 app.use("/notificaciones", createNotificacionesRouter(notificacionesController));
+app.use("/usuarios", createUsuarioRouter(productoController, pedidoController, notificacionesController));
 
 const swaggerDocument = YAML.load(path.join(__dirname, "docs", "api-docs.yaml"));
 
