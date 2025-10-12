@@ -28,11 +28,20 @@ export class PedidoService {
     //Instancio items con validacion interna
     const itemsInstancia = await Promise.all(
       items.map(async (item) => {
-        const precio = await this.productoService.buscarPrecioUnitario(item.productoId);
+        const producto = await this.productoService.buscarProductoPorId(item.productoId);
+        if (!producto) {
+          throw new NotFoundError('Producto', item.productoId);
+        }
+
+        const precio = producto.precio;
+        const vendedorId = producto.vendedor?._id || producto.vendedor;
+
         return new ItemPedido(
-            item.productoId, 
-            item.cantidad, 
-            precio);
+          item.productoId,
+          item.cantidad,
+          precio,
+          vendedorId // NUEVO: pasar vendedorId al ItemPedido
+        );
       })
     );
 
@@ -97,7 +106,7 @@ export class PedidoService {
     }
 
     // reconstruir instancia del dominio
-    const pedido = rehidratarPedido(pedidoDB);
+    const pedido = await this.rehidratarPedido(pedidoDB);
 
     // No permitir cancelar un pedido ya cancelado
     if (pedido.estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
@@ -167,24 +176,38 @@ export class PedidoService {
     return await this.actualizarEstadoPedido(pedido._id, EstadoPedido.ENVIADO, vendedorId, "Pedido marcado como enviado");
   }
 
+  async rehidratarPedido(pedidoDb) {
+    // Crear items con vendedorId obtenido de cada producto
+    const itemsInstancia = await Promise.all(
+      pedidoDb.items.map(async (item) => {
+        const producto = await this.productoService.buscarProductoPorId(item.productoId);
+        
+        // Si encontramos el producto, obtenemos su vendedorId
+        const vendedorId = producto ? (producto.vendedor?._id || producto.vendedor) : null;
+
+        return new ItemPedido(
+          item.productoId,
+          item.cantidad,
+          item.precioUnitario,
+          vendedorId
+        );
+      })
+    );
+
+    // Crear instancia de pedido con items enriquecidos
+    const pedido = new Pedido(
+      pedidoDb.compradorId,
+      itemsInstancia,
+      pedidoDb.moneda,
+      pedidoDb.direccionEntrega
+    );
+
+    pedido.id = pedidoDb._id;
+    pedido.estado = pedidoDb.estado;
+    pedido.historialEstados = pedidoDb.historialEstados ?? [];
+
+    return pedido;
+  }
+
 }
 
-function rehidratarPedido(pedidoDb) {
-
-  const items = pedidoDb.items.map(
-    i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)
-  );
-
-  const pedido = new Pedido(
-    pedidoDb.compradorId,
-    items,
-    pedidoDb.moneda,
-    pedidoDb.direccionEntrega
-  );
-
-  pedido.id = pedidoDb._id;
-  pedido.estado = pedidoDb.estado;
-  pedido.historialEstados = pedidoDb.historialEstados ?? [];
-
-  return pedido;
-}

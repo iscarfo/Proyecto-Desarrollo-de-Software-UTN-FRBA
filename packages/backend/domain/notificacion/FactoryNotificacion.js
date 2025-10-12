@@ -35,10 +35,10 @@ export class FactoryNotificacion {
     );
 
     //MENSAJE A VENDEDORES
-    for (const vendedor of pedido.obtenerVendedores()) {
+    for (const vendedorId of pedido.obtenerVendedoresIds()) {
       notificaciones.push(
         new Notificacion(
-          vendedor._id,
+          vendedorId,
           `Se ha confirmado un pedido con los productos: Recuerda preparar el envío.`
         )
       );
@@ -56,10 +56,10 @@ export class FactoryNotificacion {
       )
     );
 
-    for (const vendedor of pedido.obtenerVendedores()) {
+    for (const vendedorId of pedido.obtenerVendedoresIds()) {
       notificaciones.push(
         new Notificacion(
-          vendedor._id,
+          vendedorId,
           `El pedido fue cancelado por el comprador.`
         )
       );
@@ -77,10 +77,10 @@ export class FactoryNotificacion {
       )
     );
 
-    for (const vendedor of pedido.obtenerVendedores()) {
+    for (const vendedorId of pedido.obtenerVendedoresIds()) {
       notificaciones.push(
         new Notificacion(
-          vendedor._id,
+          vendedorId,
           `El pedido ha sido marcado como enviado.`
         )
       );

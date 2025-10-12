@@ -27,13 +27,14 @@ export class Pedido {
     return this.items.reduce((acc, item) => acc + item.subTotal(), 0);
   }
 
-  obtenerVendedores() {
-    const vendedores = new Map();
+  obtenerVendedoresIds() {
+    const vendedoresIds = new Set();
     for (const item of this.items) {
-      const vendedor = item.productoId.vendedorId;
-      if (vendedor) vendedores.set(vendedor._id.toString(), vendedor);
+      if (item.vendedorId) {
+        vendedoresIds.add(item.vendedorId.toString());
+      }
     }
-    return Array.from(vendedores.values());
+    return Array.from(vendedoresIds);
   }
 
   getCompradorId() {

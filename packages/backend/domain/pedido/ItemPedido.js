@@ -5,11 +5,13 @@ export class ItemPedido {
   productoId
   cantidad
   precioUnitario
+  vendedorId // NUEVO: almacenar vendedorId
 
-  constructor(productoId, cantidad, precioUnitario) {
+  constructor(productoId, cantidad, precioUnitario, vendedorId = null) {
     this.productoId = productoId;
     this.cantidad = cantidad;
     this.precioUnitario = precioUnitario;
+    this.vendedorId = vendedorId; // NUEVO
 
     if (this.productoId == null || this.productoId === '') {
       throw new ValidationError('El productoId no puede ser nulo o vacío', 'productoId');
