@@ -1,3 +1,5 @@
+import { z } from "zod";
+
 export class ProductoController {
   constructor(productoService) {
     this.productoService = productoService;
@@ -6,7 +8,9 @@ export class ProductoController {
   // POST: Crear producto
   async crearProducto(req, res) {
     try {
-      const { usuarioId, ...productoData } = req.body;
+      const body = ProductoSchema.parse(req.body);
+      const { usuarioId, ...productoData } = body;
+
       const productoCreado = await this.productoService.crearProducto(productoData, usuarioId);
 
       if (!productoCreado) {
@@ -15,6 +19,12 @@ export class ProductoController {
       res.status(201).json(productoCreado);
 
     } catch (err) {
+      if (err?.issues) {
+        return res.status(400).json({
+          error: "Error de validación",
+          detalles: err.issues
+        });
+      }
       res.status(500).json({ error: err.message });
     }
   }
@@ -23,7 +33,7 @@ export class ProductoController {
   async listarProductos(req, res) {
     try {
       const { page = 1, limit = 10, nombre, descripcion, categoria, precioMin, precioMax, sort } = req.query;
-      
+
       const filtros = {
         nombre,
         descripcion,
@@ -31,7 +41,7 @@ export class ProductoController {
         precioMin: precioMin ? Number(precioMin) : undefined,
         precioMax: precioMax ? Number(precioMax) : undefined
       };
-      
+
       const productosPaginados = await this.productoService.listarProductos(page, limit, filtros, sort);
 
       if (!productosPaginados || productosPaginados.length === 0) {
@@ -73,8 +83,8 @@ export class ProductoController {
   // PUT: Actualizar producto
   async actualizarProducto(req, res) {
     try {
+      const datos = ProductoUpdateSchema.parse(req.body);
       const { id } = req.params;
-      const datos = req.body;
 
       const productoActualizado = await this.productoService.actualizarProducto(id, datos);
 
@@ -85,6 +95,12 @@ export class ProductoController {
       res.status(200).json(productoActualizado);
 
     } catch (err) {
+      if (err?.issues) {
+        return res.status(400).json({
+          error: "Error de validación",
+          detalles: err.issues
+        });
+      }
       res.status(500).json({ error: err.message });
     }
   }
@@ -102,5 +118,32 @@ export class ProductoController {
       res.status(500).json({ error: err.message });
     }
   }
-
 }
+
+export const ProductoSchema = z.object({
+  usuarioId: z.string()
+    .regex(/^[a-fA-F0-9]{24}$/, "usuarioId debe ser un ObjectId válido"),
+  titulo: z.string().min(1, "El título es obligatorio"),
+  descripcion: z.string().min(1, "La descripción es obligatoria"),
+  precio: z.number().positive("El precio debe ser un número positivo"),
+  moneda: z.enum(["DOLAR_USA", "PESO_ARG", "REAL"], {
+    message: "Moneda inválida",
+  }),
+  stock: z.number().int().nonnegative("El stock debe ser un número entero positivo o cero"),
+
+  // Campos opcionales
+  categorias: z.array(
+    z.string().regex(/^[a-fA-F0-9]{24}$/, "Cada categoría debe ser un ObjectId válido")
+  )
+    .optional(),
+  fotos: z.array(z.string().url("Debe ser una URL válida")).optional(),
+  activo: z.boolean().optional(),
+});
+
+// Schema de actualización (PUT / PATCH)
+export const ProductoUpdateSchema = ProductoSchema.partial().refine(
+  (data) => Object.keys(data).length > 0,
+  {
+    message: "Debe proporcionar al menos un campo para actualizar",
+  }
+);
