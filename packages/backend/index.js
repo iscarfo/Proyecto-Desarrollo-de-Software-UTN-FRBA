@@ -20,6 +20,7 @@ import YAML from "yamljs";
 import path from "path";
 import { fileURLToPath } from "url";
 import { ProductoController } from "./controllers/productoController.js";
+import { createUsuarioRouter } from "./routes/usuarioRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -54,24 +55,27 @@ app.get("/health", (req, res) => {
 });
 
 // Instancias compartidas
+//repository
 const pedidoRepository = new PedidoRepository();
 const productoRepository = new ProductoRepository();
-
-const pedidoService = new PedidoService(pedidoRepository,productoRepository);
-const pedidoController = new PedidoController(pedidoService);
-
-const productoService = new ProductoService(productoRepository);
-const productoController = new ProductoController(productoService);
-
 const usuarioRepository = new UsuarioRepository();
 const notificacionesRepository = new NotificacionesRepository();
+
+//service
+const productoService = new ProductoService(productoRepository);
 const notificacionesService = new NotificacionesService(notificacionesRepository, usuarioRepository);
+const pedidoService = new PedidoService(pedidoRepository, productoService, usuarioRepository, notificacionesService);
+
+//controller
+const productoController = new ProductoController(productoService);
 const notificacionesController = new NotificacionesController(notificacionesService);
+const pedidoController = new PedidoController(pedidoService);
 
 // Usar router con controller inyectado
 app.use("/pedidos", createPedidoRouter(pedidoController));
 app.use("/productos", createProductoRouter(productoController));
 app.use("/notificaciones", createNotificacionesRouter(notificacionesController));
+app.use("/usuarios", createUsuarioRouter(productoController, pedidoController, notificacionesController));
 
 const swaggerDocument = YAML.load(path.join(__dirname, "docs", "api-docs.yaml"));
 

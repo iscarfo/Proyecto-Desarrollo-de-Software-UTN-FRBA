@@ -1,8 +1,6 @@
 import { EstadoPedido } from "./enums.js";
 import { FactoryNotificacion } from "../notificacion/FactoryNotificacion.js";
 import { CambioEstadoPedido } from "./CambioEstadoPedido.js";
-import { PedidoRepository } from "../../repositories/pedidoRepository.js";
-import { NotificacionesRepository } from "../../repositories/notificacionesRepository.js";
 
 export class Pedido {
   id
@@ -20,7 +18,7 @@ export class Pedido {
     this.items = Array.isArray(items) ? items : []; // [ItemPedido]
     this.moneda = moneda;
     this.direccionEntrega = direccionEntrega; // DireccionEntrega
-    this.estado = EstadoPedido.PENDIENTE;
+    this.estado = EstadoPedido.CONFIRMADO;
     this.fechaCreacion = new Date();
     this.historialEstados = [];
   }
@@ -29,68 +27,14 @@ export class Pedido {
     return this.items.reduce((acc, item) => acc + item.subTotal(), 0);
   }
 
-  async actualizarEstado(nuevoEstado, quien, motivo, pedidoRepository) {
-    // No permitir cancelar un pedido ya cancelado
-    if (this.estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
-      throw new Error("El pedido ya fue cancelado previamente.");
-    }
-
-    const cambio = new CambioEstadoPedido(
-      new Date(),
-      nuevoEstado,
-      this,
-      quien,
-      motivo,
-    );
-    this.historialEstados.push(cambio);
-    this.estado = nuevoEstado;
-
-    //Crear notificacion segun estado
-    FactoryNotificacion.crearNotificacion(this, nuevoEstado);
-
-    // Actualiza en la base de datos
-    const pedidoActualizado = await pedidoRepository.findByIdAndUpdateEstado(
-      this.id,
-      nuevoEstado,
-      quien,
-      motivo
-    );
-
-    return pedidoActualizado;
-  }
-
-  async validarStock(productoRepository) {
+  obtenerVendedoresIds() {
+    const vendedoresIds = new Set();
     for (const item of this.items) {
-      const producto = await productoRepository.findById(item.productoId);
-      if (!producto || producto.stock < item.cantidad) {
-        return false; // No hay suficiente stock para este producto
+      if (item.vendedorId) {
+        vendedoresIds.add(item.vendedorId.toString());
       }
     }
-    return true; 
-  }
-
-/*
-  obtenerVendedores() {
-    const vendedores = new Set();
-    this.items.forEach((item) => {
-      vendedores.add(item.getProductoId().getVendedor());
-    });
-    return Array.from(vendedores);
-  }*/ // TODO: dejo comentada esta validacion 
-  
-  obtenerVendedores() {
-    // Placeholder temporal: no hay productos persistidos todavía
-    return [];
-  }
-
-  crearPedido() {
-    const vendedores = this.obtenerVendedores();
-    vendedores.forEach((vendedor) => {
-      const notificacion = FactoryNotificacion.crearNotificacionNuevoPedido(
-        this,
-        vendedor,
-      );
-    });
+    return Array.from(vendedoresIds);
   }
 
   getCompradorId() {

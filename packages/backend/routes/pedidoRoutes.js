@@ -7,12 +7,14 @@ export function createPedidoRouter(pedidoController) {
   router.post("/", pedidoController.crearPedido);
   // GET /pedidos
   router.get("/", pedidoController.listarPedidos);
-  // PATCH /pedidos/:id/cancelar
-  router.patch("/:pedidoId/cancelar", pedidoController.cancelarPedido);
+  // DELETE /pedidos/:id
+  router.delete("/:pedidoId", pedidoController.cancelarPedido);
+  
   // GET /pedidos/usuario/:usuarioId
-  router.get("/usuario/:usuarioId", pedidoController.historialPedidosUsuario);
-  // PATCH /pedidos/:id/enviar
-  router.patch("/:pedidoId/enviar", pedidoController.marcarPedidoEnviado);
+  //router.get("/usuario/:usuarioId", pedidoController.historialPedidosUsuario);
+  
+  // PATCH /pedidos/:id/enviado
+  router.patch("/:pedidoId/enviado", pedidoController.marcarPedidoEnviado);
 
   return router;
 }

@@ -48,6 +48,27 @@ export const initTestData = async () => {
       console.log('ℹ️  Notificación de prueba ya existe para usuario:', testUser.email);
     }
 
+    // Verificar si ya existe el comprador de prueba
+    let testComprador = await Usuario.findOne({ email: 'comprador.prueba@test.com' });
+
+    if (!testComprador) {
+      testComprador = new Usuario({
+        nombre: 'Usuario Comprador',
+        email: 'comprador.prueba@test.com',
+        telefono: '+54 11 1234-5666',
+        direccion: {
+          calle: 'Av. Peru 1134',
+          ciudad: 'Buenos Aires',
+          codigoPostal: '1246'
+        }
+      });
+
+      await testComprador.save();
+      console.log('✅ Usuario comprador creado:', testComprador.email);
+    } else {
+      console.log('ℹ️  Usuario comprador ya existe:', testComprador.email);
+    }
+
     // ===== Categorías por default =====
     const categoriasDefault = ['running', 'calzado', 'indumentaria'];
     for (const nombre of categoriasDefault) {

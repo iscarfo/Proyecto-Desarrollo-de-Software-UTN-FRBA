@@ -1,105 +1,116 @@
 import { PedidoModel } from "../models/PedidoModel.js";
+
 export class PedidoRepository {
+
   async save(pedido) {
-    if (!pedido.id) {
-      const created = await PedidoModel.create({
-        compradorId: pedido.getCompradorId(),
-        items: pedido.items.map(i => ({
-          productoId: i.getProductoId(),
-          cantidad: i.getCantidad(),
-          precioUnitario: i.getPrecioUnitario()
-        })),
-        moneda: pedido.moneda,
-        direccionEntrega: pedido.direccionEntrega,
-        estado: pedido.estado,
-        fechaCreacion: pedido.fechaCreacion,
-        historialEstados: pedido.historialEstados.map(h => ({
-          fecha: h.fecha,
-          estado: h.estado,
-          quien: h.quien,
-          motivo: h.motivo
-        }))
-      });
-      return this.mapToPedidoDTO(created);
-    } else {
-      const updated = await PedidoModel.findByIdAndUpdate(
-        pedido.id,
-        {
-          compradorId: pedido.getCompradorId(),
-          items: pedido.items.map(i => ({
-            productoId: i.getProductoId(),
-            cantidad: i.getCantidad(),
-            precioUnitario: i.getPrecioUnitario()
-          })),
-          moneda: pedido.moneda,
-          direccionEntrega: pedido.direccionEntrega,
-          estado: pedido.estado,
-          fechaCreacion: pedido.fechaCreacion,
-          historialEstados: pedido.historialEstados.map(h => ({
-            fecha: h.fecha,
-            estado: h.estado,
-            quien: h.quien,
-            motivo: h.motivo
-          }))
-        },
-        { new: true }
-      );
-      return this.mapToPedidoDTO(updated);
+    try {
+      if (pedido._id) {
+        // Actualizar pedido existente
+        return await PedidoModel.findByIdAndUpdate(
+          pedido._id,
+          pedido,
+          { new: true, lean: true }
+        );
+      } else {
+        // Crear nuevo pedido
+        const pedidoNuevo = new PedidoModel(pedido);
+        return await pedidoNuevo.save();
+      }
+    } catch (error) {
+      throw new Error(`Error al guardar pedido: ${error.message}`);
+    }
+  }
+
+  async create(pedidoData) {
+    try {
+      const pedido = new PedidoModel(pedidoData);
+      return await pedido.save();
+    } catch (error) {
+      throw new Error(`Error al crear Pedido: ${error.message}`);
     }
   }
 
   async findAll() {
-    const pedidosDocs = await PedidoModel.find();
-    return pedidosDocs.map(doc => this.mapToPedidoDTO(doc));
+    try {
+      return await PedidoModel.find().lean();
+    } catch (error) {
+      throw new Error(`Error al buscar pedidos: ${error.message}`);
+    }
   }
 
   async findById(id) {
-    const doc = await PedidoModel.findById(id);
-    if (!doc) return null;
-    return this.mapToPedidoDTO(doc);
-  }  
+    try {
+      return await PedidoModel.findById(id)
+        .populate({
+          path: "items.productoId",
+          populate: { path: "vendedor", model: "Usuario" }
+        })
+        .lean(false);
 
-  async findByIdAndUpdateEstado(pedidoId, nuevoEstado, quien, motivo) {
-    // Construir el cambio de estado para historialEstados
-    const cambio = {
-      fecha: new Date(),
-      estado: nuevoEstado,
-      quien,
-      motivo
-    };
-    const updated = await PedidoModel.findByIdAndUpdate(
-      pedidoId,
-      {
-        $set: { estado: nuevoEstado },
-        $push: { historialEstados: cambio }
-      },
-      { new: true }
-    );
-    if (!updated) return null;
-    return this.mapToPedidoDTO(updated);
+    } catch (error) {
+      throw new Error(`Error al buscar pedido: ${error.message}`);
+    }
   }
-  
-  mapToPedidoDTO(doc) {
-    const total = doc.items.reduce((sum, i) => sum + i.cantidad * i.precioUnitario, 0);
-    return {
-      id: doc._id.toString(),
-      compradorId: doc.compradorId,
-      items: doc.items.map(i => ({
-        productoId: i.productoId,
-        cantidad: i.cantidad,
-        precioUnitario: i.precioUnitario
-      })),
-      moneda: doc.moneda,
-      direccionEntrega: doc.direccionEntrega,
-      estado: doc.estado,
-      fechaCreacion: doc.fechaCreacion,
-      historialEstados: doc.historialEstados.map(h => ({
-        fecha: h.fecha,
-        estado: h.estado,
-        quien: h.quien,
-        motivo: h.motivo
-      })),
-      total
-    };
+
+  async updateById(id, datos) {
+    try {
+      return await PedidoModel.findByIdAndUpdate(id, datos, { new: true, lean: true });
+    } catch (error) {
+      throw new Error(`Error al actualizar pedido: ${error.message}`);
+    }
+  }
+
+  async delete(id) {
+    try {
+      return await PedidoModel.findByIdAndDelete(id);
+    } catch (error) {
+      throw new Error(`Error al eliminar pedido: ${error.message}`);
+    }
+  }
+
+  async findByIdAndUpdateEstado(pedidoId, nuevoEstado, quien, motivo = null) {
+    try {
+      // Validación básica
+      if (!pedidoId) throw new Error("ID de pedido no proporcionado");
+      if (!nuevoEstado) throw new Error("Nuevo estado no proporcionado");
+
+      // Construir el cambio de estado para historialEstados
+      const cambio = {
+        fecha: new Date(),
+        estado: nuevoEstado,
+        quien: quien,
+        motivo: motivo
+      };
+
+      // Actualización: cambia estado y registra historial
+      const updatedPedido = await PedidoModel.findByIdAndUpdate(
+        pedidoId,
+        {
+          $set: { estado: nuevoEstado },
+          $push: { historialEstados: cambio }
+        },
+        {
+          new: true,          // Devuelve el documento actualizado
+          lean: true,         // Devuelve objeto plano (no documento Mongoose)
+          runValidators: true // Aplica validaciones del schema
+        }
+      );
+
+      if (!updatedPedido) {
+        throw new Error(`No se encontró el pedido con ID ${pedidoId}`);
+      }
+
+      return updatedPedido;
+    } catch (error) {
+      throw new Error(`Error al actualizar estado del pedido: ${error.message}`);
+    }
+  }
+
+  async findByCompradorId(usuarioId) {
+    try {
+      return await PedidoModel.find({ compradorId: usuarioId }).lean();
+    } catch (error) {
+      throw new Error(`Error al buscar pedidos del usuario: ${error.message}`);
+    }
   }
 }

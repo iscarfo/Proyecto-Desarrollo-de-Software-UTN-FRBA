@@ -15,6 +15,8 @@ tags:
     description: Endpoints para gestión de productos
   - name: Notificaciones
     description: Endpoints para gestión de notificaciones
+  - name: Usuarios
+    description: Endpoints para gestión de colecciones de usuarios
 
 paths:
   ############################
@@ -54,28 +56,8 @@ paths:
                 items:
                   $ref: '#/components/schemas/Pedido'
 
-  /pedidos/usuario/{usuarioId}:
-    get:
-      summary: Obtener pedidos de un usuario
-      tags: [Pedidos]
-      parameters:
-        - in: path
-          name: usuarioId
-          required: true
-          schema:
-            type: string
-      responses:
-        '200':
-          description: Lista de pedidos del usuario
-          content:
-            application/json:
-              schema:
-                type: array
-                items:
-                  $ref: '#/components/schemas/PedidoResumido'
-
-  /pedidos/{pedidoId}/cancelar:
-    patch:
+  /pedidos/{pedidoId}:
+    delete:
       summary: Cancelar un pedido
       tags: [Pedidos]
       parameters:
@@ -113,7 +95,7 @@ paths:
                 properties:
                   error: { type: string }
 
-  /pedidos/{pedidoId}/enviar:
+  /pedidos/{pedidoId}/enviado:
     patch:
       summary: Marcar pedido como enviado
       tags: [Pedidos]
@@ -151,6 +133,145 @@ paths:
                 type: object
                 properties:
                   error: { type: string }
+
+  ############################
+  # USUARIOS
+  ############################
+  /usuarios/vendedor/{vendedorId}/productos:
+    get:
+      summary: Listar productos de un usuario vendedor con filtros, paginación y rango de precios
+      tags: [Usuarios, Productos]
+      parameters:
+      - in: path
+        name: vendedorId
+        required: true
+        schema: { type: string }
+        description: ID del vendedor (debe existir en la base de datos).
+      - in: query
+        name: page
+        schema: { type: integer, minimum: 1, default: 1 }
+        description: Número de página a recuperar.
+      - in: query
+        name: limit
+        schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+        description: Cantidad de productos por página.
+      - in: query
+        name: nombre
+        schema: { type: string }
+        description: Filtro por coincidencia parcial en el título del producto.
+      - in: query
+        name: descripcion
+        schema: { type: string }
+        description: Filtro por coincidencia parcial en la descripción del producto.
+      - in: query
+        name: categoria
+        schema: { type: string }
+        description: Filtra productos que pertenezcan a una categoría específica (ID de categoría).
+      - in: query
+        name: precioMin
+        schema: { type: number }
+        description: Precio mínimo del rango a filtrar.
+      - in: query
+        name: precioMax
+        schema: { type: number }
+        description: Precio máximo del rango a filtrar.
+      responses:
+        '200':
+          description: Lista de productos filtrados
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagina: { type: integer }
+                  perPage: { type: integer }
+                  total: { type: integer }
+                  totalPaginas: { type: integer }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProductoRespuesta' }
+
+  /usuarios/comprador/{compradorId}/pedidos:
+    get:
+      summary: Obtener pedidos de un usuario comprador
+      tags: [Usuarios, Pedidos]
+      parameters:
+        - in: path
+          name: usuarioId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lista de pedidos del usuario
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PedidoResumido'
+
+  /usuarios/{usuarioId}/notificaciones/unread:
+    get:
+      summary: Obtener notificaciones sin leer
+      tags: [Usuarios, Notificaciones]
+      parameters:
+        - in: path
+          name: usuarioId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+      responses:
+        '200':
+          description: Lista paginada de notificaciones sin leer
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagina: { type: integer }
+                  perPage: { type: integer }
+                  totalColecciones: { type: integer }
+                  totalPaginas: { type: integer }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Notificacion' }
+
+  /usuarios/{usuarioId}/notificaciones/read:
+    get:
+      summary: Obtener notificaciones leídas
+      tags: [Usuarios, Notificaciones]
+      parameters:
+        - in: path
+          name: usuarioId
+          required: true
+          schema: { type: string }
+        - in: query
+          name: page
+          schema: { type: integer, minimum: 1, default: 1 }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+      responses:
+        '200':
+          description: Lista paginada de notificaciones leídas
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pagina: { type: integer }
+                  perPage: { type: integer }
+                  totalColecciones: { type: integer }
+                  totalPaginas: { type: integer }
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Notificacion' }
 
   ############################
   # PRODUCTOS
@@ -225,60 +346,6 @@ paths:
                 data:
                   type: array
                   items: { $ref: '#/components/schemas/ProductoRespuesta' }
-  
-  /productos/vendedor/{vendedorId}:
-    get:
-      summary: Listar productos de un vendedor con filtros, paginación y rango de precios
-      tags: [Productos]
-      parameters:
-      - in: path
-        name: vendedorId
-        required: true
-        schema: { type: string }
-        description: ID del vendedor (debe existir en la base de datos).
-      - in: query
-        name: page
-        schema: { type: integer, minimum: 1, default: 1 }
-        description: Número de página a recuperar.
-      - in: query
-        name: limit
-        schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
-        description: Cantidad de productos por página.
-      - in: query
-        name: nombre
-        schema: { type: string }
-        description: Filtro por coincidencia parcial en el título del producto.
-      - in: query
-        name: descripcion
-        schema: { type: string }
-        description: Filtro por coincidencia parcial en la descripción del producto.
-      - in: query
-        name: categoria
-        schema: { type: string }
-        description: Filtra productos que pertenezcan a una categoría específica (ID de categoría).
-      - in: query
-        name: precioMin
-        schema: { type: number }
-        description: Precio mínimo del rango a filtrar.
-      - in: query
-        name: precioMax
-        schema: { type: number }
-        description: Precio máximo del rango a filtrar.
-      responses:
-        '200':
-          description: Lista de productos filtrados
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  pagina: { type: integer }
-                  perPage: { type: integer }
-                  total: { type: integer }
-                  totalPaginas: { type: integer }
-                  data:
-                    type: array
-                    items: { $ref: '#/components/schemas/ProductoRespuesta' }
 
   /productos/{id}:
     put:
@@ -329,68 +396,6 @@ paths:
   ############################
   # NOTIFICACIONES
   ############################
-  /notificaciones/unread/{usuarioId}:
-    get:
-      summary: Obtener notificaciones sin leer
-      tags: [Notificaciones]
-      parameters:
-        - in: path
-          name: usuarioId
-          required: true
-          schema: { type: string }
-        - in: query
-          name: page
-          schema: { type: integer, minimum: 1, default: 1 }
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
-      responses:
-        '200':
-          description: Lista paginada de notificaciones sin leer
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  pagina: { type: integer }
-                  perPage: { type: integer }
-                  totalColecciones: { type: integer }
-                  totalPaginas: { type: integer }
-                  data:
-                    type: array
-                    items: { $ref: '#/components/schemas/Notificacion' }
-
-  /notificaciones/read/{usuarioId}:
-    get:
-      summary: Obtener notificaciones leídas
-      tags: [Notificaciones]
-      parameters:
-        - in: path
-          name: usuarioId
-          required: true
-          schema: { type: string }
-        - in: query
-          name: page
-          schema: { type: integer, minimum: 1, default: 1 }
-        - in: query
-          name: limit
-          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
-      responses:
-        '200':
-          description: Lista paginada de notificaciones leídas
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  pagina: { type: integer }
-                  perPage: { type: integer }
-                  totalColecciones: { type: integer }
-                  totalPaginas: { type: integer }
-                  data:
-                    type: array
-                    items: { $ref: '#/components/schemas/Notificacion' }
-
   /notificaciones/{id}/read:
     patch:
       summary: Marcar notificación como leída

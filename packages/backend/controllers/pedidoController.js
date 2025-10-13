@@ -1,3 +1,5 @@
+import { z, ZodError } from "zod";
+
 export class PedidoController {
   constructor(pedidoService) {
     this.pedidoService = pedidoService;
@@ -5,21 +7,30 @@ export class PedidoController {
 
   crearPedido = async (req, res) => {
     try {
-      const { compradorId, items, moneda, direccionEntrega } = req.body;
+      const body = crearPedidoSchema.parse(req.body);
+      const { compradorId, items, moneda, direccionEntrega } = body;
+      
       const pedido = await this.pedidoService.crearPedido(compradorId, items, moneda, direccionEntrega);
       res.status(201).json({
         message: "Pedido creado con éxito",
         pedidoId: pedido.id,
       });
+      
     } catch (err) {
-      res.status(400).json({ error: err.message });
+        if (err?.issues) {
+          return res.status(400).json({
+            error: "Error de validación",
+            detalles: err.issues
+          });
+        }
+        res.status(500).json({ error: err.message });
     }
   };
 
   listarPedidos = async (req, res) => { // lista todos los pedidos que existen en el sistema
     try {
       const pedidos = await this.pedidoService.listarPedidos();
-      res.json(pedidos.map(p => ({ id: p.id })));
+      res.json(pedidos.map(p => ({ id: p._id, estado: p.estado, fechaCreacion: p.fechaCreacion })));
     } catch (err) {
       res.status(400).json({ error: err.message });
     }
@@ -28,11 +39,11 @@ export class PedidoController {
   cancelarPedido = async (req, res) => {
     try {
       const { pedidoId } = req.params;
-      const compradorId = req.body.compradorId;
+      const { compradorId } = req.body;
       const pedido = await this.pedidoService.cancelarPedido(pedidoId, compradorId);
       res.json({
         message: "Pedido cancelado con éxito",
-        pedido:  pedido.id,
+        pedido: pedido.id,
         estado: pedido.estado
       });
     } catch (err) {
@@ -46,8 +57,9 @@ export class PedidoController {
       const pedidos = await this.pedidoService.obtenerPedidosDeUsuario(usuarioId);
 
       const response = pedidos.map(pedido => ({
-        id: pedido.id,
-        estado: pedido.estado
+        id: pedido._id,
+        estado: pedido.estado,
+        fechaCreacion: pedido.fechaCreacion
       }));
 
       res.json(response);
@@ -74,3 +86,29 @@ export class PedidoController {
     }
   };
 }
+
+const direccionSchema = z.object({
+  calle: z.string({ required_error: "La calle es obligatoria" }).min(1, "La calle es obligatoria"),
+  altura: z.number().int().positive(),
+  codPostal: z.string().min(1, "El código postal es obligatorio"),
+  ciudad: z.string().min(1, "La ciudad es obligatoria"),
+  provincia: z.string().min(1, "La provincia es obligatoria"),
+  pais: z.string().min(1, "El país es obligatorio"),
+  piso: z.string().optional(),
+  departamento: z.string().optional(),
+  lat: z.number().refine(v => v >= -90 && v <= 90, "Latitud inválida").optional(),
+  lon: z.number().refine(v => v >= -180 && v <= 180, "Longitud inválida").optional()
+});
+
+export const crearPedidoSchema = z.object({
+  compradorId: z.string().regex(/^[a-fA-F0-9]{24}$/, "compradorId debe ser un ObjectId válido"),
+  items: z.array(
+    z.object({
+      productoId: z.string().regex(/^[a-fA-F0-9]{24}$/, "productoId debe ser un ObjectId válido"),
+      cantidad: z.number().int().positive("Cantidad debe ser positiva"),
+      //precioUnitario: z.number().positive("Precio unitario debe ser positivo")
+    })
+  ).min(1, "Debe incluir al menos un item"),
+  moneda: z.enum(["DOLAR_USA", "PESO_ARG", "REAL"], { message: "Moneda inválida" }),
+  direccionEntrega: direccionSchema
+});

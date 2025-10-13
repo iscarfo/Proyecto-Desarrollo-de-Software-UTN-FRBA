@@ -1,26 +1,51 @@
+import mongoose from 'mongoose';
 import { Pedido } from "../domain/pedido/Pedido.js";
 import { ItemPedido } from "../domain/pedido/ItemPedido.js";
+import { EstadoPedido } from '../domain/pedido/enums.js';
 import { DireccionEntrega } from "../domain/pedido/DireccionEntrega.js";
-import { ProductoService } from "./productoService.js";
-import { ProductoRepository } from "../repositories/productoRepository.js";
+import { InvalidIdError, NotFoundError, ValidationError } from '../errors/AppError.js';
 
 export class PedidoService {
-  constructor(pedidoRepository, productoRepository) {
+  constructor(pedidoRepository, productoService, usuarioRepository, notificacionesService) {
     this.pedidoRepository = pedidoRepository;
-    this.productoRepository = productoRepository;
+    this.productoService = productoService;
+    this.notificacionesService = notificacionesService
+    this.usuarioRepository = usuarioRepository;
   }
 
   // Crear un nuevo pedido
   async crearPedido(compradorId, items, moneda, direccionEntrega) {
+    if (!mongoose.Types.ObjectId.isValid(compradorId)) {
+      throw new InvalidIdError('Usuario ID');
+    }
 
-    const itemsInstancia = items.map(item =>
-      new ItemPedido(
-        item.productoId, // ← Cambiado para que use productoId en vez de un objeto Producto
-        item.cantidad,
-        item.precioUnitario
-      )
+    //Validar que comprador exista/tenga cuenta creada
+    const comprador = await this.usuarioRepository.findById(compradorId);
+    if (!comprador) {
+      throw new NotFoundError('Comprador', compradorId);
+    }
+
+    //Instancio items con validacion interna
+    const itemsInstancia = await Promise.all(
+      items.map(async (item) => {
+        const producto = await this.productoService.buscarProductoPorId(item.productoId);
+        if (!producto) {
+          throw new NotFoundError('Producto', item.productoId);
+        }
+
+        const precio = producto.precio;
+        const vendedorId = producto.vendedor?._id || producto.vendedor;
+
+        return new ItemPedido(
+          item.productoId,
+          item.cantidad,
+          precio,
+          vendedorId // NUEVO: pasar vendedorId al ItemPedido
+        );
+      })
     );
 
+    //Instancio direcc con validacion interna
     const direccionEntregaInstancia = new DireccionEntrega(
       direccionEntrega.calle,
       direccionEntrega.altura,
@@ -34,6 +59,7 @@ export class PedidoService {
       direccionEntrega.lon
     );
 
+    //Instancio pedido con validacion interna
     const pedido = new Pedido(
       compradorId,
       itemsInstancia,
@@ -41,143 +67,147 @@ export class PedidoService {
       direccionEntregaInstancia
     );
 
-    if (!(await pedido.validarStock(this.productoRepository))) {
-      throw new Error("Stock insuficiente para uno o más productos");
+    // Validar stock de todos los productos
+    for (const item of pedido.items) {
+      if (!(await this.productoService.tieneStockSuficiente(item.productoId, item.cantidad))) {
+        throw new ValidationError("Stock insuficiente para uno o más productos");
+      }
     }
 
-    pedido.crearPedido(); // notifica a vendedores
-
-    //SI SE CREA EL PEDIDO, EL VENDEDOR BAJA EL STOCK (BAJAR STOCK)
-    const productoService = new ProductoService(new ProductoRepository());
+    //SI SE CREA EL PEDIDO, EL VENDEDOR DISMINUYE EL STOCK (BAJAR STOCK)
     for (const item of items) {
-      await productoService.disminuirStock(item.productoId, item.cantidad);
+      await this.productoService.disminuirStock(item.productoId, item.cantidad);
     }
 
-    return this.pedidoRepository.save(pedido);
+    // Guardar pedido en la base de datos
+    const pedidoCreado = await this.pedidoRepository.create(pedido);
+
+    //Despachar notificaciones tras creación del pedido (asincrónico)
+    await this.notificacionesService
+      .despacharPorEstado(pedido, EstadoPedido.CONFIRMADO)
+      .catch((err) => console.error("Error al notificar pedido:", err));
+
+    return pedidoCreado;
   }
 
   // Listar todos los pedidos
   async listarPedidos() {
-    return this.pedidoRepository.findAll();
+    return await this.pedidoRepository.findAll();
+  }
+
+  async actualizarEstadoPedido(pedidoId, nuevoEstado, quien, motivo) {
+    if (!mongoose.Types.ObjectId.isValid(pedidoId)) {
+      throw new InvalidIdError('Pedido ID');
+    }
+
+    const pedidoDB = await this.pedidoRepository.findById(pedidoId);
+    if (!pedidoDB) {
+      throw new NotFoundError('Pedido', pedidoId);
+    }
+
+    // reconstruir instancia del dominio
+    const pedido = await this.rehidratarPedido(pedidoDB);
+
+    // No permitir cancelar un pedido ya cancelado
+    if (pedido.estado === EstadoPedido.CANCELADO && nuevoEstado === EstadoPedido.CANCELADO) {
+      throw new Error("El pedido ya fue cancelado previamente.");
+    }
+
+    //Notificaciones por cambio de estado
+    await this.notificacionesService.despacharPorEstado(pedido, nuevoEstado);
+
+    //Actualizar pedido en BD
+    return await this.pedidoRepository.findByIdAndUpdateEstado(pedidoId, nuevoEstado, quien, motivo);
   }
 
   // Cancelar pedido
   async cancelarPedido(pedidoId, compradorId) {
-    const pedidoPlano = await this.pedidoRepository.findById(pedidoId);
-    if (!pedidoPlano) throw new Error("Pedido no encontrado");
+    const pedido = await this.pedidoRepository.findById(pedidoId);
+    if (!pedido) throw new NotFoundError('Pedido', pedidoId);
 
-    if (pedidoPlano.compradorId !== compradorId) {
+    if (pedido.compradorId.toString() !== compradorId.toString()) {
       throw new Error("No autorizado: solo el comprador puede cancelar su pedido");
     }
 
-    if (pedidoPlano.estado === "ENVIADO") {
+    if (pedido.estado === "ENVIADO") {
       throw new Error("El pedido ya fue enviado y no puede cancelarse");
-    } else if (pedidoPlano.estado === "CANCELADO") {
+    } else if (pedido.estado === "CANCELADO") {
       throw new Error("El pedido fue anteriormente cancelado");
     }
 
-    const direccionEntregaInstancia = new DireccionEntrega(
-      pedidoPlano.direccionEntrega.calle,
-      pedidoPlano.direccionEntrega.altura,
-      pedidoPlano.direccionEntrega.piso,
-      pedidoPlano.direccionEntrega.departamento,
-      pedidoPlano.direccionEntrega.codPostal,
-      pedidoPlano.direccionEntrega.ciudad,
-      pedidoPlano.direccionEntrega.provincia,
-      pedidoPlano.direccionEntrega.pais,
-      pedidoPlano.direccionEntrega.lat,
-      pedidoPlano.direccionEntrega.lon
-    );
-
-    const pedido = new Pedido(
-      pedidoPlano.compradorId,
-      pedidoPlano.items.map(i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)),
-      pedidoPlano.moneda,
-      direccionEntregaInstancia
-    );
-    pedido.id = pedidoPlano.id;
-    pedido.estado = pedidoPlano.estado;
-    pedido.historialEstados = pedidoPlano.historialEstados;
-
     //SI SE CANCELA EL PEDIDO, EL VENDEDOR RECUPERA EL STOCK (AUMENTAR STOCK)
-    const productoService = new ProductoService(new ProductoRepository());
     for (const item of pedido.items) {
-      await productoService.aumentarStock(item.productoId, item.cantidad);
+      await this.productoService.aumentarStock(item.productoId, item.cantidad);
     }
 
-    return await pedido.actualizarEstado("CANCELADO", compradorId, "Cancelación por el usuario", this.pedidoRepository);
+    return await this.actualizarEstadoPedido(pedido._id, EstadoPedido.CANCELADO, compradorId, "Cancelación por el usuario");
   }
 
   // Obtener pedidos de un usuario
   async obtenerPedidosDeUsuario(usuarioId) {
-    const todos = await this.pedidoRepository.findAll();
-    return todos.filter(
-      p => p.compradorId.toString() === usuarioId.toString()
-    );
-  }
+    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+      throw new InvalidIdError('Usuario ID');
+    }
 
+    const pedidos = await this.pedidoRepository.findByCompradorId(usuarioId);
+    return pedidos;
+  }
 
   // Marcar pedido como enviado
   async marcarComoEnviado(pedidoId, vendedorId) {
-    const pedidoPlano = await this.pedidoRepository.findById(pedidoId);
-    if (!pedidoPlano) throw new Error("Pedido no encontrado");
+    const pedido = await this.pedidoRepository.findById(pedidoId);
+    if (!pedido) throw new NotFoundError('Pedido', pedidoId);
 
-    /*
     // Validar que el vendedor esté en los productos de los items del pedido
-    const productos = await Promise.all(
-      pedidoPlano.items.map(i => this.productoRepository.findById(i.productoId).lean())
-    );
-    if (productos.some(p => !p)) {
-      throw new Error("Alguno de los productos del pedido no existe");
-    }
-
-    const vendedoresIds = productos.map(p => p.vendedor.toString());
-
     // Si el pedido tiene productos de múltiples vendedores,
     // obligás a que todos sean del vendedor actual.
-    const todosDelMismoVendedor = vendedoresIds.every(
-      id => id === vendedorId.toString()
-    );
 
-    if (!todosDelMismoVendedor) {
-      throw new Error("No autorizado para marcar este pedido como enviado");
-    }*/ // TODO: Revisar esta validación
-
-    if (pedidoPlano.estado === "ENVIADO") {
+    if (pedido.estado === "ENVIADO") {
       throw new Error("El pedido ya fue enviado");
-    } else if (pedidoPlano.estado === "CANCELADO") {
+    } else if (pedido.estado === "CANCELADO") {
       throw new Error("El pedido fue cancelado y no puede enviarse");
     }
 
-    const direccionEntregaInstancia = new DireccionEntrega(
-      pedidoPlano.direccionEntrega.calle,
-      pedidoPlano.direccionEntrega.altura,
-      pedidoPlano.direccionEntrega.piso,
-      pedidoPlano.direccionEntrega.departamento,
-      pedidoPlano.direccionEntrega.codPostal,
-      pedidoPlano.direccionEntrega.ciudad,
-      pedidoPlano.direccionEntrega.provincia,
-      pedidoPlano.direccionEntrega.pais,
-      pedidoPlano.direccionEntrega.lat,
-      pedidoPlano.direccionEntrega.lon
-    );
-
-    const pedido = new Pedido(
-      pedidoPlano.compradorId,
-      pedidoPlano.items.map(i => new ItemPedido(i.productoId, i.cantidad, i.precioUnitario)),
-      pedidoPlano.moneda,
-      direccionEntregaInstancia
-    );
-    pedido.id = pedidoPlano.id;
-    pedido.estado = pedidoPlano.estado;
-    pedido.historialEstados = pedidoPlano.historialEstados;
-
     // Aumentar total vendido
-    const productoService = new ProductoService(new ProductoRepository());
     for (const item of pedido.items) {
-      await productoService.aumentarCantidadVentas(item.productoId, item.cantidad);
+      await this.productoService.aumentarCantidadVentas(item.productoId, item.cantidad);
     }
 
-    return await pedido.actualizarEstado("ENVIADO", vendedorId, "Pedido marcado como enviado", this.pedidoRepository);
+    return await this.actualizarEstadoPedido(pedido._id, EstadoPedido.ENVIADO, vendedorId, "Pedido marcado como enviado");
   }
+
+  async rehidratarPedido(pedidoDb) {
+    // Crear items con vendedorId obtenido de cada producto
+    const itemsInstancia = await Promise.all(
+      pedidoDb.items.map(async (item) => {
+        const producto = await this.productoService.buscarProductoPorId(item.productoId);
+        
+        // Si encontramos el producto, obtenemos su vendedorId
+        const vendedorId = producto ? (producto.vendedor?._id || producto.vendedor) : null;
+
+        return new ItemPedido(
+          item.productoId,
+          item.cantidad,
+          item.precioUnitario,
+          vendedorId
+        );
+      })
+    );
+
+    // Crear instancia de pedido con items enriquecidos
+    const pedido = new Pedido(
+      pedidoDb.compradorId,
+      itemsInstancia,
+      pedidoDb.moneda,
+      pedidoDb.direccionEntrega
+    );
+
+    pedido.id = pedidoDb._id;
+    pedido.estado = pedidoDb.estado;
+    pedido.historialEstados = pedidoDb.historialEstados ?? [];
+
+    return pedido;
+  }
+
 }
+

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { InvalidIdError, NotFoundError, ConflictError } from '../errors/AppError.js';
+import { FactoryNotificacion } from '../domain/notificacion/FactoryNotificacion.js';
 
 export class NotificacionesService {
   constructor(notificacionesRepository, usuarioRepository) {
@@ -86,5 +87,24 @@ export class NotificacionesService {
     };
 
     return await this.notificacionesRepository.create(notificacionData);
+  }
+
+  //Persiste notificaciones segun pedido y estado
+  //La logica de creacion es delegada al FACTORY segun cada estado
+  async despacharPorEstado(pedido, estado) {
+    const notificaciones = FactoryNotificacion.crearNotificacion(pedido, estado);
+    await this.despacharNotificaciones(notificaciones);
+  }
+
+  async despacharNotificaciones(notificaciones) {
+    for (const notif of notificaciones) {
+      const data = {
+        usuarioDestinoId: notif.usuarioDestinoId,
+        mensaje: notif.mensaje,
+        leida: notif.leida,
+        fechaCreacion: notif.fechaAlta,
+      };
+      await this.notificacionesRepository.create(data);
+    }
   }
 }
