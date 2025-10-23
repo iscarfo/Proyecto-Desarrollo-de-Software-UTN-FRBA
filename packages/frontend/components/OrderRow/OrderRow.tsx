@@ -160,33 +160,30 @@ const OrderRow: React.FC<OrderRowProps> = ({
       }}>
         {/* Botón 1: Cancelar Pedido */}
         <Button
-          variant="contained"
-          onClick={() => !isCancelDisabled && onCancel(orderId)}
-          disabled={isCancelDisabled}
-          size="small"
-          sx={{
-            padding: '8px 16px',
-            fontSize: '13px',
-            fontWeight: 'bold',
-            textTransform: 'none',
-            backgroundColor: isCancelDisabled ? '#e0e0e0' : '#e0e0e0',
-            color: '#ffffff',
-            border: 'none',
-            borderRadius: '4px',
-            boxShadow: 'none',
-            '&:hover': {
-              backgroundColor: isCancelDisabled ? '#e0e0e0' : '#d0d0d0',
-              boxShadow: 'none',
-            },
-            '&:disabled': {
-              backgroundColor: '#e0e0e0',
-              color: '#ffffff',
-              opacity: 0.7,
-            },
-          }}
-        >
-          Cancelar Pedido
-        </Button>
+  variant="contained"
+  onClick={() => onCancel?.(orderId)}
+  disabled={status === "Enviado" || status === "Cancelado"}
+  sx={{
+    backgroundColor:
+      status === "Enviado" || status === "Cancelado"
+        ? "#B0B0B0"
+        : "#E53935",
+    color: "#FFFFFF",
+    textTransform: "none",
+    cursor:
+      status === "Enviado" || status === "Cancelado"
+        ? "not-allowed"
+        : "pointer",
+    "&:hover": {
+      backgroundColor:
+        status === "Enviado" || status === "Cancelado"
+          ? "#B0B0B0"
+          : "#D32F2F",
+    },
+  }}
+>
+  Cancelar pedido
+</Button>
 
         {/* Botón 2: Volver a Comprar */}
         <Button
