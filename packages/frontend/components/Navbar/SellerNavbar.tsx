@@ -16,7 +16,7 @@ interface SellerNavbarProps {
 const SellerNavbar: React.FC<SellerNavbarProps> = ({
   links = [
     { name: 'HOME', link: '/seller' },
-    { name: 'ADMINISTRAR PEDIDOS', link: '/admin-pedidos' },
+    { name: 'ADMINISTRAR PEDIDOS', link: '/seller/pedidos' },
     { name: 'MIS PRODUCTOS', link: '/mis-productos' }
   ]
 }) => {
