@@ -41,7 +41,6 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
       <Toolbar sx={{ padding: '10px 20px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
 
-          {/* Logo/Nombre de la tienda */}
           <Typography
             variant="h5"
             component="div"
@@ -50,7 +49,6 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
             Tienda Sol
           </Typography>
 
-          {/* Enlaces específicos para el vendedor */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
             {links.map((navLink) => (
               <Box
@@ -62,8 +60,7 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
                 {navLink.name}
               </Box>
             ))}
-
-            {/* Iconos - Solo notificaciones y usuario, NO carrito */}
+  
             <IconButton aria-label="Notificaciones">
               <FiBell size={20} />
             </IconButton>

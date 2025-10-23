@@ -41,7 +41,6 @@ interface NavbarProps {
  * />
  */
 const Navbar: React.FC<NavbarProps> = ({ userType, links, showSearch, searchPlaceholder }) => {
-  // Manejo de qué componente renderizar
   switch (userType) {
     case 'buyer':
       return (
@@ -54,7 +53,6 @@ const Navbar: React.FC<NavbarProps> = ({ userType, links, showSearch, searchPlac
     case 'seller':
       return <SellerNavbar links={links} />;
     default:
-      // Fallback: Si el userType no es válido, mostramos la versión de comprador
       console.warn(`Tipo de usuario desconocido: ${userType}. Mostrando Navbar del Comprador.`);
       return (
         <BuyerNavbar

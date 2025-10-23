@@ -44,7 +44,6 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
       <Toolbar sx={{ padding: '10px 20px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
 
-          {/* Logo/Nombre de la tienda */}
           <Typography
             variant="h5"
             component="div"
@@ -53,7 +52,6 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
             Tienda Sol
           </Typography>
 
-          {/* Búsqueda */}
           {showSearch && (
             <TextField
               size="small"
@@ -89,7 +87,6 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
             />
           )}
 
-          {/* Enlaces y botones */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
             {links.map((navLink) => (
               <Box
@@ -102,7 +99,6 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
               </Box>
             ))}
 
-            {/* Iconos */}
             <IconButton aria-label="Notificaciones">
               <FiBell size={20} />
             </IconButton>

@@ -7,7 +7,6 @@ import { FaTiktok } from 'react-icons/fa';
 const Footer: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Aquí puedes agregar la lógica de suscripción
   };
 
   return (
@@ -20,7 +19,6 @@ const Footer: React.FC = () => {
       }}
     >
       <Container maxWidth="lg">
-        {/* Contenido superior */}
         <Box sx={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
@@ -29,7 +27,6 @@ const Footer: React.FC = () => {
           flexWrap: 'wrap', 
           gap: 4 
         }}>
-          {/* Sección de Logo y Redes Sociales (Izquierda) */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <Typography variant="h4" sx={{ fontWeight: 'bold', marginBottom: 2 }}>
               Tienda Sol
@@ -121,7 +118,6 @@ const Footer: React.FC = () => {
             </Box>
           </Box>
 
-          {/* Sección de Suscripción (Derecha) */}
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <Typography
               variant="body1"
@@ -169,7 +165,6 @@ const Footer: React.FC = () => {
           </Box>
         </Box>
 
-        {/* Franja de Copyright */}
         <Box sx={{ textAlign: 'center', marginTop: 4 }}>
           <Typography variant="body2" sx={{ fontSize: '14px' }}>
             © 2025 tienda sol — Todos los derechos reservados.
