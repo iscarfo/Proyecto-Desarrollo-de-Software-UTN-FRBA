@@ -9,7 +9,7 @@ import { useState } from 'react';
 
 export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = 5;
+  const pageSize = 4; // ahora mostramos 4 pedidos por página
 
   // Datos de ejemplo para OrderRow
   const sampleOrders = [
@@ -18,66 +18,52 @@ export default function Home() {
       status: "Enviado" as const,
       deliveryAddress: "Av. Monroe 3506",
       products: [
-        {
-          name: "Remera blanca",
-          imageUrl: "https://acdn-us.mitiendanube.com/stores/001/203/421/products/an29-110415-removebg-preview-4f8315b62c4aa1287917563899571320-480-0.png",
-          size: "L",
-          quantity: 1
-        }
+        { name: "Remera blanca", imageUrl: "https://acdn-us.mitiendanube.com/stores/001/203/421/products/an29-110415-removebg-preview-4f8315b62c4aa1287917563899571320-480-0.png", size: "L", quantity: 1 }
+      ]
+    },
+    {
+      orderId: "#00002",
+      status: "Pendiente" as const,
+      deliveryAddress: "Av. Rivadavia 9012",
+      products: [
+        { name: "Sweater cremita", imageUrl: "https://acdn-us.mitiendanube.com/stores/242/695/products/1000199931-285643ebaf86c68c2517148343802720-1024-1024.jpg", size: "S", quantity: 1 }
+      ]
+    },
+    {
+      orderId: "#00003",
+      status: "Confirmado" as const,
+      deliveryAddress: "Calle Falsa 123",
+      products: [
+        { name: "Pantalón negro", imageUrl: "https://juanperez.com.ar/cdn/shop/files/5488801.T38_284_29.jpg?v=1729261528", quantity: 2 }
       ]
     },
     {
       orderId: "#00004",
       status: "Cancelado" as const,
-      deliveryAddress: "Av. Santa Fe 5678",
+      deliveryAddress: "Av. Libertador 4500",
       products: [
-        {
-          name: "Jean azul",
-          imageUrl: "https://plataforma.iduo.com.ar/Panelcontenidos/Contenidos/Jean-rica-lewis-american-celeste-clasico-1718307204-0-1.png",
-          size: "44",
-          quantity: 2
-        }
+        { name: "Camisa azul", imageUrl: "https://www.wessi.com/cdn/shop/files/4_59a965a0-1caf-4241-b0aa-e24ed8d5fc5f.jpg?v=1726733385&width=1080", size: "M", quantity: 1 }
       ]
     },
     {
-      orderId: "#00206",
+      orderId: "#00005",
       status: "Pendiente" as const,
-      deliveryAddress: "Av. Rivadavia 9012",
+      deliveryAddress: "Calle Corrientes 2200",
       products: [
-        {
-          name: "Sweater cremita",
-          imageUrl: "https://static.wixstatic.com/media/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png/v1/fill/w_480,h_480,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png",
-          size: "S",
-          quantity: 1
-        }
+        { name: "Zapatillas rojas", imageUrl: "https://http2.mlstatic.com/D_693634-MLA83771250445_042025-O.jpg", size: "42", quantity: 1 }
       ]
     },
-    {
-      orderId: "#01789",
-      status: "Confirmado" as const,
-      deliveryAddress: "Av. Corrientes 1234",
-      products: [
-        {
-          name: "Sweater cremita",
-          imageUrl: "https://static.wixstatic.com/media/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png/v1/fill/w_480,h_480,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png",
-          size: "S",
-          quantity: 1
-        },
-        {
-          name: "Campera negra",
-          imageUrl: "https://static.wixstatic.com/media/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png/v1/fill/w_480,h_480,al_c,q_85,usm_0.66_1.00_0.01,enc_avif,quality_auto/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png",
-          size: "M",
-          quantity: 2
-        },
-        {
-          name: "Jean azul",
-          imageUrl: "https://plataforma.iduo.com.ar/Panelcontenidos/Contenidos/Jean-rica-lewis-american-celeste-clasico-1718307204-0-1.png",
-          size: "42",
-          quantity: 1
-        }
-      ]
-    }
   ];
+
+  const totalPages = Math.ceil(sampleOrders.length / pageSize);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const startIndex = (currentPage - 1) * pageSize;
+  const endIndex = startIndex + pageSize;
+  const paginatedOrders = sampleOrders.slice(startIndex, endIndex);
 
   const handleCancelOrder = (orderId: string) => {
     console.log(`Cancelando pedido: ${orderId}`);
@@ -87,11 +73,6 @@ export default function Home() {
   const handleRepurchase = (orderId: string) => {
     console.log(`Volviendo a comprar: ${orderId}`);
     alert(`Volviendo a comprar pedido ${orderId}`);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-    console.log(`Cambiando a página: ${page}`);
   };
 
   return (
@@ -114,13 +95,13 @@ export default function Home() {
             </Link>
           </Box>
 
-          {/* Sección de ejemplo con OrderRow */}
+          {/* Sección de pedidos con paginación */}
           <Box sx={{ marginBottom: 6 }}>
             <Typography variant="h4" sx={{ marginBottom: 3, fontWeight: 'bold', color: 'primary.main' }}>
-              Ejemplo de Pedidos
+              Algunos de tus pedidos
             </Typography>
-            
-            {sampleOrders.map((order) => (
+
+            {paginatedOrders.map((order) => (
               <OrderRow
                 key={order.orderId}
                 orderId={order.orderId}
@@ -132,17 +113,17 @@ export default function Home() {
                 userType="buyer"
               />
             ))}
+
+            <Box sx={{ marginTop: 4 }}>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </Box>
           </Box>
 
-          {/* Sección de ejemplo con Pagination */}
-          <Box sx={{ marginBottom: 6 }}>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </Box>
-
+          {/* Sección de beneficios */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
             <Box className="bg-white rounded-lg shadow-lg p-6 text-center hover:shadow-xl transition-shadow">
               <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">
