@@ -1,0 +1,137 @@
+.navbar {
+  background-color: #0d1a2f; 
+  color: #ffffff;
+  padding: 10px 20px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.navbar-container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.navbar-brand .logo-text {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ffffff;
+  margin-right: 20px;
+  white-space: nowrap; /* Evita que el logo se rompa */
+}
+
+/* ------------------------------------- */
+/* Estilos Específicos para Comprador */
+/* ------------------------------------- */
+
+.buyer-navbar .search-bar-container {
+  flex-grow: 1; /* Ocupa todo el espacio central disponible */
+  display: flex;
+  align-items: center;
+  position: relative;
+  max-width: 500px; /* Limita el tamaño de la búsqueda si quieres */
+}
+
+.buyer-navbar .search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  background-color: #334057; 
+  color: #ffffff;
+  font-size: 14px;
+  padding-right: 40px; /* Espacio para el ícono de búsqueda */
+}
+
+.buyer-navbar .search-icon {
+  position: absolute;
+  right: 12px;
+  color: #a0a0a0;
+  pointer-events: none; /* Asegura que el ícono no bloquee el input */
+}
+
+/* ------------------------------------- */
+/* Estilos Generales de Enlaces */
+/* ------------------------------------- */
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 15px; 
+}
+
+.nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: background-color 0.3s ease;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.nav-link:hover {
+  background-color: #2a3a52;
+}
+
+.nav-link.home-link {
+  border: 1px solid #ffffff;
+}
+
+.nav-icon-btn {
+  background: none;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 4px;
+  transition: color 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-icon-btn:hover {
+  color: #cccccc; /* Un ligero cambio de color al pasar el ratón */
+}
+
+/* ------------------------------------- */
+/* Estilos Específicos para Vendedor */
+/* ------------------------------------- */
+
+.seller-navbar .navbar-container {
+  /* Al no haber barra de búsqueda en el medio,
+  usamos space-between para empujar los links a la derecha. */
+  justify-content: space-between;
+}
+
+/* 1. ELIMINAR el recuadro blanco permanente del HOME */
+.nav-link.home-link {
+  /* ¡Eliminado! Lo único que queremos es: */
+  border: none;
+}
+
+/* 2. DEFINIR el recuadro blanco para el estado "ACTIVO" o "SELECCIONADO" */
+.nav-link.active-link {
+  border: 1px solid #ffffff; /* Recuadro blanco */
+  background-color: transparent; /* Asegurarse de que el fondo es transparente si hay hover */
+  padding: 5px 10px; /* Mantener el padding para que el recuadro se vea bien */
+}
+
+/* 3. Ajuste de estilos de enlaces generales */
+.nav-link {
+  color: #ffffff;
+  text-decoration: none;
+  font-family: 'Poppins', sans-serif; /* Poppins Regular */
+  font-weight: 400;
+  padding: 5px 10px;
+  border-radius: 4px; /* Puedes quitarlo si quieres esquinas cuadradas */
+  transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+  /* El hover debe ser sutil si no está activo */
+  background-color: #2a3a52; 
+}
