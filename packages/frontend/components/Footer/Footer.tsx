@@ -13,65 +13,128 @@ const Footer: React.FC = () => {
   return (
     <Box
       component="footer"
-      className="bg-platinum py-10 px-5 w-full"
+      sx={{
+        backgroundColor: '#E1E1E1',
+        padding: 5,
+        width: '100%',
+      }}
     >
       <Container maxWidth="lg">
         {/* Contenido superior */}
-        <div className="flex justify-between items-start mb-12 flex-wrap gap-16">
-
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'flex-start', 
+          marginBottom: 6, 
+          flexWrap: 'wrap', 
+          gap: 4 
+        }}>
           {/* Sección de Logo y Redes Sociales (Izquierda) */}
-          <Box className="flex flex-col items-start">
-            <Typography variant="h4" className="font-bold mb-5">
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+            <Typography variant="h4" sx={{ fontWeight: 'bold', marginBottom: 2 }}>
               Tienda Sol
             </Typography>
-            <Typography variant="body1" className="mb-4 font-normal">
+            <Typography variant="body1" sx={{ marginBottom: 2 }}>
               Redes sociales
             </Typography>
-            <div className="flex gap-4">
+            <Box sx={{ display: 'flex', gap: 1 }}>
               <a
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-black rounded flex items-center justify-center hover:bg-oxford-blue transition-colors"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  backgroundColor: 'black',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background-color 0.2s',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14213d'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'black'}
               >
-                <FiFacebook size={20} className="text-white" />
+                <FiFacebook size={20} style={{ color: 'white' }} />
               </a>
               <a
                 href="https://tiktok.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-black rounded flex items-center justify-center hover:bg-oxford-blue transition-colors"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  backgroundColor: 'black',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background-color 0.2s',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14213d'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'black'}
               >
-                <FaTiktok size={20} className="text-white" />
+                <FaTiktok size={20} style={{ color: 'white' }} />
               </a>
               <a
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-black rounded flex items-center justify-center hover:bg-oxford-blue transition-colors"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  backgroundColor: 'black',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background-color 0.2s',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14213d'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'black'}
               >
-                <FiTwitter size={20} className="text-white" />
+                <FiTwitter size={20} style={{ color: 'white' }} />
               </a>
               <a
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-10 h-10 bg-black rounded flex items-center justify-center hover:bg-oxford-blue transition-colors"
+                style={{
+                  width: '40px',
+                  height: '40px',
+                  backgroundColor: 'black',
+                  borderRadius: '4px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'background-color 0.2s',
+                  textDecoration: 'none',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14213d'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'black'}
               >
-                <FiInstagram size={20} className="text-white" />
+                <FiInstagram size={20} style={{ color: 'white' }} />
               </a>
-            </div>
+            </Box>
           </Box>
 
           {/* Sección de Suscripción (Derecha) */}
-          <Box className="flex flex-col items-start">
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
             <Typography
               variant="body1"
-              className="font-black text-lg mb-4 tracking-wider"
+              sx={{
+                fontWeight: 'bold',
+                fontSize: '18px',
+                marginBottom: 2,
+                letterSpacing: '0.1em',
+              }}
             >
               SUBSCRIBITE
             </Typography>
-            <form onSubmit={handleSubmit} className="flex flex-col w-[280px] gap-3">
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', width: '280px', gap: '12px' }}>
               <TextField
                 type="email"
                 placeholder="Ingresa tu mail"
@@ -90,13 +153,13 @@ const Footer: React.FC = () => {
                 variant="contained"
                 fullWidth
                 sx={{
-                  backgroundColor: '#000000',
-                  color: '#ffffff',
+                  backgroundColor: 'black',
+                  color: 'white',
                   borderRadius: 0,
                   padding: '10px 20px',
                   fontWeight: 'bold',
                   '&:hover': {
-                    backgroundColor: '#14213d',
+                    backgroundColor: 'primary.main',
                   },
                 }}
               >
@@ -104,11 +167,11 @@ const Footer: React.FC = () => {
               </Button>
             </form>
           </Box>
-        </div>
+        </Box>
 
         {/* Franja de Copyright */}
-        <Box className="text-center mt-8">
-          <Typography variant="body2" className="text-sm">
+        <Box sx={{ textAlign: 'center', marginTop: 4 }}>
+          <Typography variant="body2" sx={{ fontSize: '14px' }}>
             © 2025 tienda sol — Todos los derechos reservados.
           </Typography>
         </Box>

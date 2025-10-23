@@ -26,16 +26,16 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
   const pathname = usePathname();
 
   const getLinkStyles = (path: string) => ({
-    color: pathname === path ? '#14213d' : '#ffffff',
-    backgroundColor: pathname === path ? '#ffffff' : 'transparent',
+    color: pathname === path ? 'primary.main' : 'inherit',
+    backgroundColor: pathname === path ? 'background.paper' : 'transparent',
     textDecoration: 'none',
     padding: '6px 12px',
     fontSize: '14px',
     fontWeight: 400,
-    borderRadius: '4px',
+    borderRadius: 1,
     transition: 'all 0.2s',
     '&:hover': {
-      backgroundColor: pathname === path ? '#ffffff' : 'rgba(252, 163, 17, 0.15)',
+      backgroundColor: pathname === path ? 'background.paper' : 'rgba(252, 163, 17, 0.15)',
     },
   });
 
@@ -61,8 +61,8 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
               variant="outlined"
               sx={{
                 width: '380px',
-                backgroundColor: '#ffffff',
-                borderRadius: '4px',
+                backgroundColor: 'background.paper',
+                borderRadius: 1,
                 '& .MuiOutlinedInput-root': {
                   '& fieldset': {
                     borderColor: 'transparent',
@@ -103,15 +103,15 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
             ))}
 
             {/* Iconos */}
-            <IconButton aria-label="Notificaciones" sx={{ color: '#ffffff', '&:hover': { color: '#fca311' } }}>
+            <IconButton aria-label="Notificaciones">
               <FiBell size={20} />
             </IconButton>
 
-            <IconButton aria-label="Carrito de compras" sx={{ color: '#ffffff', '&:hover': { color: '#fca311' } }}>
+            <IconButton aria-label="Carrito de compras">
               <FiShoppingCart size={20} />
             </IconButton>
 
-            <IconButton aria-label="Perfil de Usuario" sx={{ color: '#ffffff', '&:hover': { color: '#fca311' } }}>
+            <IconButton aria-label="Perfil de Usuario">
               <FiUser size={20} />
             </IconButton>
           </Box>

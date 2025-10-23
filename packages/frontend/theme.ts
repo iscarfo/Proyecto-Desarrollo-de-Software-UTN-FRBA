@@ -13,7 +13,7 @@ const theme = createTheme({
       contrastText: '#000000',
     },
     background: {
-      default: '#e5e5e5', // platinum
+      default: '#EDEDED', // body background
       paper: '#ffffff',
     },
     text: {
@@ -80,13 +80,29 @@ const theme = createTheme({
           borderRadius: '4px',
           padding: '8px 20px',
           fontWeight: 500,
+          textTransform: 'none',
+        },
+        containedPrimary: {
+          backgroundColor: '#14213d',
+          color: '#ffffff',
+          '&:hover': {
+            backgroundColor: '#0f1a2e',
+          },
         },
         containedSecondary: {
           backgroundColor: '#fca311',
           color: '#000000',
           '&:hover': {
-            backgroundColor: '#14213d',
+            backgroundColor: '#e0903f',
+          },
+        },
+        outlined: {
+          borderColor: '#fca311',
+          color: '#fca311',
+          '&:hover': {
+            backgroundColor: '#fca311',
             color: '#ffffff',
+            borderColor: '#fca311',
           },
         },
       },
@@ -105,6 +121,27 @@ const theme = createTheme({
             '&.Mui-focused fieldset': {
               borderColor: '#fca311',
             },
+          },
+        },
+      },
+    },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontSize: '13px',
+          fontWeight: 500,
+          height: 'auto',
+          padding: '2px 6px',
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          color: '#ffffff',
+          '&:hover': {
+            color: '#fca311',
+            backgroundColor: 'rgba(252, 163, 17, 0.1)',
           },
         },
       },
