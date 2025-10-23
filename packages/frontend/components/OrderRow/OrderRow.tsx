@@ -11,47 +11,48 @@ export interface Product {
   quantity: number;
 }
 
+// --- INTERFAZ MODIFICADA ---
+// Añadimos las props opcionales para el VENDEDOR
 interface OrderRowProps {
   orderId: string;
   status: OrderStatus;
   deliveryAddress: string;
   products: Product[];
-  onCancel: (orderId: string) => void;
-  onRepurchase: (orderId: string) => void;
   userType?: 'buyer' | 'seller';
+
+  // Props del Comprador (ya existían)
+  onCancel?: (orderId: string) => void;
+  onRepurchase?: (orderId: string) => void;
+
+  // Props del Vendedor (NUEVAS)
+  onConfirm?: (orderId: string) => void;
+  onSend?: (orderId: string) => void;
+  onCancelSeller?: (orderId: string) => void;
 }
 
-/**
- * Componente que representa una fila completa de un pedido (Vista Comprador - Diseño Final).
- * Esta versión usa MUI y Tailwind manteniendo los estilos originales.
- *
- * @param orderId - ID del pedido (ej: #00001)
- * @param status - Estado actual del pedido
- * @param deliveryAddress - Dirección de entrega
- * @param products - Lista de productos en el pedido
- * @param onCancel - Función para cancelar el pedido
- * @param onRepurchase - Función para volver a comprar
- */
 const OrderRow: React.FC<OrderRowProps> = ({
   orderId,
   status,
   deliveryAddress,
   products,
+  userType = 'buyer', // Por defecto es 'buyer' si no se especifica
   onCancel,
   onRepurchase,
-  userType
+  onConfirm,
+  onSend,
+  onCancelSeller,
 }) => {
   // Determina el color del chip según el estado
   const getStatusStyles = (currentStatus: OrderStatus) => {
     switch (currentStatus) {
       case 'Enviado':
-        return { bg: '#d4edda', color: '#155724' };
+        return { bg: '#d4edda', color: '#155724' }; // Verde
       case 'Cancelado':
-        return { bg: '#f8d7da', color: '#721c24' };
+        return { bg: '#f8d7da', color: '#721c24' }; // Rojo
       case 'Pendiente':
-        return { bg: '#fff3cd', color: '#856404' };
+        return { bg: '#fff3cd', color: '#856404' }; // Amarillo
       case 'Confirmado':
-        return { bg: '#cce5ff', color: '#004085' };
+        return { bg: '#cce5ff', color: '#004085' }; // Azul
       default:
         return { bg: '#eeeeee', color: '#333' };
     }
@@ -59,8 +60,106 @@ const OrderRow: React.FC<OrderRowProps> = ({
 
   const statusStyles = getStatusStyles(status);
 
-  // El botón de cancelar está DESHABILITADO si el pedido ya está Enviado o Cancelado
-  const isCancelDisabled = ['Enviado', 'Cancelado'].includes(status);
+  // --- LÓGICA DE BOTONES DEL VENDEDOR ---
+  const renderSellerButtons = () => {
+    const isPending = status === 'Pendiente';
+    const isConfirmed = status === 'Confirmado';
+    const isFinished = status === 'Enviado' || status === 'Cancelado';
+
+    // Estilo de los botones del admin (naranja)
+    const adminButtonSx = (disabled: boolean) => ({
+      backgroundColor: disabled ? '#B0B0B0' : '#FB9635',
+      color: '#FFFFFF',
+      textTransform: 'none',
+      fontSize: '13px',
+      fontWeight: 'bold',
+      padding: '8px 16px',
+      border: 'none',
+      borderRadius: '3px',
+      boxShadow: 'none',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      '&:hover': {
+        backgroundColor: disabled ? '#B0B0B0' : '#e8852a',
+        boxShadow: 'none',
+      },
+    });
+
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0, minWidth: '140px' }}>
+        <Button
+          variant="contained"
+          onClick={() => onConfirm?.(orderId)}
+          disabled={!isPending}
+          sx={adminButtonSx(!isPending)}
+        >
+          Confirmar
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => onSend?.(orderId)}
+          disabled={!isConfirmed}
+          sx={adminButtonSx(!isConfirmed)}
+        >
+          Enviar
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => onCancelSeller?.(orderId)}
+          disabled={isFinished}
+          sx={adminButtonSx(isFinished)}
+        >
+          Cancelar
+        </Button>
+      </Box>
+    );
+  };
+
+  // --- LÓGICA DE BOTONES DEL COMPRADOR ---
+  const renderBuyerButtons = () => {
+    const isCancelDisabled = status === 'Enviado' || status === 'Cancelado';
+    return (
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0, minWidth: '140px' }}>
+        <Button
+          variant="contained"
+          onClick={() => onCancel?.(orderId)}
+          disabled={isCancelDisabled}
+          sx={{
+            backgroundColor: isCancelDisabled ? '#B0B0B0' : '#E53935',
+            color: '#FFFFFF',
+            textTransform: 'none',
+            cursor: isCancelDisabled ? 'not-allowed' : 'pointer',
+            '&:hover': {
+              backgroundColor: isCancelDisabled ? '#B0B0B0' : '#D32F2F',
+            },
+          }}
+        >
+          Cancelar pedido
+        </Button>
+        <Button
+          variant="contained"
+          onClick={() => onRepurchase?.(orderId)}
+          size="small"
+          sx={{
+            padding: '8px 16px',
+            fontSize: '13px',
+            fontWeight: 'bold',
+            textTransform: 'none',
+            backgroundColor: '#FB9635',
+            color: '#FFFFFF',
+            border: 'none',
+            borderRadius: '3px',
+            boxShadow: 'none',
+            '&:hover': {
+              backgroundColor: '#e8852a',
+              boxShadow: 'none',
+            },
+          }}
+        >
+          Volver a Comprar
+        </Button>
+      </Box>
+    );
+  };
 
   return (
     <Box
@@ -71,6 +170,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
         marginBottom: 2,
         boxShadow: 1,
         display: 'flex',
+        flexDirection: { xs: 'column', sm: 'row' }, // Apilable en móvil
         justifyContent: 'space-between',
         alignItems: 'flex-start',
         gap: 2,
@@ -78,9 +178,9 @@ const OrderRow: React.FC<OrderRowProps> = ({
         borderColor: 'divider',
       }}
     >
-      <Box sx={{ flexGrow: 1 }}>
+      <Box sx={{ flexGrow: 1, width: '100%' }}>
         {/* ENCABEZADO (Estado, ID y Dirección) */}
-        <Box sx={{ display: 'flex', alignItems: 'baseline', marginBottom: 2, gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'baseline', marginBottom: 2, gap: 1, flexWrap: 'wrap' }}>
           <Chip
             label={status}
             size="small"
@@ -150,64 +250,9 @@ const OrderRow: React.FC<OrderRowProps> = ({
         ))}
       </Box>
 
-      {/* BOTONES DE ACCIÓN (Derecha, apilados) */}
-      <Box sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        gap: 1, 
-        flexShrink: 0, 
-        minWidth: '140px' 
-      }}>
-        {/* Botón 1: Cancelar Pedido */}
-        <Button
-  variant="contained"
-  onClick={() => onCancel?.(orderId)}
-  disabled={status === "Enviado" || status === "Cancelado"}
-  sx={{
-    backgroundColor:
-      status === "Enviado" || status === "Cancelado"
-        ? "#B0B0B0"
-        : "#E53935",
-    color: "#FFFFFF",
-    textTransform: "none",
-    cursor:
-      status === "Enviado" || status === "Cancelado"
-        ? "not-allowed"
-        : "pointer",
-    "&:hover": {
-      backgroundColor:
-        status === "Enviado" || status === "Cancelado"
-          ? "#B0B0B0"
-          : "#D32F2F",
-    },
-  }}
->
-  Cancelar pedido
-</Button>
-
-        {/* Botón 2: Volver a Comprar */}
-        <Button
-          variant="contained"
-          onClick={() => onRepurchase(orderId)}
-          size="small"
-          sx={{
-            padding: '8px 16px',
-            fontSize: '13px',
-            fontWeight: 'bold',
-            textTransform: 'none',
-            backgroundColor: '#FB9635',
-            color: '#FFFFFF',
-            border: 'none',
-            borderRadius: '3px',
-            boxShadow: 'none',
-            '&:hover': {
-              backgroundColor: '#e8852a',
-              boxShadow: 'none',
-            },
-          }}
-        >
-          Volver a Comprar
-        </Button>
+      {/* --- RENDERIZADO CONDICIONAL DE BOTONES --- */}
+      <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
+        {userType === 'seller' ? renderSellerButtons() : renderBuyerButtons()}
       </Box>
     </Box>
   );

@@ -26,6 +26,8 @@ export default function SellerPage() {
           </Box>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            
+            {/* Tarjeta de Mis Productos (sin cambios) */}
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
               <CardContent>
                 <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">
@@ -37,17 +39,21 @@ export default function SellerPage() {
               </CardContent>
             </Card>
 
-            <Card className="shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent>
-                <Typography variant="h5" className="mb-4 text-orange font-bold">
-                  Pedidos
-                </Typography>
-                <Typography variant="body1" className="text-black">
-                  Administra los pedidos de tus clientes
-                </Typography>
-              </CardContent>
-            </Card>
+            {/* Añadimos el componente Link para que envuelva la tarjeta de Pedidos */}
+            <Link href="/seller/pedidos" passHref style={{ textDecoration: 'none' }}>
+              <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                <CardContent>
+                  <Typography variant="h5" className="mb-4 text-orange font-bold">
+                    Pedidos
+                  </Typography>
+                  <Typography variant="body1" className="text-black">
+                    Administra los pedidos de tus clientes
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Link>
 
+            {/* Tarjeta de Estadísticas (sin cambios) */}
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
               <CardContent>
                 <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">
