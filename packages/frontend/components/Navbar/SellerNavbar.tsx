@@ -17,7 +17,7 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
   links = [
     { name: 'HOME', link: '/seller' },
     { name: 'ADMINISTRAR PEDIDOS', link: '/seller/pedidos' },
-    { name: 'MIS PRODUCTOS', link: '/mis-productos' }
+    { name: 'MIS PRODUCTOS', link: '/seller/mis-productos' }
   ]
 }) => {
   const pathname = usePathname();
