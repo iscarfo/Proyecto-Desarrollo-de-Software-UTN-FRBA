@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material';
 import { FiBell, FiUser } from 'react-icons/fi';
 import NextLink from 'next/link';
+import { Link } from '@mui/material';
 
 export interface NavLink {
   name: string;
@@ -44,13 +45,16 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
       <Toolbar sx={{ padding: '10px 20px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
 
-          <Typography
-            variant="h5"
-            component="div"
-            sx={{ fontWeight: 'bold' }}
-          >
-            Tienda Sol
-          </Typography>
+          <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Typography
+              variant="h5"
+              component="div"
+              sx={{ fontWeight: 'bold' }}
+            >
+              Tienda Sol
+            </Typography>
+          </Link>
+
 
           <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
             {links.map((navLink) => (

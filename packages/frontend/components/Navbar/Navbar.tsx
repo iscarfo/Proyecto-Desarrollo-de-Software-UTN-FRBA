@@ -3,6 +3,7 @@ import React from 'react';
 import BuyerNavbar from './BuyerNavbar';
 import SellerNavbar from './SellerNavbar';
 import { NavLink } from './BuyerNavbar';
+import { Link } from '@mui/material';
 
 interface NavbarProps {
   userType: 'buyer' | 'seller';
@@ -76,15 +77,19 @@ const Navbar: React.FC<NavbarProps> = ({
 }) => {
   if (minimal) {
     return (
-      <div style={{
-        backgroundColor: 'var(--oxford-blue)',
-        color: 'white',
-        padding: '16px 24px',
-        fontSize: '22px',
-        fontWeight: 'bold'
-      }}>
-        Tienda Sol
-      </div>
+    <div style={{
+          backgroundColor: 'var(--oxford-blue)',
+          padding: '16px 24px'
+        }}>
+          <Link href="/" style={{
+            color: 'white',
+            fontSize: '22px',
+            fontWeight: 'bold',
+            textDecoration: 'none'
+          }}>
+            Tienda Sol
+          </Link>
+    </div>
     );
   }
 

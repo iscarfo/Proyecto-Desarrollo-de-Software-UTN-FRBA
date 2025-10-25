@@ -4,6 +4,7 @@ import { usePathname } from 'next/navigation';
 import { AppBar, Toolbar, Typography, TextField, IconButton, InputAdornment, Box } from '@mui/material';
 import { FiShoppingCart, FiBell, FiSearch, FiUser } from 'react-icons/fi';
 import NextLink from 'next/link';
+import { Link } from '@mui/material';
 
 export interface NavLink {
   name: string;
@@ -47,13 +48,16 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
       <Toolbar sx={{ padding: '10px 20px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
 
-          <Typography
-            variant="h5"
-            component="div"
-            sx={{ fontWeight: 'bold', marginRight: '24px' }}
-          >
-            Tienda Sol
-          </Typography>
+          <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+            <Typography
+              variant="h5"
+              component="div"
+              sx={{ fontWeight: 'bold', marginRight: '24px' }}
+            >
+              Tienda Sol
+            </Typography>
+          </Link>
+
 
           {showSearch && (
             <TextField
