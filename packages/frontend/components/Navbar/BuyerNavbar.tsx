@@ -3,6 +3,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import { AppBar, Toolbar, Typography, TextField, IconButton, InputAdornment, Box } from '@mui/material';
 import { FiShoppingCart, FiBell, FiSearch, FiUser } from 'react-icons/fi';
+import NextLink from 'next/link';
 
 export interface NavLink {
   name: string;
@@ -18,12 +19,14 @@ interface BuyerNavbarProps {
 const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
   links = [
     { name: 'HOME', link: '/' },
-    { name: 'MIS PEDIDOS', link: '/mis-pedidos' }
+    { name: 'MIS PEDIDOS', link: '/mis-pedidos' },
   ],
   showSearch = true,
   searchPlaceholder = 'Buscar productos, marcas y más...'
 }) => {
   const pathname = usePathname();
+
+  const isNotifications = pathname === '/notificaciones';
 
   const getLinkStyles = (path: string) => ({
     color: pathname === path ? 'primary.main' : 'inherit',
@@ -99,7 +102,13 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
               </Box>
             ))}
 
-            <IconButton aria-label="Notificaciones">
+            <IconButton aria-label="Notificaciones"
+              component={NextLink}
+              href="/notificaciones"
+              sx={{
+                backgroundColor: isNotifications ? 'primary.main' : 'transparent'
+              }}
+            >
               <FiBell size={20} />
             </IconButton>
 

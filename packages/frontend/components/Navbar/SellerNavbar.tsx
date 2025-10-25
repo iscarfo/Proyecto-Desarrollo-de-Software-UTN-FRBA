@@ -3,6 +3,7 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material';
 import { FiBell, FiUser } from 'react-icons/fi';
+import NextLink from 'next/link';
 
 export interface NavLink {
   name: string;
@@ -21,6 +22,8 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
   ]
 }) => {
   const pathname = usePathname();
+
+  const isNotifications = pathname === '/notificaciones';
 
   const getLinkStyles = (path: string) => ({
     color: pathname === path ? 'primary.main' : 'inherit',
@@ -60,8 +63,14 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
                 {navLink.name}
               </Box>
             ))}
-  
-            <IconButton aria-label="Notificaciones">
+
+            <IconButton aria-label="Notificaciones"
+              component={NextLink}
+              href="/notificaciones"
+              sx={{
+                backgroundColor: isNotifications ? 'white' : 'transparent'
+              }}
+            >
               <FiBell size={20} />
             </IconButton>
 
