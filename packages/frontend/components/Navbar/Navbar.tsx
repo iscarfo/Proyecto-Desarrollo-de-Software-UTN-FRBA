@@ -81,7 +81,7 @@ const Navbar: React.FC<NavbarProps> = ({
           backgroundColor: 'var(--oxford-blue)',
           padding: '16px 24px'
         }}>
-          <Link href="/" style={{
+          <Link href="/home" style={{
             color: 'white',
             fontSize: '22px',
             fontWeight: 'bold',

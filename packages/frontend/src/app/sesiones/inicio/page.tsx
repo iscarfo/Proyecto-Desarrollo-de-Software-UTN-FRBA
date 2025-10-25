@@ -54,7 +54,8 @@ export default function LoginPage() {
               fontWeight: 'bold',
               '&:hover': { backgroundColor: '#e68400' }
             }}
-            onClick={handleLogin}
+            //onClick={handleLogin}
+            href='/home'
           >
             Iniciar Sesión
           </Button>

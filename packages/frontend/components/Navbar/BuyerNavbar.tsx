@@ -19,7 +19,7 @@ interface BuyerNavbarProps {
 
 const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
   links = [
-    { name: 'HOME', link: '/' },
+    { name: 'HOME', link: '/home' },
     { name: 'MIS PEDIDOS', link: '/mis-pedidos' },
   ],
   showSearch = true,
@@ -48,7 +48,7 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
       <Toolbar sx={{ padding: '10px 20px' }}>
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '1400px', margin: '0 auto' }}>
 
-          <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <Link href="/home" style={{ textDecoration: 'none', color: 'inherit' }}>
             <Typography
               variant="h5"
               component="div"
