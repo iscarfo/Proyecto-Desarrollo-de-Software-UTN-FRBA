@@ -5,6 +5,7 @@ import { AppBar, Toolbar, Typography, IconButton, Box } from '@mui/material';
 import { FiBell, FiUser } from 'react-icons/fi';
 import NextLink from 'next/link';
 import { Link } from '@mui/material';
+import UsuarioMenu from '@/components/UsuarioMenu/usuarioMenu';
 
 export interface NavLink {
   name: string;
@@ -78,9 +79,7 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
               <FiBell size={20} />
             </IconButton>
 
-            <IconButton aria-label="Perfil de Usuario">
-              <FiUser size={20} />
-            </IconButton>
+            <UsuarioMenu />
           </Box>
         </Box>
       </Toolbar>

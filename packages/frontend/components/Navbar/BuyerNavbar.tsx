@@ -5,6 +5,7 @@ import { AppBar, Toolbar, Typography, TextField, IconButton, InputAdornment, Box
 import { FiShoppingCart, FiBell, FiSearch, FiUser } from 'react-icons/fi';
 import NextLink from 'next/link';
 import { Link } from '@mui/material';
+import UsuarioMenu from '@/components/UsuarioMenu/usuarioMenu';
 
 export interface NavLink {
   name: string;
@@ -120,9 +121,8 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
               <FiShoppingCart size={20} />
             </IconButton>
 
-            <IconButton aria-label="Perfil de Usuario" href="/sesiones/inicio" component={NextLink}>
-              <FiUser size={20} />
-            </IconButton>
+            <UsuarioMenu />
+
           </Box>
         </Box>
       </Toolbar>
