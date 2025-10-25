@@ -121,7 +121,7 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
               <FiShoppingCart size={20} />
             </IconButton>
 
-            <UsuarioMenu />
+            <UsuarioMenu userType="buyer" />
 
           </Box>
         </Box>

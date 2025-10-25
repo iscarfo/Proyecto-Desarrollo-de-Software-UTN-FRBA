@@ -79,7 +79,7 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
               <FiBell size={20} />
             </IconButton>
 
-            <UsuarioMenu />
+            <UsuarioMenu userType="seller" />
           </Box>
         </Box>
       </Toolbar>

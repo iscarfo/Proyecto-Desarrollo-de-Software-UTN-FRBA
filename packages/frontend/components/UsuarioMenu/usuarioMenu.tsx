@@ -1,10 +1,15 @@
 'use client';
 import React, { useState } from 'react';
-import { IconButton, Menu, MenuItem, Avatar } from '@mui/material';
+import { IconButton, Menu, MenuItem, Button } from '@mui/material';
 import { FiUser } from 'react-icons/fi';
 import LogoutIcon from '@mui/icons-material/Logout';
+import Link from 'next/link';
 
-const UsuarioMenu: React.FC = () => {
+interface UsuarioMenuProps {
+  userType: 'buyer' | 'seller';
+}
+
+const UsuarioMenu: React.FC<UsuarioMenuProps> = ({ userType }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
 
@@ -17,10 +22,12 @@ const UsuarioMenu: React.FC = () => {
   };
 
   const handleLogout = () => {
-    // Lógica de cierre de sesión
     console.log('Cerrar sesión');
     handleClose();
   };
+
+  const oppositeView = userType === 'buyer' ? '/seller' : '/home';
+  const oppositeLabel = userType === 'buyer' ? 'Vista de Vendedor' : 'Vista de Comprador';
 
   return (
     <>
@@ -40,7 +47,8 @@ const UsuarioMenu: React.FC = () => {
             color: 'white',
             mt: 1,
             borderRadius: 2,
-            minWidth: 160,
+            minWidth: 180,
+            padding: 2,
           },
         }}
       >
@@ -48,6 +56,18 @@ const UsuarioMenu: React.FC = () => {
           <LogoutIcon fontSize="small" />
           Cerrar sesión
         </MenuItem>
+
+        <Link href={oppositeView} passHref>
+          <Button
+            variant="contained"
+            color="secondary"
+            fullWidth
+            sx={{ mt: 2 }}
+            onClick={handleClose}
+          >
+            {oppositeLabel}
+          </Button>
+        </Link>
       </Menu>
     </>
   );

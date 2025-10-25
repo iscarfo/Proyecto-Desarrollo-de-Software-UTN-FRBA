@@ -18,11 +18,6 @@ export default function SellerPage() {
             <Typography variant="h5" className="text-oxford-blue mb-4">
               Gestiona tus productos y pedidos
             </Typography>
-            <Link href="/" passHref>
-              <Button variant="contained" color="secondary" className="mt-4">
-                Ver Vista de Comprador
-              </Button>
-            </Link>
           </Box>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">

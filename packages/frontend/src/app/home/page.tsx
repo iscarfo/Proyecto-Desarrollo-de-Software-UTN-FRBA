@@ -93,11 +93,7 @@ export default function Home() {
             <Typography variant="h5" className="text-oxford-blue mb-4">
               Tu tienda online de confianza
             </Typography>
-            <Link href="/seller" passHref>
-              <Button variant="contained" color="secondary" className="mt-4">
-                Ver Panel de Vendedor
-              </Button>
-            </Link>
+            
           </Box>
 
           {/*Título */}
