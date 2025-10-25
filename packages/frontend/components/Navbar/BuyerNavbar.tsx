@@ -116,7 +116,7 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
               <FiShoppingCart size={20} />
             </IconButton>
 
-            <IconButton aria-label="Perfil de Usuario">
+            <IconButton aria-label="Perfil de Usuario" href="/sesiones/inicio" component={NextLink}>
               <FiUser size={20} />
             </IconButton>
           </Box>

@@ -9,6 +9,7 @@ interface NavbarProps {
   links?: NavLink[];
   showSearch?: boolean;
   searchPlaceholder?: string;
+  minimal?: boolean;
 }
 
 /**
@@ -40,7 +41,53 @@ interface NavbarProps {
  *   ]}
  * />
  */
+/*
 const Navbar: React.FC<NavbarProps> = ({ userType, links, showSearch, searchPlaceholder }) => {
+  switch (userType) {
+    case 'buyer':
+      return (
+        <BuyerNavbar
+          links={links}
+          showSearch={showSearch}
+          searchPlaceholder={searchPlaceholder}
+        />
+      );
+    case 'seller':
+      return <SellerNavbar links={links} />;
+    default:
+      console.warn(`Tipo de usuario desconocido: ${userType}. Mostrando Navbar del Comprador.`);
+      return (
+        <BuyerNavbar
+          links={links}
+          showSearch={showSearch}
+          searchPlaceholder={searchPlaceholder}
+        />
+      );
+  }
+};*/
+
+
+const Navbar: React.FC<NavbarProps> = ({
+  userType,
+  links,
+  showSearch,
+  searchPlaceholder,
+  minimal = false
+}) => {
+  if (minimal) {
+    return (
+      <div style={{
+        backgroundColor: 'var(--oxford-blue)',
+        color: 'white',
+        padding: '16px 24px',
+        fontSize: '22px',
+        fontWeight: 'bold'
+      }}>
+        Tienda Sol
+      </div>
+    );
+  }
+
   switch (userType) {
     case 'buyer':
       return (
