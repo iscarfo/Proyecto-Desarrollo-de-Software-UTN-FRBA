@@ -23,12 +23,12 @@ interface Props {
   onDelete?: () => void;
 }
 
-const ProductCard: React.FC<Props> = ({ 
-  product, 
+const ProductCard: React.FC<Props> = ({
+  product,
   userType = 'buyer',
-  onAddToCart, 
-  onEdit, 
-  onDelete 
+  onAddToCart,
+  onEdit,
+  onDelete
 }) => {
   // Función para formatear el precio con la moneda correcta
   const formatPrice = (precio: number, moneda: string) => {
@@ -55,6 +55,11 @@ const ProductCard: React.FC<Props> = ({
         alignItems: "center",
         boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
         backgroundColor: "#fff",
+        transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+        ":hover": {
+          transform: "scale(1.03)",
+          boxShadow: "0 6px 16px rgba(0,0,0,0.18)",
+        },
       }}
     >
       {/* Imagen del producto */}
