@@ -117,7 +117,13 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
               <FiBell size={20} />
             </IconButton>
 
-            <IconButton aria-label="Carrito de compras">
+            <IconButton aria-label="Carrito de compras"
+              component={NextLink}
+              href="/carrito"
+              sx={{
+                backgroundColor: isNotifications ? 'primary.main' : 'transparent'
+              }}
+            >
               <FiShoppingCart size={20} />
             </IconButton>
 
