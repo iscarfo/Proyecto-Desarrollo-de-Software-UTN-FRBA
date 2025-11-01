@@ -147,15 +147,22 @@ export default function AdminProductsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-platinum">
-      <Navbar userType="seller" /> {/* Cambia a seller */}
+      <Navbar userType="seller" />
 
-      <main className="flex-grow py-12">
+      <main
+        role="main"
+        aria-label="Sección de productos del vendedor"
+        className="flex-grow py-12"
+      >
         <Container maxWidth="lg" className="flex gap-8">
           {/* ... filtros ... */}
 
           <Box className="flex-1">
-            {/* Productos */}
-            <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-10 place-items-center">
+            <div
+              role="region"
+              aria-label="Listado de productos"
+              className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-10 place-items-center"
+            >
               {paginatedProducts.map((prod) => (
                 <ProductCard
                   key={prod._id}
@@ -167,8 +174,7 @@ export default function AdminProductsPage() {
               ))}
             </div>
 
-            {/* PAGINACIÓN */}
-            <Box sx={{ marginTop: 4 }}>
+            <Box sx={{ marginTop: 4 }} aria-label="Paginación de productos">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

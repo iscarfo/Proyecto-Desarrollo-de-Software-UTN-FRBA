@@ -67,10 +67,9 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar position="static" role="navigation">
         <Toolbar sx={{ px: { xs: 2, md: 3 }, py: 1 }}>
           {isMobile ? (
-            // 📱 Mobile layout
             <Box
               sx={{
                 display: 'flex',
@@ -81,7 +80,6 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 gap: 1
               }}
             >
-              {/* Top Row */}
               <Box
                 sx={{
                   display: 'flex',
@@ -90,12 +88,14 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                   width: '100%'
                 }}
               >
-                {/* Left: Hamburguesa */}
-                <IconButton onClick={toggleDrawer(true)}>
+                <IconButton
+                  aria-label="Abrir menú de navegación"
+                  title="Menú"
+                  onClick={toggleDrawer(true)}
+                >
                   <FiMenu size={22} />
                 </IconButton>
 
-                {/* Center: Logo */}
                 <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
                   <Link href="/home" style={{ textDecoration: 'none', color: 'inherit' }}>
                     <Typography
@@ -108,10 +108,10 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                   </Link>
                 </Box>
 
-                {/* Right: Íconos */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <IconButton
-                    aria-label="Notificaciones"
+                    aria-label="Ver notificaciones"
+                    title="Notificaciones"
                     component={NextLink}
                     href="/notificaciones"
                     sx={{ backgroundColor: isNotifications ? 'primary.main' : 'transparent' }}
@@ -120,7 +120,8 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                   </IconButton>
 
                   <IconButton
-                    aria-label="Carrito de compras"
+                    aria-label="Ver carrito de compras"
+                    title="Carrito"
                     component={NextLink}
                     href="/carrito"
                     sx={{ backgroundColor: isNotifications ? 'primary.main' : 'transparent' }}
@@ -132,13 +133,13 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 </Box>
               </Box>
 
-              {/* Search Bar */}
               {showSearch && (
                 <TextField
                   size="small"
                   placeholder={searchPlaceholder}
                   variant="outlined"
                   fullWidth
+                  aria-label="Buscar productos, marcas y más"
                   sx={{
                     backgroundColor: 'background.paper',
                     borderRadius: 1,
@@ -163,7 +164,6 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
               )}
             </Box>
           ) : (
-            // 💻 Desktop layout (tu versión original)
             <Box
               sx={{
                 display: 'flex',
@@ -174,7 +174,6 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 mx: 'auto'
               }}
             >
-              {/* Logo */}
               <Link href="/home" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <Typography
                   variant="h5"
@@ -185,12 +184,12 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 </Typography>
               </Link>
 
-              {/* Search */}
               {showSearch && (
                 <TextField
                   size="small"
                   placeholder={searchPlaceholder}
                   variant="outlined"
+                  aria-label="Buscar productos, marcas y más"
                   sx={{
                     width: '380px',
                     backgroundColor: 'background.paper',
@@ -215,13 +214,14 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 />
               )}
 
-              {/* Links + Íconos */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
                 {links.map((navLink) => (
                   <Box
                     key={navLink.link}
                     component="a"
                     href={navLink.link}
+                    role="link"
+                    aria-label={`Ir a ${navLink.name}`}
                     sx={getLinkStyles(navLink.link)}
                   >
                     {navLink.name}
@@ -229,7 +229,8 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 ))}
 
                 <IconButton
-                  aria-label="Notificaciones"
+                  aria-label="Ver notificaciones"
+                  title="Notificaciones"
                   component={NextLink}
                   href="/notificaciones"
                   sx={{ backgroundColor: isNotifications ? 'primary.main' : 'transparent' }}
@@ -238,7 +239,8 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 </IconButton>
 
                 <IconButton
-                  aria-label="Carrito de compras"
+                  aria-label="Ver carrito de compras"
+                  title="Carrito"
                   component={NextLink}
                   href="/carrito"
                   sx={{ backgroundColor: isNotifications ? 'primary.main' : 'transparent' }}
@@ -253,12 +255,11 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
         </Toolbar>
       </AppBar>
 
-      {/* Drawer para móviles */}
-      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
+      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)} aria-label="Menú de navegación móvil">
         <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
           <List>
             {links.map((navLink) => (
-              <ListItem key={navLink.link} disablePadding>
+              <ListItem key={navLink.link} disablePadding role="listitem">
                 <ListItemButton component={NextLink} href={navLink.link}>
                   <ListItemText primary={navLink.name} />
                 </ListItemButton>

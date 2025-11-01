@@ -9,7 +9,11 @@ export default function SellerPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar userType="seller" />
 
-      <main className="flex-grow bg-platinum py-12">
+      <main
+        role="main"
+        aria-label="Panel de vendedor"
+        className="flex-grow bg-platinum py-12"
+      >
         <Container maxWidth="lg">
           <Box className="text-center mb-8">
             <Typography
@@ -19,9 +23,9 @@ export default function SellerPage() {
                 color: 'var(--oxford-blue)',
                 mb: 4,
                 fontSize: {
-                  xs: '2rem',     // <600px
-                  sm: '2.5rem',   // 600px–800px
-                  md: '3rem',     // >800px
+                  xs: '2rem',
+                  sm: '2.5rem',
+                  md: '3rem',
                 }
               }}
             >
@@ -32,9 +36,12 @@ export default function SellerPage() {
             </Typography>
           </Box>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            
-            {/* Tarjeta de Mis Productos (sin cambios) */}
+          <div
+            role="region"
+            aria-label="Accesos rápidos del panel"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
+          >
+            {/* Tarjeta de Mis Productos */}
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
               <CardContent>
                 <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">
@@ -46,8 +53,14 @@ export default function SellerPage() {
               </CardContent>
             </Card>
 
-            {/* Añadimos el componente Link para que envuelva la tarjeta de Pedidos */}
-            <Link href="/seller/pedidos" passHref style={{ textDecoration: 'none' }}>
+            {/* Tarjeta de Pedidos con Link accesible */}
+            <Link
+              href="/seller/pedidos"
+              passHref
+              aria-label="Ir a la sección de pedidos"
+              title="Administrar pedidos"
+              style={{ textDecoration: 'none' }}
+            >
               <Card className="shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent>
                   <Typography variant="h5" className="mb-4 text-orange font-bold">
@@ -60,7 +73,7 @@ export default function SellerPage() {
               </Card>
             </Link>
 
-            {/* Tarjeta de Estadísticas (sin cambios) */}
+            {/* Tarjeta de Estadísticas */}
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
               <CardContent>
                 <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">

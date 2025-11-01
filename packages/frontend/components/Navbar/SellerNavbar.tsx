@@ -62,10 +62,9 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
 
   return (
     <>
-      <AppBar position="static">
+      <AppBar position="static" role="navigation">
         <Toolbar sx={{ px: { xs: 2, md: 3 }, py: 1 }}>
           {isMobile ? (
-            // 📱 Mobile layout
             <Box
               sx={{
                 display: 'flex',
@@ -76,12 +75,14 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
                 mx: 'auto'
               }}
             >
-              {/* Left: Hamburguesa */}
-              <IconButton onClick={toggleDrawer(true)}>
+              <IconButton
+                aria-label="Abrir menú de navegación"
+                title="Menú"
+                onClick={toggleDrawer(true)}
+              >
                 <FiMenu size={22} />
               </IconButton>
 
-              {/* Center: Logo */}
               <Box sx={{ flexGrow: 1, textAlign: 'center' }}>
                 <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                   <Typography
@@ -94,10 +95,10 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
                 </Link>
               </Box>
 
-              {/* Right: Íconos */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <IconButton
-                  aria-label="Notificaciones"
+                  aria-label="Ver notificaciones"
+                  title="Notificaciones"
                   component={NextLink}
                   href="/notificaciones"
                   sx={{ backgroundColor: isNotifications ? 'primary.main' : 'transparent' }}
@@ -109,7 +110,6 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
               </Box>
             </Box>
           ) : (
-            // 💻 Desktop layout (tu versión original)
             <Box
               sx={{
                 display: 'flex',
@@ -120,7 +120,6 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
                 mx: 'auto'
               }}
             >
-              {/* Logo */}
               <Link href="/" style={{ textDecoration: 'none', color: 'inherit' }}>
                 <Typography
                   variant="h5"
@@ -131,13 +130,14 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
                 </Typography>
               </Link>
 
-              {/* Links + Íconos */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
                 {links.map((navLink) => (
                   <Box
                     key={navLink.link}
                     component="a"
                     href={navLink.link}
+                    role="link"
+                    aria-label={`Ir a ${navLink.name}`}
                     sx={getLinkStyles(navLink.link)}
                   >
                     {navLink.name}
@@ -145,7 +145,8 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
                 ))}
 
                 <IconButton
-                  aria-label="Notificaciones"
+                  aria-label="Ver notificaciones"
+                  title="Notificaciones"
                   component={NextLink}
                   href="/notificaciones"
                   sx={{ backgroundColor: isNotifications ? 'white' : 'transparent' }}
@@ -160,12 +161,11 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
         </Toolbar>
       </AppBar>
 
-      {/* Drawer para móviles */}
-      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)}>
+      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)} aria-label="Menú de navegación móvil">
         <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
           <List>
             {links.map((navLink) => (
-              <ListItem key={navLink.link} disablePadding>
+              <ListItem key={navLink.link} disablePadding role="listitem">
                 <ListItemButton component={NextLink} href={navLink.link}>
                   <ListItemText primary={navLink.name} />
                 </ListItemButton>

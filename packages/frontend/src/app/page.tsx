@@ -9,6 +9,8 @@ const LandingPage: React.FC = () => {
 
   return (
     <Box
+      role="main"
+      aria-label="Landing page de Tienda Sol"
       sx={{
         display: 'flex',
         flexDirection: { xs: 'column', md: 'row' },
@@ -30,12 +32,22 @@ const LandingPage: React.FC = () => {
           zIndex: 2
         }}
       >
-        <Link href="/sesiones/registro/compradores" passHref>
+        <Link
+          href="/sesiones/registro/compradores"
+          passHref
+          aria-label="Crear cuenta como comprador"
+          title="Crear cuenta"
+        >
           <Button variant="outlined" sx={{ color: 'white', borderColor: 'white' }}>
             Crear Cuenta
           </Button>
         </Link>
-        <Link href="/sesiones/inicio" passHref>
+        <Link
+          href="/sesiones/inicio"
+          passHref
+          aria-label="Iniciar sesión en Tienda Sol"
+          title="Iniciar sesión"
+        >
           <Button variant="outlined" sx={{ color: 'white', borderColor: 'white' }}>
             Iniciar Sesión
           </Button>
@@ -44,6 +56,8 @@ const LandingPage: React.FC = () => {
 
       {/* Sección izquierda */}
       <Box
+        role="region"
+        aria-label="Mensaje de bienvenida"
         sx={{
           flex: 1,
           display: 'flex',
@@ -61,7 +75,7 @@ const LandingPage: React.FC = () => {
             fontWeight: 'bold',
             color: 'orange',
             mb: 2,
-            mt: { xs: 10, sm: 12, md: 0 }, // ← margen arriba solo en mobile/tablet
+            mt: { xs: 10, sm: 12, md: 0 },
             fontFamily: 'var(--font-montserrat)',
             fontSize: {
               xs: '2rem',
@@ -72,7 +86,6 @@ const LandingPage: React.FC = () => {
         >
           Descubre y encuentra tu estilo
         </Typography>
-
 
         <Typography
           variant="body1"
@@ -86,7 +99,12 @@ const LandingPage: React.FC = () => {
           encontrá exactamente lo que buscás.
         </Typography>
 
-        <Link href="/home" passHref>
+        <Link
+          href="/home"
+          passHref
+          aria-label="Ir al catálogo de productos"
+          title="Descubrir productos"
+        >
           <Button variant="outlined" sx={{ backgroundColor: 'white', color: 'black' }}>
             Descubrir Ahora
           </Button>
@@ -102,24 +120,24 @@ const LandingPage: React.FC = () => {
           justifyContent: 'center',
           mt: { xs: 4, md: '10px' },
           pr: { xs: 0, md: '15%' },
-          maxHeight: { xs: '40vh', sm: '50vh', md: '100%' }, // ← limita altura en mobile
+          maxHeight: { xs: '40vh', sm: '50vh', md: '100%' },
           overflow: 'hidden'
         }}
       >
-      <Box
-        component="img"
-        src="/img/modelo_home.png"
-        alt="Modelo Tienda Sol"
-        sx={{
-          width: '100%',
-          height: 'auto',
-          maxHeight: '100%',
-          objectFit: 'contain',
-          borderRadius: 2,
-          boxShadow: '0 0 8px rgba(252, 163, 17, 0.1)',
-          mx: 'auto'
-        }}
-      />
+        <Box
+          component="img"
+          src="/img/modelo_home.png"
+          alt="Modelo Tienda Sol"
+          sx={{
+            width: '100%',
+            height: 'auto',
+            maxHeight: '100%',
+            objectFit: 'contain',
+            borderRadius: 2,
+            boxShadow: '0 0 8px rgba(252, 163, 17, 0.1)',
+            mx: 'auto'
+          }}
+        />
       </Box>
     </Box>
   );

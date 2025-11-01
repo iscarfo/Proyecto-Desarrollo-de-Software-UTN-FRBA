@@ -144,13 +144,17 @@ export default function Home() {
     router.push('/products');
   };
 
-  return (
+    return (
     <div className="min-h-screen flex flex-col">
       <Navbar userType="buyer" />
 
-      <main className="flex-grow py-12" style={{ backgroundColor: '#EDEDED' }}>
+      <main
+        role="main"
+        aria-label="Página principal de Tienda Sol"
+        className="flex-grow py-12"
+        style={{ backgroundColor: '#EDEDED' }}
+      >
         <Container maxWidth="lg">
-
           <Box className="text-center mb-8">
             <Typography
               component="h1"
@@ -159,9 +163,9 @@ export default function Home() {
                 color: 'var(--oxford-blue)',
                 mb: 4,
                 fontSize: {
-                  xs: '2rem',     // <600px
-                  sm: '2.5rem',   // 600px–800px
-                  md: '3rem',     // >800px
+                  xs: '2rem',
+                  sm: '2.5rem',
+                  md: '3rem',
                 }
               }}
             >
@@ -170,11 +174,9 @@ export default function Home() {
             <Typography variant="h5" className="text-oxford-blue mb-4">
               Tu tienda online de confianza
             </Typography>
-            
           </Box>
 
-          {/*Título */}
-          <Box className="text-center mb-14">
+          <Box className="text-center mb-14" role="region" aria-label="Sección Lo más vendido">
             <Typography
               component="h2"
               sx={{
@@ -182,9 +184,9 @@ export default function Home() {
                 color: 'var(--oxford-blue)',
                 mb: 2,
                 fontSize: {
-                  xs: '1.5rem',   // <600px
-                  sm: '1.75rem',  // 600px–800px
-                  md: '2rem',     // >800px
+                  xs: '1.5rem',
+                  sm: '1.75rem',
+                  md: '2rem',
                 }
               }}
             >
@@ -195,7 +197,6 @@ export default function Home() {
             </Typography>
           </Box>
 
-          {/* Productos */}
           <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 place-items-center">
             {paginatedProducts.map((prod) => (
               <ProductCard
@@ -206,43 +207,40 @@ export default function Home() {
             ))}
           </div>
 
-          {/*Ver mas */}
           <Box sx={{ marginTop: 3 }} className="text-center">
             <Button
               onClick={handleVerMas}
               variant="outlined"
               disabled={currentPage === totalPages}
+              aria-label="Ver más productos"
               sx={{ mt: 3 }}
             >
               Ver Más
             </Button>
           </Box>
 
-            {/* Vendedores que más destacan */}
-            <Box className="text-center mb-10 mt-20">
+          <Box className="text-center mb-10 mt-20" role="region" aria-label="Vendedores destacados">
             <Typography variant="h4" className="font-bold text-oxford-blue mb-2">
-                Vendedores que más destacan
+              Vendedores que más destacan
             </Typography>
             <Typography variant="subtitle1" className="text-gray-600">
-                Marcas que están marcando tendencia en Tienda Sol
+              Marcas que están marcando tendencia en Tienda Sol
             </Typography>
-            </Box>
+          </Box>
 
-            {/* Carrusel de marcas */}
-            <Box sx={{ mb: 10 }}>
+          <Box sx={{ mb: 10 }} role="region" aria-label="Carrusel de marcas destacadas">
             <Slider {...sliderSettings}>
-                {marcasDestacadas.map((marca, index) => (
+              {marcasDestacadas.map((marca, index) => (
                 <Box key={index} sx={{ padding: 2, textAlign: 'center' }}>
-                    <img
+                  <img
                     src={marca.logo}
-                    alt={marca.nombre}
+                    alt={`Logo de ${marca.nombre}`}
                     style={{ maxHeight: '80px', margin: '0 auto', objectFit: 'contain' }}
-                    />
+                  />
                 </Box>
-                ))}
+              ))}
             </Slider>
-            </Box>
-
+          </Box>
         </Container>
       </main>
 

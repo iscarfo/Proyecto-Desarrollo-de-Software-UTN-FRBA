@@ -17,6 +17,8 @@ export default function RegisterUserPage() {
     <>
       <Navbar userType="buyer" minimal />
       <Box
+        role="main"
+        aria-label="Formulario de registro"
         sx={{
           display: 'flex',
           flexDirection: 'column',
@@ -26,8 +28,17 @@ export default function RegisterUserPage() {
           backgroundColor: '#f1f1f1'
         }}
       >
-        <Paper elevation={3} sx={{ p: 4, width: 450, textAlign: 'center', borderRadius: 2 }}>
-          <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
+        <Paper
+          elevation={3}
+          role="form"
+          aria-labelledby="registro-title"
+          sx={{ p: 4, width: 450, textAlign: 'center', borderRadius: 2 }}
+        >
+          <Typography
+            id="registro-title"
+            variant="h5"
+            sx={{ mb: 3, fontWeight: 'bold' }}
+          >
             Crear Cuenta
           </Typography>
 
@@ -68,6 +79,7 @@ export default function RegisterUserPage() {
           <Button
             fullWidth
             variant="contained"
+            aria-label="Crear cuenta en Tienda Sol"
             sx={{
               backgroundColor: '#f79533',
               color: '#fff',

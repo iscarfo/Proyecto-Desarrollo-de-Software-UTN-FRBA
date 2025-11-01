@@ -68,7 +68,12 @@ export default function MisPedidosPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar userType="buyer" />
 
-      <main className="flex-grow py-12" style={{ backgroundColor: '#EDEDED' }}>
+      <main
+        role="main"
+        aria-label="Sección de pedidos"
+        className="flex-grow py-12"
+        style={{ backgroundColor: '#EDEDED' }}
+      >
         <Container maxWidth="lg">
           <Typography
             variant="h4"
@@ -77,20 +82,22 @@ export default function MisPedidosPage() {
             Mis Pedidos
           </Typography>
 
-          {paginatedOrders.map((order) => (
-            <OrderRow
-              key={order.orderId}
-              orderId={order.orderId}
-              status={order.status}
-              deliveryAddress={order.deliveryAddress}
-              products={order.products}
-              userType="buyer"
-              onCancel={(id) => console.log("Cancelar pedido", id)}
-              onRepurchase={(id) => console.log("Volver a comprar", id)}
-            />
-          ))}
+          <Box role="region" aria-label="Listado de pedidos">
+            {paginatedOrders.map((order) => (
+              <OrderRow
+                key={order.orderId}
+                orderId={order.orderId}
+                status={order.status}
+                deliveryAddress={order.deliveryAddress}
+                products={order.products}
+                userType="buyer"
+                onCancel={(id) => console.log("Cancelar pedido", id)}
+                onRepurchase={(id) => console.log("Volver a comprar", id)}
+              />
+            ))}
+          </Box>
 
-          <Box sx={{ marginTop: 4 }}>
+          <Box sx={{ marginTop: 4 }} aria-label="Paginación de pedidos">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}

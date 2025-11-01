@@ -14,16 +14,29 @@ export default function LoginPage() {
   return (
     <>
       <Navbar userType="buyer" minimal />
-      <Box sx={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        minHeight: '93vh',
-        backgroundColor: '#f1f1f1'
-      }}>
-        <Paper elevation={3} sx={{ p: 4, width: 340, textAlign: 'center', borderRadius: 2 }}>
-          <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold' }}>
+      <Box
+        role="main"
+        aria-label="Formulario de inicio de sesión"
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '93vh',
+          backgroundColor: '#f1f1f1'
+        }}
+      >
+        <Paper
+          elevation={3}
+          role="form"
+          aria-labelledby="login-title"
+          sx={{ p: 4, width: 340, textAlign: 'center', borderRadius: 2 }}
+        >
+          <Typography
+            id="login-title"
+            variant="h5"
+            sx={{ mb: 3, fontWeight: 'bold' }}
+          >
             Iniciar Sesión
           </Typography>
 
@@ -33,6 +46,7 @@ export default function LoginPage() {
             fullWidth
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            aria-describedby="email-help"
             sx={{ mb: 2 }}
           />
           <TextField
@@ -42,27 +56,41 @@ export default function LoginPage() {
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            aria-describedby="password-help"
             sx={{ mb: 3 }}
           />
 
           <Button
             fullWidth
             variant="contained"
+            aria-label="Iniciar sesión en Tienda Sol"
             sx={{
               backgroundColor: '#f79533',
               color: '#fff',
               fontWeight: 'bold',
               '&:hover': { backgroundColor: '#e68400' }
             }}
-            //onClick={handleLogin}
-            href='/home'
+            href="/home"
           >
             Iniciar Sesión
           </Button>
 
           <Box sx={{ mt: 2 }}>
-            <Link href="/sesiones/registro/compradores" underline="hover">Crear cuenta</Link><br />
-            <Link href="/sesiones/registro/vendedores" underline="hover">Registrarme como vendedor</Link>
+            <Link
+              href="/sesiones/registro/compradores"
+              underline="hover"
+              aria-label="Crear cuenta como comprador"
+            >
+              Crear cuenta
+            </Link>
+            <br />
+            <Link
+              href="/sesiones/registro/vendedores"
+              underline="hover"
+              aria-label="Registrarme como vendedor"
+            >
+              Registrarme como vendedor
+            </Link>
           </Box>
         </Paper>
       </Box>

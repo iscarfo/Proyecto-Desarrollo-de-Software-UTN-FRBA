@@ -12,6 +12,7 @@ const Footer: React.FC = () => {
   return (
     <Box
       component="footer"
+      role="contentinfo"
       sx={{
         backgroundColor: '#c8c8c8ff',
         padding: 5,
@@ -39,6 +40,8 @@ const Footer: React.FC = () => {
                 href="https://facebook.com"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Visitar Facebook de Tienda Sol"
+                title="Facebook"
                 style={{
                   width: '40px',
                   height: '40px',
@@ -59,6 +62,8 @@ const Footer: React.FC = () => {
                 href="https://tiktok.com"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Visitar TikTok de Tienda Sol"
+                title="TikTok"
                 style={{
                   width: '40px',
                   height: '40px',
@@ -79,6 +84,8 @@ const Footer: React.FC = () => {
                 href="https://twitter.com"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Visitar Twitter de Tienda Sol"
+                title="Twitter"
                 style={{
                   width: '40px',
                   height: '40px',
@@ -99,6 +106,8 @@ const Footer: React.FC = () => {
                 href="https://instagram.com"
                 target="_blank"
                 rel="noopener noreferrer"
+                aria-label="Visitar Instagram de Tienda Sol"
+                title="Instagram"
                 style={{
                   width: '40px',
                   height: '40px',
@@ -148,6 +157,7 @@ const Footer: React.FC = () => {
                 type="submit"
                 variant="contained"
                 fullWidth
+                aria-label="Enviar suscripción"
                 sx={{
                   backgroundColor: 'black',
                   color: 'white',

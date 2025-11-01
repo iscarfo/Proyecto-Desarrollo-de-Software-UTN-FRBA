@@ -139,11 +139,19 @@ export default function ProductosPage() {
     <div className="min-h-screen flex flex-col bg-platinum">
       <Navbar userType="buyer" />
 
-      <main className="flex-grow py-12">
+      <main
+        role="main"
+        aria-label="Sección de productos"
+        className="flex-grow py-12"
+      >
         <Container maxWidth="lg" className="flex gap-8">
 
           {/* FILTROS */}
-          <aside className="w-60 hidden md:block bg-white p-4 rounded-lg shadow">
+          <aside
+            role="complementary"
+            aria-label="Filtros de productos"
+            className="w-60 hidden md:block bg-white p-4 rounded-lg shadow"
+          >
             <Typography variant="h6" fontWeight={700} mb={2}>Precio</Typography>
             <TextField fullWidth size="small" label="Min" type="number" sx={{ mb: 1 }} />
             <TextField fullWidth size="small" label="Max" type="number" />
@@ -169,9 +177,11 @@ export default function ProductosPage() {
 
           {/* GRID DE PRODUCTOS */}
           <Box className="flex-1">
-
-            {/* Productos */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center">
+            <div
+              role="region"
+              aria-label="Listado de productos"
+              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center"
+            >
               {paginatedProducts.map((prod) => (
                 <ProductCard
                   key={prod._id}
@@ -182,7 +192,7 @@ export default function ProductosPage() {
             </div>
 
             {/* PAGINACIÓN */}
-            <Box sx={{ marginTop: 4 }}>
+            <Box sx={{ marginTop: 4 }} aria-label="Paginación de productos">
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}

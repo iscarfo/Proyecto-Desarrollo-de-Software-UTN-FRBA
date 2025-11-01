@@ -89,36 +89,39 @@ export default function AdminPedidosPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar userType="seller" />
 
-      <main className="flex-grow py-12" style={{ backgroundColor: '#EDEDED' }}>
+      <main
+        role="main"
+        aria-label="Sección de administración de pedidos"
+        className="flex-grow py-12"
+        style={{ backgroundColor: '#EDEDED' }}
+      >
         <Container maxWidth="lg">
           <Typography
             variant="h4"
-            sx={{ marginBottom: 4, fontWeight: 'bold' , color: 'primary.main'}}
+            sx={{ marginBottom: 4, fontWeight: 'bold', color: 'primary.main' }}
           >
             Administrar pedidos
           </Typography>
 
-          {paginatedOrders.map((order) => (
-            <OrderRow
-              key={order.orderId}
-              orderId={order.orderId}
-              status={order.status}
-              deliveryAddress={order.deliveryAddress}
-              products={order.products}
-              userType="seller" // MUY IMPORTANTE: Le decimos al componente que es la vista de vendedor
-              
-              // Pasamos los handlers del vendedor
-              onConfirm={handleConfirmOrder}
-              onSend={handleSendOrder}
-              onCancelSeller={handleCancelOrderSeller}
+          <Box role="region" aria-label="Listado de pedidos del vendedor">
+            {paginatedOrders.map((order) => (
+              <OrderRow
+                key={order.orderId}
+                orderId={order.orderId}
+                status={order.status}
+                deliveryAddress={order.deliveryAddress}
+                products={order.products}
+                userType="seller"
+                onConfirm={handleConfirmOrder}
+                onSend={handleSendOrder}
+                onCancelSeller={handleCancelOrderSeller}
+                onCancel={() => {}}
+                onRepurchase={() => {}}
+              />
+            ))}
+          </Box>
 
-              // Pasamos dummies para las props de comprador que no usamos aquí
-              onCancel={() => {}}
-              onRepurchase={() => {}}
-            />
-          ))}
-
-          <Box sx={{ marginTop: 4 }}>
+          <Box sx={{ marginTop: 4 }} aria-label="Paginación de pedidos">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
