@@ -11,7 +11,7 @@ import 'slick-carousel/slick/slick-theme.css';
 
 export default function Home() {
   const [currentPage] = useState(1);
-  const pageSize = 3;
+  const pageSize = 8;
 
   const [products] = useState<Product[]>([
     {
@@ -68,7 +68,40 @@ export default function Home() {
       stock: 8,
       totalVendido: 20,
       fotos: ["https://i.postimg.cc/fLj549nq/modazapa.jpg"]
-    }
+    },
+  {
+    _id: "6",
+    vendedor: "yo",
+    titulo: "Gorra Tienda Sol",
+    descripcion: "Unisex, ajustable",
+    precio: 15.99,
+    moneda: "USD",
+    stock: 20,
+    totalVendido: 60,
+    fotos: ["https://assets.adidas.com/images/w_1880,f_auto,q_auto/ff663c5d6fe3482987d73f5d85a9322d_9366/II0702_01_standard.jpg"]
+  },
+  {
+    _id: "7",
+    vendedor: "yo",
+    titulo: "Mochila Urbana",
+    descripcion: "Espaciosa y resistente",
+    precio: 79.99,
+    moneda: "USD",
+    stock: 10,
+    totalVendido: 80,
+    fotos: ["https://i.dell.com/is/image/DellContent/content/dam/ss2/product-images/dell-client-products/peripherals/carrying-cases/cp5625g/media-gallery/backpack-dell-pro-cp5625g-gy-gallery-1.psd?fmt=png-alpha&pscan=auto&scl=1&hei=804&wid=849&qlt=100,1&resMode=sharp2&size=849,804&chrss=full"]
+  },
+  {
+    _id: "8",
+    vendedor: "yo",
+    titulo: "Camisa Blanca",
+    descripcion: "Slim fit, talle M",
+    precio: 49.99,
+    moneda: "USD",
+    stock: 12,
+    totalVendido: 55,
+    fotos: ["https://images.bewakoof.com/original/men-s-white-cotton-shirt-538469-1661765773-1.jpg"]
+  }
   ]);
 
   const marcasDestacadas = [
@@ -119,7 +152,19 @@ export default function Home() {
         <Container maxWidth="lg">
 
           <Box className="text-center mb-8">
-            <Typography variant="h2" component="h1" className="mb-4 font-bold text-oxford-blue">
+            <Typography
+              component="h1"
+              sx={{
+                fontWeight: 'bold',
+                color: 'var(--oxford-blue)',
+                mb: 4,
+                fontSize: {
+                  xs: '2rem',     // <600px
+                  sm: '2.5rem',   // 600px–800px
+                  md: '3rem',     // >800px
+                }
+              }}
+            >
               Bienvenido a Tienda Sol
             </Typography>
             <Typography variant="h5" className="text-oxford-blue mb-4">
@@ -130,7 +175,19 @@ export default function Home() {
 
           {/*Título */}
           <Box className="text-center mb-14">
-            <Typography variant="h3" className="font-bold text-oxford-blue mb-2">
+            <Typography
+              component="h2"
+              sx={{
+                fontWeight: 'bold',
+                color: 'var(--oxford-blue)',
+                mb: 2,
+                fontSize: {
+                  xs: '1.5rem',   // <600px
+                  sm: '1.75rem',  // 600px–800px
+                  md: '2rem',     // >800px
+                }
+              }}
+            >
               Lo más vendido
             </Typography>
             <Typography variant="subtitle1" className="text-gray-600">
@@ -139,7 +196,7 @@ export default function Home() {
           </Box>
 
           {/* Productos */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center">
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 place-items-center">
             {paginatedProducts.map((prod) => (
               <ProductCard
                 key={prod._id}

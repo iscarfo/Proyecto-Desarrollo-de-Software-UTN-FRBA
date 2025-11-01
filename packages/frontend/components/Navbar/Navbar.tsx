@@ -3,7 +3,7 @@ import React from 'react';
 import BuyerNavbar from './BuyerNavbar';
 import SellerNavbar from './SellerNavbar';
 import { NavLink } from './BuyerNavbar';
-import { Link } from '@mui/material';
+import { Link, Box } from '@mui/material';
 
 interface NavbarProps {
   userType: 'buyer' | 'seller';
@@ -12,61 +12,6 @@ interface NavbarProps {
   searchPlaceholder?: string;
   minimal?: boolean;
 }
-
-/**
- * Componente de barra de navegación principal.
- * Renderiza la versión para comprador o vendedor según el 'userType'.
- *
- * @param {string} userType - Debe ser 'buyer' o 'seller'.
- * @param {NavLink[]} links - Array de objetos con { name: string, link: string }
- * @param {boolean} showSearch - Mostrar barra de búsqueda (solo para buyer)
- * @param {string} searchPlaceholder - Placeholder de la barra de búsqueda
- *
- * @example
- * // Buyer con links personalizados
- * <Navbar
- *   userType="buyer"
- *   links={[
- *     { name: 'HOME', link: '/' },
- *     { name: 'MIS PEDIDOS', link: '/mis-pedidos' }
- *   ]}
- * />
- *
- * @example
- * // Seller con links personalizados
- * <Navbar
- *   userType="seller"
- *   links={[
- *     { name: 'HOME', link: '/seller' },
- *     { name: 'PEDIDOS', link: '/admin-pedidos' }
- *   ]}
- * />
- */
-/*
-const Navbar: React.FC<NavbarProps> = ({ userType, links, showSearch, searchPlaceholder }) => {
-  switch (userType) {
-    case 'buyer':
-      return (
-        <BuyerNavbar
-          links={links}
-          showSearch={showSearch}
-          searchPlaceholder={searchPlaceholder}
-        />
-      );
-    case 'seller':
-      return <SellerNavbar links={links} />;
-    default:
-      console.warn(`Tipo de usuario desconocido: ${userType}. Mostrando Navbar del Comprador.`);
-      return (
-        <BuyerNavbar
-          links={links}
-          showSearch={showSearch}
-          searchPlaceholder={searchPlaceholder}
-        />
-      );
-  }
-};*/
-
 
 const Navbar: React.FC<NavbarProps> = ({
   userType,
@@ -77,19 +22,25 @@ const Navbar: React.FC<NavbarProps> = ({
 }) => {
   if (minimal) {
     return (
-    <div style={{
+      <Box
+        sx={{
           backgroundColor: 'var(--oxford-blue)',
-          padding: '16px 24px'
-        }}>
-          <Link href="/home" style={{
+          px: { xs: 2, md: 3 },
+          py: { xs: 1, md: 2 }
+        }}
+      >
+        <Link
+          href="/home"
+          sx={{
             color: 'white',
-            fontSize: '22px',
+            fontSize: { xs: '18px', md: '22px' },
             fontWeight: 'bold',
             textDecoration: 'none'
-          }}>
-            Tienda Sol
-          </Link>
-    </div>
+          }}
+        >
+          Tienda Sol
+        </Link>
+      </Box>
     );
   }
 

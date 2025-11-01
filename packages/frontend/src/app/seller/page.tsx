@@ -12,7 +12,19 @@ export default function SellerPage() {
       <main className="flex-grow bg-platinum py-12">
         <Container maxWidth="lg">
           <Box className="text-center mb-8">
-            <Typography variant="h2" component="h1" className="mb-4 font-bold text-oxford-blue">
+            <Typography
+              component="h1"
+              sx={{
+                fontWeight: 'bold',
+                color: 'var(--oxford-blue)',
+                mb: 4,
+                fontSize: {
+                  xs: '2rem',     // <600px
+                  sm: '2.5rem',   // 600px–800px
+                  md: '3rem',     // >800px
+                }
+              }}
+            >
               Panel de Vendedor
             </Typography>
             <Typography variant="h5" className="text-oxford-blue mb-4">

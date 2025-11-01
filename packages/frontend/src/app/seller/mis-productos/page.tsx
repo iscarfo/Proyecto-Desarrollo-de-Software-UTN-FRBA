@@ -155,7 +155,7 @@ export default function AdminProductsPage() {
 
           <Box className="flex-1">
             {/* Productos */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center">
+            <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-10 place-items-center">
               {paginatedProducts.map((prod) => (
                 <ProductCard
                   key={prod._id}
