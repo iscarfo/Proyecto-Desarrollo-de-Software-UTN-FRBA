@@ -3,16 +3,25 @@ import React, { useState } from "react";
 import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer/Footer";
 import ProductCard, { Product } from "@/components/ProductCard/ProductCard";
-import Pagination from "@/components/Pagination/Pagination"; // ← Agregar esta importación
-import { Container, Box, Typography, Divider, TextField } from "@mui/material";
+import Pagination from "@/components/Pagination/Pagination";
+import {
+  Container,
+  Box,
+  Typography,
+  TextField,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button
+} from "@mui/material";
 
 export default function AdminProductsPage() {
-
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6; // productos por página
+  const pageSize = 6;
 
   // Datos de ejemplo TEMPORALES
-  const [products] = useState<Product[]>([
+  const [products, setProducts] = useState<Product[]>([
     {
       _id: "1",
       vendedor: "yo",
@@ -125,24 +134,35 @@ export default function AdminProductsPage() {
     }
   ]);
 
-  const totalPages = Math.ceil(products.length / pageSize);
+ const totalPages = Math.ceil(products.length / pageSize);
+  const startIndex = (currentPage - 1) * pageSize;
+  const paginatedProducts = products.slice(startIndex, startIndex + pageSize);
+
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedProducts = products.slice(startIndex, endIndex);
-
   const handleEdit = (productId: string) => {
-    console.log("Editar producto:", productId);
-    // aca modal de edición
+    const productToEdit = products.find(p => p._id === productId);
+    if (productToEdit) {
+      setEditingProduct(productToEdit);
+    }
   };
 
   const handleDelete = (productId: string) => {
     console.log("Eliminar producto:", productId);
-    // aca modal de confirmación
+    // modal de confirmación si querés
+  };
+
+  const handleSaveChanges = () => {
+    if (!editingProduct) return;
+    setProducts(prev =>
+      prev.map(p => (p._id === editingProduct._id ? editingProduct : p))
+    );
+    console.log("Producto actualizado:", editingProduct);
+    setEditingProduct(null);
   };
 
   return (
@@ -155,7 +175,7 @@ export default function AdminProductsPage() {
         className="flex-grow py-12"
       >
         <Container maxWidth="lg" className="flex gap-8">
-          {/* ... filtros ... */}
+          {/* Filtros si querés */}
 
           <Box className="flex-1">
             <div
@@ -184,6 +204,69 @@ export default function AdminProductsPage() {
           </Box>
         </Container>
       </main>
+
+      {editingProduct && (
+        <Dialog
+          open={!!editingProduct}
+          onClose={() => setEditingProduct(null)}
+          aria-labelledby="editar-producto"
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle id="editar-producto">Editar producto</DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              label="Título"
+              variant="outlined"
+              fullWidth
+              value={editingProduct.titulo}
+              onChange={(e) =>
+                setEditingProduct(prev =>
+                  prev ? { ...prev, titulo: e.target.value } : prev
+                )
+              }
+            />
+            <TextField
+              label="Descripción"
+              fullWidth
+              value={editingProduct.descripcion}
+              onChange={(e) =>
+                setEditingProduct(prev =>
+                  prev ? { ...prev, descripcion: e.target.value } : prev
+                )
+              }
+            />
+            <TextField
+              label="Precio"
+              type="number"
+              fullWidth
+              value={editingProduct.precio}
+              onChange={(e) =>
+                setEditingProduct(prev =>
+                  prev ? { ...prev, precio: parseFloat(e.target.value) } : prev
+                )
+              }
+            />
+            <TextField
+              label="Stock"
+              type="number"
+              fullWidth
+              value={editingProduct.stock}
+              onChange={(e) =>
+                setEditingProduct(prev =>
+                  prev ? { ...prev, stock: parseInt(e.target.value) } : prev
+                )
+              }
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditingProduct(null)}>Cancelar</Button>
+            <Button variant="contained" onClick={handleSaveChanges}>
+              Guardar
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
 
       <Footer />
     </div>
