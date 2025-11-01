@@ -9,11 +9,43 @@ export default function RegisterStorePage() {
   const [telefono, setTelefono] = useState('')
   const [password, setPassword] = useState('')
 
+  const [errors, setErrors] = useState({
+    email: '',
+    nombreTienda: '',
+    telefono: '',
+    password: ''
+  })
+
+  const validateEmail = (value: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+
+  const validateNombreTienda = (value: string) =>
+    /^[A-Za-zÁÉÍÓÚáéíóúÑñ0-9\s]{2,}$/.test(value)
+
+  const validateTelefono = (value: string) =>
+    /^[0-9]{6,}$/.test(value)
+
+  const validatePassword = (value: string) =>
+    value.length >= 6
+
   const handleRegister = () => {
+    const newErrors = {
+      email: validateEmail(email) ? '' : 'Ingresá un correo válido',
+      nombreTienda: validateNombreTienda(nombreTienda) ? '' : 'Ingresá un nombre válido',
+      telefono: validateTelefono(telefono) ? '' : 'Ingresá un teléfono válido',
+      password: validatePassword(password) ? '' : 'La contraseña debe tener al menos 6 caracteres'
+    }
+
+    setErrors(newErrors)
+
+    const hasErrors = Object.values(newErrors).some((msg) => msg !== '')
+    if (hasErrors) return
+
     console.log('Registrarse vendedor:', { email, nombreTienda, telefono, password })
+    // continuar con el registro...
   }
 
-  return(
+  return (
     <>
       <Navbar userType="seller" minimal />
       <Box
@@ -51,6 +83,8 @@ export default function RegisterStorePage() {
             fullWidth
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            error={!!errors.email}
+            helperText={errors.email}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -59,6 +93,8 @@ export default function RegisterStorePage() {
             fullWidth
             value={nombreTienda}
             onChange={(e) => setNombreTienda(e.target.value)}
+            error={!!errors.nombreTienda}
+            helperText={errors.nombreTienda}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -67,6 +103,8 @@ export default function RegisterStorePage() {
             fullWidth
             value={telefono}
             onChange={(e) => setTelefono(e.target.value)}
+            error={!!errors.telefono}
+            helperText={errors.telefono}
             sx={{ mb: 2 }}
           />
           <TextField
@@ -76,6 +114,8 @@ export default function RegisterStorePage() {
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            error={!!errors.password}
+            helperText={errors.password}
             sx={{ mb: 3 }}
           />
 

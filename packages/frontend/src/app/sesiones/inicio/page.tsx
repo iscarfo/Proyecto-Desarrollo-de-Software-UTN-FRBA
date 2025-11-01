@@ -6,9 +6,27 @@ import Navbar from '@/components/Navbar/Navbar'
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [errors, setErrors] = useState({ email: '', password: '' })
+
+  const validateEmail = (value: string) =>
+    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)
+
+  const validatePassword = (value: string) =>
+    value.length >= 6
 
   const handleLogin = () => {
+    const newErrors = {
+      email: validateEmail(email) ? '' : 'Ingresá un correo válido',
+      password: validatePassword(password) ? '' : 'La contraseña debe tener al menos 6 caracteres'
+    }
+
+    setErrors(newErrors)
+
+    const hasErrors = Object.values(newErrors).some((msg) => msg !== '')
+    if (hasErrors) return
+
     console.log('Iniciar sesión con:', email, password)
+    // continuar con autenticación...
   }
 
   return (
@@ -46,6 +64,8 @@ export default function LoginPage() {
             fullWidth
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            error={!!errors.email}
+            helperText={errors.email}
             aria-describedby="email-help"
             sx={{ mb: 2 }}
           />
@@ -56,6 +76,8 @@ export default function LoginPage() {
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            error={!!errors.password}
+            helperText={errors.password}
             aria-describedby="password-help"
             sx={{ mb: 3 }}
           />
@@ -70,7 +92,7 @@ export default function LoginPage() {
               fontWeight: 'bold',
               '&:hover': { backgroundColor: '#e68400' }
             }}
-            href="/home"
+            onClick={handleLogin}
           >
             Iniciar Sesión
           </Button>
