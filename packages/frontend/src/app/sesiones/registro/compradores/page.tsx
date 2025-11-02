@@ -28,6 +28,20 @@ export default function RegisterUserPage() {
   const validatePassword = (value: string) =>
     value.length >= 6
 
+  const handleBlur = (field: keyof typeof errors, value: string) => {
+    setErrors((prev) => ({
+      ...prev,
+      [field]:
+        field === 'email'
+          ? validateEmail(value) ? '' : 'Ingresá un correo válido'
+          : field === 'nombre'
+          ? validateNombre(value) ? '' : 'Ingresá un nombre válido'
+          : field === 'telefono'
+          ? validateTelefono(value) ? '' : 'Ingresá un teléfono válido'
+          : validatePassword(value) ? '' : 'La contraseña debe tener al menos 6 caracteres'
+    }))
+  }
+
   const handleRegister = () => {
     const newErrors = {
       email: validateEmail(email) ? '' : 'Ingresá un correo válido',
@@ -80,6 +94,7 @@ export default function RegisterUserPage() {
             fullWidth
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => handleBlur('email', email)}
             error={!!errors.email}
             helperText={errors.email}
             sx={{ mb: 2 }}
@@ -90,6 +105,7 @@ export default function RegisterUserPage() {
             fullWidth
             value={nombre}
             onChange={(e) => setNombre(e.target.value)}
+            onBlur={() => handleBlur('nombre', nombre)}
             error={!!errors.nombre}
             helperText={errors.nombre}
             sx={{ mb: 2 }}
@@ -100,6 +116,7 @@ export default function RegisterUserPage() {
             fullWidth
             value={telefono}
             onChange={(e) => setTelefono(e.target.value)}
+            onBlur={() => handleBlur('telefono', telefono)}
             error={!!errors.telefono}
             helperText={errors.telefono}
             sx={{ mb: 2 }}
@@ -111,6 +128,7 @@ export default function RegisterUserPage() {
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onBlur={() => handleBlur('password', password)}
             error={!!errors.password}
             helperText={errors.password}
             sx={{ mb: 3 }}

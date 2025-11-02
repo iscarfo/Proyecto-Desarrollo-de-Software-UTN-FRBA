@@ -29,6 +29,16 @@ export default function LoginPage() {
     // continuar con autenticación...
   }
 
+  const handleBlur = (field: 'email' | 'password', value: string) => {
+    setErrors((prev) => ({
+      ...prev,
+      [field]:
+        field === 'email'
+          ? validateEmail(value) ? '' : 'Ingresá un correo válido'
+          : validatePassword(value) ? '' : 'La contraseña debe tener al menos 6 caracteres'
+    }));
+  };
+
   return (
     <>
       <Navbar userType="buyer" minimal />
@@ -64,6 +74,7 @@ export default function LoginPage() {
             fullWidth
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            onBlur={() => handleBlur('email', email)}
             error={!!errors.email}
             helperText={errors.email}
             aria-describedby="email-help"
@@ -76,6 +87,7 @@ export default function LoginPage() {
             fullWidth
             value={password}
             onChange={(e) => setPassword(e.target.value)}
+            onBlur={() => handleBlur('password', password)}
             error={!!errors.password}
             helperText={errors.password}
             aria-describedby="password-help"

@@ -4,6 +4,7 @@ import { IconButton, Menu, MenuItem, Button } from '@mui/material';
 import { FiUser } from 'react-icons/fi';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 interface UsuarioMenuProps {
   userType: 'buyer' | 'seller';
@@ -12,6 +13,8 @@ interface UsuarioMenuProps {
 const UsuarioMenu: React.FC<UsuarioMenuProps> = ({ userType }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+  const router = useRouter();
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -24,6 +27,7 @@ const UsuarioMenu: React.FC<UsuarioMenuProps> = ({ userType }) => {
   const handleLogout = () => {
     console.log('Cerrar sesión');
     handleClose();
+    router.push('/');
   };
 
   const oppositeView = userType === 'buyer' ? '/seller' : '/home';
