@@ -31,6 +31,7 @@ interface BuyerNavbarProps {
   links?: NavLink[];
   showSearch?: boolean;
   searchPlaceholder?: string;
+  onSearch?: (text: string) => void;
 }
 
 const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
@@ -39,13 +40,15 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
     { name: 'MIS PEDIDOS', link: '/mis-pedidos' },
   ],
   showSearch = true,
-  searchPlaceholder = 'Buscar productos, marcas y más...'
+  searchPlaceholder = 'Buscar productos, marcas y más...',
+  onSearch
 }) => {
   const pathname = usePathname();
   const theme = useTheme();
   const isMobile = useMediaQuery('(max-width:980px)');
   const isNotifications = pathname === '/notificaciones';
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [searchText, setSearchText] = useState(''); // estado del input
 
   const toggleDrawer = (open: boolean) => () => {
     setDrawerOpen(open);
@@ -64,6 +67,13 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
       backgroundColor: pathname === path ? 'background.paper' : 'rgba(252, 163, 17, 0.15)',
     },
   });
+
+  // función que llama al callback del padre
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchText(value);
+    if (onSearch) onSearch(value);
+  };
 
   return (
     <>
@@ -139,6 +149,8 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                   placeholder={searchPlaceholder}
                   variant="outlined"
                   fullWidth
+                  value={searchText}
+                  onChange={handleSearchChange} // filtra al escribir
                   aria-label="Buscar productos, marcas y más"
                   sx={{
                     backgroundColor: 'background.paper',
@@ -190,6 +202,8 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                   placeholder={searchPlaceholder}
                   variant="outlined"
                   aria-label="Buscar productos, marcas y más"
+                  value={searchText}
+                  onChange={handleSearchChange} 
                   sx={{
                     width: '380px',
                     backgroundColor: 'background.paper',
@@ -259,7 +273,7 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
         <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
           <List>
             {links.map((navLink) => (
-              <ListItem key={navLink.link} disablePadding role="listitem">
+              <ListItem key={navLink.link} disablePadding>
                 <ListItemButton component={NextLink} href={navLink.link}>
                   <ListItemText primary={navLink.name} />
                 </ListItemButton>

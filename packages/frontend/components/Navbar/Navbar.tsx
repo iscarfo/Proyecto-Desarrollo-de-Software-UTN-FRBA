@@ -11,6 +11,7 @@ interface NavbarProps {
   showSearch?: boolean;
   searchPlaceholder?: string;
   minimal?: boolean;
+  onSearch?: (value: string) => void;
 }
 
 const Navbar: React.FC<NavbarProps> = ({
@@ -18,7 +19,8 @@ const Navbar: React.FC<NavbarProps> = ({
   links,
   showSearch,
   searchPlaceholder,
-  minimal = false
+  minimal = false,
+  onSearch,
 }) => {
   if (minimal) {
     return (
@@ -26,7 +28,7 @@ const Navbar: React.FC<NavbarProps> = ({
         sx={{
           backgroundColor: 'var(--oxford-blue)',
           px: { xs: 2, md: 3 },
-          py: { xs: 1, md: 2 }
+          py: { xs: 1, md: 2 },
         }}
       >
         <Link
@@ -35,7 +37,7 @@ const Navbar: React.FC<NavbarProps> = ({
             color: 'white',
             fontSize: { xs: '18px', md: '22px' },
             fontWeight: 'bold',
-            textDecoration: 'none'
+            textDecoration: 'none',
           }}
         >
           Tienda Sol
@@ -51,6 +53,7 @@ const Navbar: React.FC<NavbarProps> = ({
           links={links}
           showSearch={showSearch}
           searchPlaceholder={searchPlaceholder}
+          onSearch={onSearch}
         />
       );
     case 'seller':
@@ -62,6 +65,7 @@ const Navbar: React.FC<NavbarProps> = ({
           links={links}
           showSearch={showSearch}
           searchPlaceholder={searchPlaceholder}
+          onSearch={onSearch}
         />
       );
   }
