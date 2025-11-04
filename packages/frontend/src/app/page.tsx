@@ -26,12 +26,12 @@ const LandingPage: React.FC = () => {
           gap: 2
         }}
       >
-        <Link href="/sesiones/registro/compradores" passHref>
+        <Link href="/registro" passHref>
           <Button variant="outlined" sx={{ color: 'white', borderColor: 'white' }}>
             Crear Cuenta
           </Button>
         </Link>
-        <Link href="/sesiones/inicio" passHref>
+        <Link href="/inicio-sesion" passHref>
           <Button variant="outlined" sx={{ color: 'white', borderColor: 'white' }}>
             Iniciar Sesión
           </Button>

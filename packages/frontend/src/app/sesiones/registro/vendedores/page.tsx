@@ -1,18 +1,10 @@
 'use client'
-import React, { useState } from 'react'
-import { Box, Button, TextField, Typography, Paper } from '@mui/material'
+import React from 'react'
+import { Box, Paper, Typography } from '@mui/material'
 import Navbar from '@/components/Navbar/Navbar'
+import { SignUp } from '@clerk/nextjs'
 
 export default function RegisterStorePage() {
-  const [email, setEmail] = useState('')
-  const [nombreTienda, setNombreTienda] = useState('')
-  const [telefono, setTelefono] = useState('')
-  const [password, setPassword] = useState('')
-
-  const handleRegister = () => {
-    console.log('Registrarse vendedor:', { email, nombreTienda, telefono, password })
-  }
-
   return (
     <>
       <Navbar userType="seller" minimal />
@@ -26,7 +18,7 @@ export default function RegisterStorePage() {
           backgroundColor: '#f1f1f1'
         }}
       >
-        <Paper elevation={3} sx={{ p: 4, width: 450, textAlign: 'center', borderRadius: 2 }}>
+        <Paper elevation={3} sx={{ p: 4, width: 'auto', textAlign: 'center', borderRadius: 2 }}>
           <Typography variant="h5" sx={{ mb: 1, fontWeight: 'bold' }}>
             ¡Bienvenido al equipo!
           </Typography>
@@ -34,53 +26,28 @@ export default function RegisterStorePage() {
             Creá tu cuenta y empezá a vender tus prendas al mundo
           </Typography>
 
-          <TextField
-            label="E-mail"
-            variant="outlined"
-            fullWidth
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Nombre de la tienda"
-            variant="outlined"
-            fullWidth
-            value={nombreTienda}
-            onChange={(e) => setNombreTienda(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Teléfono"
-            variant="outlined"
-            fullWidth
-            value={telefono}
-            onChange={(e) => setTelefono(e.target.value)}
-            sx={{ mb: 2 }}
-          />
-          <TextField
-            label="Contraseña"
-            type="password"
-            variant="outlined"
-            fullWidth
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            sx={{ mb: 3 }}
-          />
-
-          <Button
-            fullWidth
-            variant="contained"
-            sx={{
-              backgroundColor: '#f79533',
-              color: '#fff',
-              fontWeight: 'bold',
-              '&:hover': { backgroundColor: '#e68400' }
+          <SignUp
+            appearance={{
+              elements: {
+                rootBox: {
+                  width: '450px',
+                },
+                card: {
+                  boxShadow: 'none',
+                },
+                headerTitle: {
+                  fontWeight: 'bold',
+                },
+                formButtonPrimary: {
+                  backgroundColor: '#f79533',
+                  '&:hover': {
+                    backgroundColor: '#e68400',
+                  },
+                },
+              },
             }}
-            onClick={handleRegister}
-          >
-            Crear cuenta
-          </Button>
+            unsafeMetadata={{ role: 'seller' }}
+          />
         </Paper>
       </Box>
     </>

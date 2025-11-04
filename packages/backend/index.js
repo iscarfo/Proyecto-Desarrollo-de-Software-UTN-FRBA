@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { clerkMiddleware } from '@clerk/express';
 import { createPedidoRouter } from "./routes/pedidoRoutes.js";
 import { PedidoRepository } from "./repositories/pedidoRepository.js";
 import { PedidoService } from "./services/pedidoService.js";
@@ -14,7 +15,7 @@ import { UsuarioRepository } from "./repositories/usuarioRepository.js";
 import { NotificacionesService } from "./services/notificacionesService.js";
 import { NotificacionesController } from "./controllers/notificacionesController.js";
 import { connectDB } from "./config/database.js";
-import { initTestData } from "./config/testData.js"; // TODO: REMOVER EN PRODUCCIÓN
+import { initTestData } from "./config/testData.js";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 import path from "path";
@@ -37,6 +38,11 @@ app.use(
     credentials: true
   }),
 );
+
+app.use(clerkMiddleware({
+  secretKey: process.env.CLERK_SECRET_KEY,
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+}));
 
 // Conectar a MongoDB
 await connectDB();

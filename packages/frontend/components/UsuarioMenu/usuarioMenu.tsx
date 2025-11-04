@@ -4,6 +4,8 @@ import { IconButton, Menu, MenuItem, Button } from '@mui/material';
 import { FiUser } from 'react-icons/fi';
 import LogoutIcon from '@mui/icons-material/Logout';
 import Link from 'next/link';
+import { useClerk, useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 
 interface UsuarioMenuProps {
   userType: 'buyer' | 'seller';
@@ -12,6 +14,9 @@ interface UsuarioMenuProps {
 const UsuarioMenu: React.FC<UsuarioMenuProps> = ({ userType }) => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+  const { signOut } = useClerk();
+  const { user } = useUser();
+  const router = useRouter();
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -21,13 +26,26 @@ const UsuarioMenu: React.FC<UsuarioMenuProps> = ({ userType }) => {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
-    console.log('Cerrar sesión');
+  const handleLogout = async () => {
+    await signOut();
     handleClose();
+    router.push('/inicio-sesion');
   };
 
   const oppositeView = userType === 'buyer' ? '/seller' : '/home';
   const oppositeLabel = userType === 'buyer' ? 'Vista de Vendedor' : 'Vista de Comprador';
+
+  if (!user) {
+    return (
+      <IconButton
+        aria-label="Iniciar sesión"
+        onClick={() => router.push('/inicio-sesion')}
+        sx={{ color: 'white' }}
+      >
+        <FiUser size={20} />
+      </IconButton>
+    );
+  }
 
   return (
     <>
