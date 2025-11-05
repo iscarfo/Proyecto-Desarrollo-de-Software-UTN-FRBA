@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   AppBar,
   Toolbar,
@@ -15,11 +15,11 @@ import {
   ListItemButton,
   ListItemText,
   useMediaQuery,
-  useTheme
+  useTheme,
+  Link
 } from '@mui/material';
 import { FiShoppingCart, FiBell, FiSearch, FiMenu } from 'react-icons/fi';
 import NextLink from 'next/link';
-import { Link } from '@mui/material';
 import UsuarioMenu from '@/components/UsuarioMenu/usuarioMenu';
 
 export interface NavLink {
@@ -45,18 +45,35 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
 }) => {
   const pathname = usePathname();
   const theme = useTheme();
+  const router = useRouter();
   const isMobile = useMediaQuery('(max-width:980px)');
   const isNotifications = pathname === '/notificaciones';
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [searchText, setSearchText] = useState(''); // estado del input
+  const [searchText, setSearchText] = useState('');
 
   const toggleDrawer = (open: boolean) => () => {
     setDrawerOpen(open);
   };
 
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchText(value);
+    if (onSearch) onSearch(value);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const query = searchText.trim();
+    if (query) {
+      router.push(`/products?search=${encodeURIComponent(query)}`);
+    } else {
+      router.push('/products');
+    }
+  };
+
   const getLinkStyles = (path: string) => ({
-    color: pathname === path ? 'primary.main' : 'inherit',
-    backgroundColor: pathname === path ? 'background.paper' : 'transparent',
+    color: pathname === path ? theme.palette.primary.main : 'inherit',
+    backgroundColor: pathname === path ? theme.palette.background.paper : 'transparent',
     textDecoration: 'none',
     padding: '6px 12px',
     fontSize: '14px',
@@ -64,20 +81,54 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
     borderRadius: 1,
     transition: 'all 0.2s',
     '&:hover': {
-      backgroundColor: pathname === path ? 'background.paper' : 'rgba(252, 163, 17, 0.15)',
+      backgroundColor:
+        pathname === path ? theme.palette.background.paper : 'rgba(252, 163, 17, 0.15)',
     },
   });
 
-  // función que llama al callback del padre
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchText(value);
-    if (onSearch) onSearch(value);
-  };
+  const SearchField = (
+    <Box
+      component="form"
+      onSubmit={handleSearchSubmit}
+      sx={{ width: isMobile ? '100%' : '380px' }}
+    >
+      <TextField
+        fullWidth
+        size="small"
+        placeholder={searchPlaceholder}
+        variant="outlined"
+        value={searchText}
+        onChange={handleSearchChange}
+        aria-label="Buscar productos, marcas y más"
+        sx={{
+          backgroundColor: 'background.paper',
+          borderRadius: 1,
+          '& .MuiOutlinedInput-root': {
+            '& fieldset': { borderColor: 'transparent' },
+            '&:hover fieldset': { borderColor: 'transparent' },
+            '&.Mui-focused fieldset': { borderColor: 'transparent' },
+          },
+          '& .MuiInputBase-input': {
+            padding: '8px 12px',
+            fontSize: '14px',
+          },
+        }}
+        InputProps={{
+          startAdornment: (
+            <InputAdornment position="start">
+              <IconButton type="submit" aria-label="Buscar">
+                <FiSearch size={18} style={{ color: '#666' }} />
+              </IconButton>
+            </InputAdornment>
+          ),
+        }}
+      />
+    </Box>
+  );
 
   return (
     <>
-      <AppBar position="static" role="navigation">
+      <AppBar position="static" role="navigation" color="inherit" elevation={1}>
         <Toolbar sx={{ px: { xs: 2, md: 3 }, py: 1 }}>
           {isMobile ? (
             <Box
@@ -87,15 +138,16 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 width: '100%',
                 maxWidth: '1400px',
                 mx: 'auto',
-                gap: 1
+                gap: 1,
               }}
             >
+              {/* Header superior móvil */}
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  width: '100%'
+                  width: '100%',
                 }}
               >
                 <IconButton
@@ -124,7 +176,9 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                     title="Notificaciones"
                     component={NextLink}
                     href="/notificaciones"
-                    sx={{ backgroundColor: isNotifications ? 'primary.main' : 'transparent' }}
+                    sx={{
+                      backgroundColor: isNotifications ? 'primary.main' : 'transparent',
+                    }}
                   >
                     <FiBell size={20} />
                   </IconButton>
@@ -134,7 +188,6 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                     title="Carrito"
                     component={NextLink}
                     href="/carrito"
-                    sx={{ backgroundColor: isNotifications ? 'primary.main' : 'transparent' }}
                   >
                     <FiShoppingCart size={20} />
                   </IconButton>
@@ -143,37 +196,8 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 </Box>
               </Box>
 
-              {showSearch && (
-                <TextField
-                  size="small"
-                  placeholder={searchPlaceholder}
-                  variant="outlined"
-                  fullWidth
-                  value={searchText}
-                  onChange={handleSearchChange} // filtra al escribir
-                  aria-label="Buscar productos, marcas y más"
-                  sx={{
-                    backgroundColor: 'background.paper',
-                    borderRadius: 1,
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': { borderColor: 'transparent' },
-                      '&:hover fieldset': { borderColor: 'transparent' },
-                      '&.Mui-focused fieldset': { borderColor: 'transparent' },
-                    },
-                    '& .MuiInputBase-input': {
-                      padding: '8px 12px',
-                      fontSize: '14px',
-                    },
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <FiSearch size={18} style={{ color: '#666' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
+              {/* Barra de búsqueda móvil */}
+              {showSearch && SearchField}
             </Box>
           ) : (
             <Box
@@ -183,7 +207,7 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 justifyContent: 'space-between',
                 width: '100%',
                 maxWidth: '1400px',
-                mx: 'auto'
+                mx: 'auto',
               }}
             >
               <Link href="/home" style={{ textDecoration: 'none', color: 'inherit' }}>
@@ -196,37 +220,7 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 </Typography>
               </Link>
 
-              {showSearch && (
-                <TextField
-                  size="small"
-                  placeholder={searchPlaceholder}
-                  variant="outlined"
-                  aria-label="Buscar productos, marcas y más"
-                  value={searchText}
-                  onChange={handleSearchChange} 
-                  sx={{
-                    width: '380px',
-                    backgroundColor: 'background.paper',
-                    borderRadius: 1,
-                    '& .MuiOutlinedInput-root': {
-                      '& fieldset': { borderColor: 'transparent' },
-                      '&:hover fieldset': { borderColor: 'transparent' },
-                      '&.Mui-focused fieldset': { borderColor: 'transparent' },
-                    },
-                    '& .MuiInputBase-input': {
-                      padding: '8px 12px',
-                      fontSize: '14px',
-                    },
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <FiSearch size={18} style={{ color: '#666' }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              )}
+              {showSearch && SearchField}
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: '16px', marginLeft: 'auto' }}>
                 {links.map((navLink) => (
@@ -269,7 +263,13 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
         </Toolbar>
       </AppBar>
 
-      <Drawer anchor="left" open={drawerOpen} onClose={toggleDrawer(false)} aria-label="Menú de navegación móvil">
+      {/* Drawer lateral móvil */}
+      <Drawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={toggleDrawer(false)}
+        aria-label="Menú de navegación móvil"
+      >
         <Box sx={{ width: 250 }} role="presentation" onClick={toggleDrawer(false)}>
           <List>
             {links.map((navLink) => (

@@ -1,206 +1,220 @@
 'use client';
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer/Footer";
 import ProductCard, { Product } from "@/components/ProductCard/ProductCard";
-import Pagination from "@/components/Pagination/Pagination"; // ← Agregar esta importación
-import { Container, Box, Typography, Divider, TextField } from "@mui/material";
+import Pagination from "@/components/Pagination/Pagination";
+import {
+  Container,
+  Box,
+  Typography,
+  Divider,
+  TextField,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
+import axios from "axios";
 
 export default function ProductosPage() {
-
+  const [products, setProducts] = useState<Product[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 6; // productos por página
+  const [totalPages, setTotalPages] = useState(1);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Datos de ejemplo TEMPORALES
-  const [products] = useState<Product[]>([
-    {
-      _id: "1",
-      vendedor: "yo",
-      titulo: "Remera Cremita",
-      descripcion: "Talle M. Algodón",
-      precio: 39.99,
-      moneda: "DOLAR_USA",
-      stock: 12,
-      totalVendido: 102,
-      fotos: ["https://i.postimg.cc/2yrvnctP/remera.jpg"]
-    },
-    {
-      _id: "2",
-      vendedor: "yo",
-      titulo: "Bolsa Tienda Sol",
-      descripcion: "Perfecta para tu día a día",
-      precio: 59.99,
-      moneda: "DOLAR_USA",
-      stock: 5,
-      totalVendido: 100,
-      fotos: ["https://i.postimg.cc/4dBtbbTd/bolso.jpg"]
-    },
-    {
-      _id: "3",
-      vendedor: "yo",
-      titulo: "Zapatillas Tienda Sol",
-      descripcion: "Cómodas y a la moda",
-      precio: 49.99,
-      moneda: "DOLAR_USA",
-      stock: 8,
-      totalVendido: 98,
-      fotos: ["https://i.postimg.cc/BQDbJcwm/zapas.jpg", "https://i.postimg.cc/501qm2Yh/remeron-bordo.jpg"]
-    },
-    {
-      _id: "4",
-      vendedor: "yo",
-      titulo: "Remera Roja",
-      descripcion: "Oversize",
-      precio: 19.99,
-      moneda: "DOLAR_USA",
-      stock: 8,
-      totalVendido: 25,
-      fotos: ["https://i.postimg.cc/501qm2Yh/remeron-bordo.jpg"]
-    },
-    {
-      _id: "5",
-      vendedor: "yo",
-      titulo: "Zapatillas Deportivas",
-      descripcion: "Cómodas y a la moda",
-      precio: 49.99,
-      moneda: "DOLAR_USA",
-      stock: 8,
-      totalVendido: 20,
-      fotos: ["https://i.postimg.cc/fLj549nq/modazapa.jpg"]
-    },
-    {
-      _id: "6",
-      vendedor: "yo",
-      titulo: "Remera Blanca",
-      descripcion: "Talle L. Algodón premium",
-      precio: 35.99,
-      moneda: "DOLAR_USA",
-      stock: 15,
-      totalVendido: 89,
-      fotos: ["https://acdn-us.mitiendanube.com/stores/001/203/421/products/an29-110415-removebg-preview-4f8315b62c4aa1287917563899571320-480-0.png"]
-    },
-    {
-      _id: "7",
-      vendedor: "yo",
-      titulo: "Sweater Cremita",
-      descripcion: "Talle S. Suave y abrigado",
-      precio: 69.99,
-      moneda: "DOLAR_USA",
-      stock: 10,
-      totalVendido: 76,
-      fotos: ["https://static.wixstatic.com/media/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png"]
-    },
-    {
-      _id: "8",
-      vendedor: "yo",
-      titulo: "Pantalón Negro",
-      descripcion: "Clásico y versátil",
-      precio: 79.99,
-      moneda: "DOLAR_USA",
-      stock: 14,
-      totalVendido: 65,
-      fotos: ["https://juanperez.com.ar/cdn/shop/files/5488801.T38_284_29.jpg?v=1729261528"]
-    },
-    {
-      _id: "9",
-      vendedor: "yo",
-      titulo: "Camisa Azul",
-      descripcion: "Talle M. Perfecta para ocasiones formales",
-      precio: 54.99,
-      moneda: "DOLAR_USA",
-      stock: 9,
-      totalVendido: 58,
-      fotos: ["https://www.wessi.com/cdn/shop/files/4_59a965a0-1caf-4241-b0aa-e24ed8d5fc5f.jpg?v=1726733385&width=1080"]
-    },
-    {
-      _id: "10",
-      vendedor: "yo",
-      titulo: "Zapatillas Rojas",
-      descripcion: "Talle 42. Estilo deportivo",
-      precio: 89.99,
-      moneda: "DOLAR_USA",
-      stock: 6,
-      totalVendido: 45,
-      fotos: ["https://http2.mlstatic.com/D_693634-MLA83771250445_042025-O.jpg"]
+  // filtros
+  const [nombre, setNombre] = useState("");
+  const [precioMin, setPrecioMin] = useState("");
+  const [precioMax, setPrecioMax] = useState("");
+  const [categoria, setCategoria] = useState("");
+  const [sort, setSort] = useState("");
+
+  const pageSize = 6;
+
+  // estado del buscador del Navbar
+  const [searchTerm, setSearchTerm] = useState("");
+
+  //leer params de la url
+  const searchParams = useSearchParams();
+
+  //cuando cambia el parámetro "search" en la URL, actualizamos el estado
+  useEffect(() => {
+    const param = searchParams.get("search");
+    if (param) {
+      setSearchTerm(param);
     }
-  ]);
+  }, [searchParams]);
 
-  const totalPages = Math.ceil(products.length / pageSize);
+  const fetchProducts = async (page = currentPage, search = searchTerm) => {
+    setLoading(true);
+    setError(null);
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
+    try {
+      const params: Record<string, string> = {
+        page: page.toString(),
+        limit: pageSize.toString(),
+      };
+
+      // si hay un término de búsqueda, lo enviamos como filtro de texto
+      if (search) params.nombre = search;
+      if (precioMin) params.precioMin = precioMin;
+      if (precioMax) params.precioMax = precioMax;
+      if (categoria) params.categoria = categoria;
+      if (sort) params.sort = sort;
+
+      const res = await axios.get("http://localhost:3001/productos", { params });
+
+      setProducts(res.data.data || []);
+      setTotalPages(res.data.totalPaginas || 1);
+    } catch (err) {
+      console.error(err);
+      setError("No se pudieron cargar los productos.");
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const endIndex = startIndex + pageSize;
-  const paginatedProducts = products.slice(startIndex, endIndex);
+  // Fetch inicial o cuando cambian filtros / sort / pagina
+  useEffect(() => {
+    fetchProducts();
+  }, [currentPage, sort]);
+
+  //busqueda en navbar
+  useEffect(() => {
+    const delay = setTimeout(() => {
+      setCurrentPage(1);
+      fetchProducts(1, searchTerm);
+    }, 500); // debounce: espera medio segundo antes de buscar
+    return () => clearTimeout(delay);
+  }, [searchTerm]);
+
+  // Aplica filtros y reinicia a página 1
+  const handleApplyFilters = () => {
+    setCurrentPage(1);
+    fetchProducts(1);
+  };
+
+  // cambio de pagina
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+    fetchProducts(page);
+  };
 
   return (
     <div className="min-h-screen flex flex-col bg-platinum">
-      <Navbar userType="buyer" />
+      {/*Navbar con buscador */}
+      <Navbar
+        userType="buyer"
+        showSearch={true}
+        searchPlaceholder="Buscar productos..."
+        onSearch={setSearchTerm}
+      />
 
-      <main
-        role="main"
-        aria-label="Sección de productos"
-        className="flex-grow py-12"
-      >
+      <main role="main" aria-label="Sección de productos" className="flex-grow py-12">
         <Container maxWidth="lg" className="flex gap-8">
 
           {/* FILTROS */}
-          <aside
-            role="complementary"
-            aria-label="Filtros de productos"
-            className="w-60 hidden md:block bg-white p-4 rounded-lg shadow"
-          >
+          <aside className="w-60 hidden md:block bg-white p-4 rounded-lg shadow">
             <Typography variant="h6" fontWeight={700} mb={2}>Precio</Typography>
-            <TextField fullWidth size="small" label="Min" type="number" sx={{ mb: 1 }} />
-            <TextField fullWidth size="small" label="Max" type="number" />
+            <TextField
+              fullWidth
+              size="small"
+              label="Min"
+              type="number"
+              value={precioMin}
+              onChange={(e) => setPrecioMin(e.target.value)}
+              sx={{ mb: 1 }}
+            />
+            <TextField
+              fullWidth
+              size="small"
+              label="Max"
+              type="number"
+              value={precioMax}
+              onChange={(e) => setPrecioMax(e.target.value)}
+            />
 
             <Divider sx={{ my: 3 }} />
 
-            <Typography variant="h6" fontWeight={700} mb={2}>Categorías</Typography>
-            <ul className="text-gray-700 space-y-1">
-              <li>remeras</li>
-              <li>pantalones</li>
-              <li>sweaters</li>
-            </ul>
+            <Typography variant="h6" fontWeight={700} mb={2}>Categoría</Typography>
+            <TextField
+              fullWidth
+              size="small"
+              placeholder="Ej: remeras"
+              value={categoria}
+              onChange={(e) => setCategoria(e.target.value)}
+            />
 
             <Divider sx={{ my: 3 }} />
 
             <Typography variant="h6" fontWeight={700} mb={2}>Ordenar por</Typography>
-            <ul className="text-gray-700 space-y-1">
-              <li>Más vendidos</li>
-              <li>Mayor precio</li>
-              <li>Menor precio</li>
-            </ul>
+            <FormControl fullWidth size="small">
+              <InputLabel>Orden</InputLabel>
+              <Select
+                value={sort}
+                label="Orden"
+                onChange={(e) => {
+                  setSort(e.target.value);
+                  setCurrentPage(1);
+                }}
+              >
+                <MenuItem value="">Predeterminado</MenuItem>
+                <MenuItem value="mas_vendidos">Más vendidos</MenuItem>
+                <MenuItem value="precio_asc">Menor precio</MenuItem>
+                <MenuItem value="precio_desc">Mayor precio</MenuItem>
+              </Select>
+            </FormControl>
+
+            <Button
+              variant="contained"
+              fullWidth
+              sx={{ mt: 3 }}
+              onClick={handleApplyFilters}
+            >
+              Aplicar filtros
+            </Button>
           </aside>
 
           {/* GRID DE PRODUCTOS */}
           <Box className="flex-1">
-            <div
-              role="region"
-              aria-label="Listado de productos"
-              className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center"
-            >
-              {paginatedProducts.map((prod) => (
-                <ProductCard
-                  key={prod._id}
-                  product={prod}
-                  onAddToCart={() => alert("Agregar al carrito: " + prod.titulo)}
-                />
-              ))}
-            </div>
+            {loading && (
+              <Typography align="center" mt={4}>Cargando productos...</Typography>
+            )}
+            {error && (
+              <Typography color="error" align="center" mt={4}>{error}</Typography>
+            )}
+            {!loading && !error && products.length === 0 && (
+              <Typography align="center" mt={4}>No se encontraron productos.</Typography>
+            )}
+            {!loading && !error && products.length > 0 && (
+              <>
+                <div
+                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center"
+                >
+                  {products.map((prod) => (
+                    <ProductCard
+                      key={prod._id}
+                      product={prod}
+                      onAddToCart={() => alert("Agregar al carrito: " + prod.titulo)}
+                    />
+                  ))}
+                </div>
 
-            {/* PAGINACIÓN */}
-            <Box sx={{ marginTop: 4 }} aria-label="Paginación de productos">
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-              />
-            </Box>
+                {/* PAGINACIÓN */}
+                <Box sx={{ marginTop: 4 }} aria-label="Paginación de productos">
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                </Box>
+              </>
+            )}
           </Box>
-
         </Container>
       </main>
 
