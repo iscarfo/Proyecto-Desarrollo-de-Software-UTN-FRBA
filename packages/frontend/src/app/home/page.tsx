@@ -11,43 +11,25 @@ import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 
 export default function Home() {
-  const [currentPage] = useState(1);
-  const pageSize = 8;
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-
   const router = useRouter();
 
-  // Fetch de productos al cargar la página
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get('http://localhost:3000/productos');
-        console.log('Datos del backend:', res.data);
+        const res = await axios.get('http://localhost:3001/productos?page=1&limit=3&sort=mas_vendidos');
         setProducts(res.data.data || []);
-      } catch (err: any) {
-        console.error('Error al obtener productos:', err);
-        setError('No se pudieron cargar los productos');
+      } catch (err) {
+        console.error(err);
+        setError('No se pudieron cargar los productos.');
       } finally {
         setLoading(false);
       }
     };
-
     fetchProducts();
   }, []);
-
-  // Filtrado por búsqueda
-  const filteredProducts = products.filter((p) =>
-    p.titulo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    p.descripcion.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // Paginación (sobre los productos filtrados)
-  const totalPages = Math.ceil(filteredProducts.length / pageSize);
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedProducts = filteredProducts.slice(startIndex, startIndex + pageSize);
 
   const handleVerMas = () => {
     router.push('/products');
@@ -85,10 +67,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar userType="buyer" 
-      showSearch={true}
-      searchPlaceholder="Buscar productos..."
-      onSearch={setSearchTerm}/>
+      <Navbar userType="buyer" />
 
       <main
         role="main"
@@ -97,105 +76,95 @@ export default function Home() {
         style={{ backgroundColor: '#EDEDED' }}
       >
         <Container maxWidth="lg">
+          {/* Título principal */}
+          <Box className="text-center mb-8">
+            <Typography
+              component="h1"
+              sx={{
+                fontWeight: 'bold',
+                color: 'var(--oxford-blue)',
+                mb: 4,
+                fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
+              }}
+            >
+              Bienvenido a Tienda Sol
+            </Typography>
+            <Typography variant="h5" className="text-oxford-blue mb-4">
+              Tu tienda online de confianza
+            </Typography>
+          </Box>
 
-          {/* Loading / Error states */}
-          {loading && <Typography>Cargando productos...</Typography>}
-          {error && <Typography color="error">{error}</Typography>}
+          {/* Sección Lo más vendido */}
+          <Box className="text-center mb-14" role="region" aria-label="Sección Lo más vendido">
+            <Typography
+              component="h2"
+              sx={{
+                fontWeight: 'bold',
+                color: 'var(--oxford-blue)',
+                mb: 2,
+                fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+              }}
+            >
+              Lo más vendido
+            </Typography>
+            <Typography variant="subtitle1" className="text-gray-600">
+              Súmate a la tendencia con nuestra cuidada selección de los estilos más vendidos.
+            </Typography>
+          </Box>
 
-          {!loading && !error && (
-            <>
-              <Box className="text-center mb-8">
-                <Typography
-                  component="h1"
-                  sx={{
-                    fontWeight: 'bold',
-                    color: 'var(--oxford-blue)',
-                    mb: 4,
-                    fontSize: {
-                      xs: '2rem',
-                      sm: '2.5rem',
-                      md: '3rem',
-                    },
-                  }}
-                >
-                  Bienvenido a Tienda Sol
-                </Typography>
-                <Typography variant="h5" className="text-oxford-blue mb-4">
-                  Tu tienda online de confianza
-                </Typography>
-              </Box>
+          {/* Productos */}
+          <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 place-items-center">
+            {loading && <Typography>Cargando productos...</Typography>}
+            {error && <Typography color="error">{error}</Typography>}
+            {!loading && !error && products.map((prod) => (
+              <ProductCard
+                key={prod._id}
+                product={prod}
+                onAddToCart={() => alert(`Agregar al carrito: ${prod.titulo}`)}
+              />
+            ))}
+          </div>
 
-              <Box className="text-center mb-14" role="region" aria-label="Sección Lo más vendido">
-                <Typography
-                  component="h2"
-                  sx={{
-                    fontWeight: 'bold',
-                    color: 'var(--oxford-blue)',
-                    mb: 2,
-                    fontSize: {
-                      xs: '1.5rem',
-                      sm: '1.75rem',
-                      md: '2rem',
-                    },
-                  }}
-                >
-                  Lo más vendido
-                </Typography>
-                <Typography variant="subtitle1" className="text-gray-600 mb-6">
-                  Súmate a la tendencia con nuestra cuidada selección de los estilos más vendidos.
-                </Typography>
-              </Box>
+          {/* Botón Ver Más */}
+          <Box sx={{ marginTop: 3 }} className="text-center">
+            <Button
+              onClick={handleVerMas}
+              variant="outlined"
+              aria-label="Ver más productos"
+              sx={{ mt: 3 }}
+            >
+              Ver Más
+            </Button>
+          </Box>
 
-              {/* Grilla de productos */}
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 place-items-center">
-                {paginatedProducts.map((prod) => (
-                  <ProductCard
-                    key={prod._id}
-                    product={prod}
-                    onAddToCart={() => alert("Agregar al carrito: " + prod.titulo)}
+          {/* Marcas destacadas */}
+          <Box className="text-center mb-10 mt-20" role="region" aria-label="Vendedores destacados">
+            <Typography variant="h4" className="font-bold text-oxford-blue mb-2">
+              Vendedores que más destacan
+            </Typography>
+            <Typography variant="subtitle1" className="text-gray-600">
+              Marcas que están marcando tendencia en Tienda Sol
+            </Typography>
+          </Box>
+
+          {/* Carrusel */}
+          <Box sx={{ mb: 10 }} role="region" aria-label="Carrusel de marcas destacadas">
+            <Slider {...sliderSettings}>
+              {marcasDestacadas.map((marca, index) => (
+                <Box key={index} sx={{ padding: 2, textAlign: 'center' }}>
+                  <img
+                    src={marca.logo}
+                    alt={`Logo de ${marca.nombre}`}
+                    style={{
+                      maxHeight: '80px',
+                      margin: '0 auto',
+                      objectFit: 'contain',
+                    }}
                   />
-                ))}
-              </div>
-
-              {/* Botón Ver más */}
-              <Box sx={{ marginTop: 3 }} className="text-center">
-                <Button
-                  onClick={handleVerMas}
-                  variant="outlined"
-                  disabled={currentPage === totalPages}
-                  aria-label="Ver más productos"
-                  sx={{ mt: 3 }}
-                >
-                  Ver Más
-                </Button>
-              </Box>
-
-              {/* Sección de marcas */}
-              <Box className="text-center mb-10 mt-20" role="region" aria-label="Vendedores destacados">
-                <Typography variant="h4" className="font-bold text-oxford-blue mb-2">
-                  Vendedores que más destacan
-                </Typography>
-                <Typography variant="subtitle1" className="text-gray-600">
-                  Marcas que están marcando tendencia en Tienda Sol
-                </Typography>
-              </Box>
-
-              {/* Carrusel de marcas */}
-              <Box sx={{ mb: 10 }} role="region" aria-label="Carrusel de marcas destacadas">
-                <Slider {...sliderSettings}>
-                  {marcasDestacadas.map((marca, index) => (
-                    <Box key={index} sx={{ padding: 2, textAlign: 'center' }}>
-                      <img
-                        src={marca.logo}
-                        alt={`Logo de ${marca.nombre}`}
-                        style={{ maxHeight: '80px', margin: '0 auto', objectFit: 'contain' }}
-                      />
-                    </Box>
-                  ))}
-                </Slider>
-              </Box>
-            </>
-          )}
+                </Box>
+              ))}
+            </Slider>
+          </Box>
         </Container>
       </main>
 
