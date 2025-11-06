@@ -1,6 +1,8 @@
 'use client';
 import React, { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import Badge from '@mui/material/Badge';
+import { useCart } from '../../src/store/CartContext';
 import {
   AppBar,
   Toolbar,
@@ -54,6 +56,8 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
   const toggleDrawer = (open: boolean) => () => {
     setDrawerOpen(open);
   };
+
+  const { totalItems } = useCart();
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -184,13 +188,19 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                   </IconButton>
 
                   <IconButton
-                    aria-label="Ver carrito de compras"
-                    title="Carrito"
-                    component={NextLink}
-                    href="/carrito"
+                  aria-label="Ver carrito"
+                  component={NextLink}
+                  href="/carrito"
                   >
-                    <FiShoppingCart size={20} />
-                  </IconButton>
+                  <Badge
+                  badgeContent={totalItems}
+                  color="error"
+                  overlap="circular"
+                  invisible={totalItems === 0}
+  >
+                  <FiShoppingCart size={20} />
+                </Badge>
+                </IconButton>
 
                   <UsuarioMenu userType="buyer" />
                 </Box>
@@ -246,14 +256,19 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                   <FiBell size={20} />
                 </IconButton>
 
-                <IconButton
-                  aria-label="Ver carrito de compras"
-                  title="Carrito"
+                  <IconButton
+                  aria-label="Ver carrito"
                   component={NextLink}
                   href="/carrito"
-                  sx={{ backgroundColor: isNotifications ? 'primary.main' : 'transparent' }}
-                >
+                  >
+                  <Badge
+                  badgeContent={totalItems}
+                  color="error"
+                  overlap="circular"
+                  invisible={totalItems === 0}
+  >
                   <FiShoppingCart size={20} />
+                </Badge>
                 </IconButton>
 
                 <UsuarioMenu userType="buyer" />

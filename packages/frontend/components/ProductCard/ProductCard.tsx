@@ -1,6 +1,17 @@
 'use client';
-import React from 'react';
-import { Button, Card, CardMedia, Typography, Box } from "@mui/material";
+
+import React, { useState } from 'react';
+import {
+  Button,
+  Card,
+  CardMedia,
+  Typography,
+  Box,
+  IconButton
+} from "@mui/material";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import { useCart } from "../../src/store/CartContext";
 
 export interface Product {
   _id: string;
@@ -18,7 +29,6 @@ export interface Product {
 interface Props {
   product: Product;
   userType?: 'buyer' | 'seller';
-  onAddToCart?: () => void;
   onEdit?: () => void;
   onDelete?: () => void;
 }
@@ -26,19 +36,29 @@ interface Props {
 const ProductCard: React.FC<Props> = ({
   product,
   userType = 'buyer',
-  onAddToCart,
   onEdit,
   onDelete
 }) => {
-  // Función para formatear el precio con la moneda correcta
+
+  const { addToCart } = useCart();
+  const [quantity, setQuantity] = useState(1);
+
+  const increase = () => {
+    if (quantity < product.stock) setQuantity((q) => q + 1);
+  };
+
+  const decrease = () => {
+    if (quantity > 1) setQuantity((q) => q - 1);
+  };
+
   const formatPrice = (precio: number, moneda: string) => {
     switch (moneda) {
       case "PESO_ARG":
         return `$${precio} ARS`;
       case "DOLAR_USA":
         return `US$${precio}`;
-      case "EUR":
-        return `€${precio}`;
+      case "REAL":
+        return `R$${precio}`;
       default:
         return `$${precio}`;
     }
@@ -62,7 +82,6 @@ const ProductCard: React.FC<Props> = ({
         },
       }}
     >
-      {/* Imagen del producto */}
       <CardMedia
         component="img"
         image={product.fotos?.[0] || "/placeholder.jpg"}
@@ -75,10 +94,7 @@ const ProductCard: React.FC<Props> = ({
         }}
       />
 
-      {/* titulo y precio */}
-      <Typography
-        sx={{ mt: 2, fontWeight: 600, fontSize: "1.1rem", textAlign: "center" }}
-      >
+      <Typography sx={{ mt: 2, fontWeight: 600, fontSize: "1.1rem", textAlign: "center" }}>
         {product.titulo}
       </Typography>
 
@@ -86,33 +102,65 @@ const ProductCard: React.FC<Props> = ({
         {formatPrice(product.precio, product.moneda)}
       </Typography>
 
-      {/* Mostrar stock para vendedores */}
-      {userType === 'seller' && (
+      {userType === "seller" && (
         <Typography sx={{ color: "#666", mt: 0.5, fontSize: "0.9rem" }}>
           Stock: {product.stock} | Vendidos: {product.totalVendido}
         </Typography>
       )}
 
-      {/* Botones según tipo de usuario */}
-      {userType === 'buyer' ? (
-        <Button
-          variant="contained"
-          sx={{
-            mt: 2,
-            backgroundColor: "#ff9800",
-            fontWeight: 600,
-            ":hover": { backgroundColor: "#e68900" },
-          }}
-          onClick={onAddToCart}
-        >
-          Agregar al carrito
-        </Button>
-      ) : (
-        <Box sx={{ display: 'flex', gap: 1, mt: 2, width: '100%' }}>
+      {userType === "buyer" && (
+        <>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 1,
+              mt: 2,
+              width: "100%",
+              justifyContent: "center",
+            }}
+          >
+            <IconButton 
+              onClick={decrease}
+              disabled={quantity === 1}
+              sx={{ color: "#333" }}
+            >
+              <RemoveIcon />
+            </IconButton>
+
+            <Typography sx={{ fontSize: "1.2rem", fontWeight: 600 }}>
+              {quantity}
+            </Typography>
+
+            <IconButton 
+              onClick={increase}
+              disabled={quantity === product.stock}
+              sx={{ color: "#333" }}
+            >
+              <AddIcon />
+            </IconButton>
+          </Box>
+
+          <Button
+            variant="contained"
+            sx={{
+              mt: 2,
+              backgroundColor: "#ff9800",
+              fontWeight: 600,
+              ":hover": { backgroundColor: "#e68900" },
+            }}
+            onClick={() => addToCart(product, quantity)}
+          >
+            Agregar al carrito
+          </Button>
+        </>
+      )}
+
+      {userType === "seller" && (
+        <Box sx={{ display: "flex", gap: 1, mt: 2, width: "100%" }}>
           <Button
             variant="contained"
             color="primary"
-            //startIcon={<EditIcon />}
             onClick={onEdit}
             sx={{ flex: 1 }}
           >
@@ -121,7 +169,6 @@ const ProductCard: React.FC<Props> = ({
           <Button
             variant="contained"
             color="error"
-            //startIcon={<DeleteIcon />}
             onClick={onDelete}
             sx={{ flex: 1 }}
           >
