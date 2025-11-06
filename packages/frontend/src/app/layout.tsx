@@ -15,6 +15,9 @@ const poppins = Poppins({
 export const metadata = {
   title: "Tienda Sol",
   description: "Trabajo Práctico de Desarrollo de Software - Grupo 6",
+  icons: {
+    icon: "/favicon.ico",
+  },
 };
 
 export default function RootLayout({
@@ -24,6 +27,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={poppins.variable}>
+      <head />
       <body>
         <AppRouterCacheProvider options={{ key: "css", enableCssLayer: true }}>
           <ThemeProvider theme={theme}>
