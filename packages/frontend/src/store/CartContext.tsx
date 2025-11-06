@@ -9,10 +9,11 @@ interface CartItem extends Product {
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (product: Product) => void;
+  addToCart: (product: Product, quantity: number) => void;
   updateQuantity: (productId: string, qty: number) => void;
   removeFromCart: (productId: string) => void;
   clearCart: () => void;
+  totalItems: number;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -29,17 +30,19 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
     localStorage.setItem("cart", JSON.stringify(cart));
   }, [cart]);
 
-  const addToCart = (product: Product) => {
+  const addToCart = (product: Product, quantity: number) => {
     setCart((prev) => {
       const existing = prev.find((p) => p._id === product._id);
+
       if (existing) {
         return prev.map((p) =>
           p._id === product._id
-            ? { ...p, cantidad: p.cantidad + 1 }
+            ? { ...p, cantidad: p.cantidad + quantity }
             : p
         );
       }
-      return [...prev, { ...product, cantidad: 1 }];
+
+      return [...prev, { ...product, cantidad: quantity }];
     });
   };
 
@@ -57,9 +60,11 @@ export const CartProvider = ({ children }: { children: React.ReactNode }) => {
 
   const clearCart = () => setCart([]);
 
+  const totalItems = cart.reduce((acc, item) => acc + item.cantidad, 0);
+
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, updateQuantity, removeFromCart, clearCart }}
+      value={{ cart, addToCart, updateQuantity, removeFromCart, clearCart, totalItems }}
     >
       {children}
     </CartContext.Provider>

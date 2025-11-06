@@ -1,4 +1,5 @@
 'use client';
+
 import React from 'react';
 import { Box, Button, Container, Typography, Divider, IconButton } from '@mui/material';
 import Navbar from '@/components/Navbar/Navbar';
@@ -22,6 +23,19 @@ export default function CarritoPage() {
   const subtotal = cart.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
   const envio = cart.length > 0 ? 15000 : 0;
   const total = subtotal + envio;
+
+  const formatCurrency = (moneda: string) => {
+    switch (moneda) {
+      case "PESO_ARG":
+        return "ARS";
+      case "DOLAR_USA":
+        return "USD";
+      case "REAL":
+        return "BRL";
+      default:
+        return "";
+    }
+  };
 
   const handleComprar = () => {
     if (cart.length === 0) return;
@@ -66,28 +80,36 @@ export default function CarritoPage() {
                     alt={product.titulo}
                     sx={{ width: 100, height: 100, borderRadius: 2, objectFit: 'cover' }}
                   />
+
                   <Box sx={{ flex: 1 }}>
                     <Typography sx={{ fontWeight: 600 }}>{product.titulo}</Typography>
                     <Typography sx={{ color: '#555', fontSize: 14 }}>
                       {product.descripcion}
                     </Typography>
+
                     <Typography sx={{ mt: 1, fontWeight: 500 }}>
-                      ${product.precio.toLocaleString('es-AR')} {product.moneda}
+                      ${product.precio.toLocaleString('es-AR')} {formatCurrency(product.moneda)}
                     </Typography>
                   </Box>
+
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <IconButton onClick={() => handleQuantityChange(product._id, -1)}>
+                    <IconButton onClick={() => handleQuantityChange(product._id, -1)} sx={{ color: "#333" }}>
                       <Remove />
                     </IconButton>
+
                     <Typography>{product.cantidad}</Typography>
-                    <IconButton onClick={() => handleQuantityChange(product._id, 1)}>
+
+                    <IconButton onClick={() => handleQuantityChange(product._id, 1)} sx={{ color: "#333" }}>
                       <Add />
                     </IconButton>
                   </Box>
+
                   <Typography sx={{ width: 120, textAlign: 'right', fontWeight: 600 }}>
-                    ${(product.precio * product.cantidad).toLocaleString('es-AR')} {product.moneda}
+                    ${(product.precio * product.cantidad).toLocaleString('es-AR')}{" "}
+                    {formatCurrency(product.moneda)}
                   </Typography>
-                  <IconButton color="error" onClick={() => removeFromCart(product._id)}>
+
+                  <IconButton onClick={() => removeFromCart(product._id)} sx={{ color: "#d32f2f" }}>
                     <Delete />
                   </IconButton>
                 </Box>
@@ -100,10 +122,15 @@ export default function CarritoPage() {
                   <Typography sx={{ mb: 1 }}>
                     Subtotal ({totalProductos} productos): ${subtotal.toLocaleString('es-AR')}
                   </Typography>
-                  <Typography sx={{ mb: 1 }}>Envío: ${envio.toLocaleString('es-AR')}</Typography>
+
+                  <Typography sx={{ mb: 1 }}>
+                    Envío: ${envio.toLocaleString('es-AR')}
+                  </Typography>
+
                   <Typography sx={{ fontWeight: 700, fontSize: 18, mt: 1 }}>
                     Total: ${total.toLocaleString('es-AR')}
                   </Typography>
+
                   <Button
                     variant="contained"
                     color="primary"

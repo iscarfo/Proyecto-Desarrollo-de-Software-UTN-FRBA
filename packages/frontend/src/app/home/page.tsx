@@ -118,15 +118,15 @@ export default function Home() {
 
           {/* Productos */}
           <div className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-6 place-items-center">
-            {loading && <Typography>Cargando productos...</Typography>}
-            {error && <Typography color="error">{error}</Typography>}
-            {!loading && !error && products.map((prod) => (
-              <ProductCard
-                key={prod._id}
-                product={prod}
-                onAddToCart={() => addToCart(prod)}
-              />
-            ))}
+          {loading && <Typography>Cargando productos...</Typography>}
+          {error && <Typography color="error">{error}</Typography>}
+          {!loading && !error && products.map((prod) => (
+          <ProductCard
+            key={prod._id}
+            product={prod}
+            userType="buyer"
+          />
+          ))}
           </div>
 
           {/* Botón Ver Más */}

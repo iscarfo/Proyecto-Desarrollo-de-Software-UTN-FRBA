@@ -187,14 +187,14 @@ export default function ProductosPage() {
             {!loading && !error && products.length > 0 && (
               <>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center">
-                  {products.map((prod) => (
-                    <ProductCard
-                      key={prod._id}
-                      product={prod}
-                      onAddToCart={() => addToCart(prod)}
-                    />
-                  ))}
-                </div>
+                {products.map((prod) => (
+                <ProductCard
+                key={prod._id}
+                product={prod}
+                userType="buyer"
+                />
+                ))}
+              </div>
 
                 {/* PAGINACIÓN */}
                 <Box sx={{ marginTop: 4 }} aria-label="Paginación de productos">
