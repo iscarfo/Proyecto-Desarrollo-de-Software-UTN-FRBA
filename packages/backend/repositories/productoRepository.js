@@ -1,4 +1,5 @@
 import { Producto } from "../models/Producto.js";
+import { Categoria } from "../models/Producto.js";
 import mongoose from 'mongoose';
 
 export class ProductoRepository {
@@ -132,6 +133,22 @@ export class ProductoRepository {
         }));
     }
 
+    // ===== Obtener todas las categorías =====
+    async obtenerCategorias() {
+        try {
+            // Busca todas las categorías, devolviendo solo _id y nombre
+            const categorias = await Categoria.find({}, { _id: 1, nombre: 1 }).lean();
+
+            if (!categorias || categorias.length === 0) {
+                throw new Error('No se encontraron categorías');
+            }
+
+            return categorias;
+        } catch (error) {
+            throw new Error(`Error al buscar categorías: ${error.message}`);
+        }
+    }
+
 }
 
 //funciones auxiliares para evitar repeticion al filtrar
@@ -142,7 +159,14 @@ function buildQuery(filtros, vendedorId = null) {
     if (vendedorId) query.vendedor = vendedorId;
     if (filtros.nombre) query.titulo = { $regex: filtros.nombre, $options: "i" };
     if (filtros.descripcion) query.descripcion = { $regex: filtros.descripcion, $options: "i" };
-    if (filtros.categoria) query.categorias = new mongoose.Types.ObjectId(filtros.categoria);
+    if (filtros.categoria) {
+        // Detecta automáticamente si es un ObjectId válido
+        if (mongoose.isValidObjectId(filtros.categoria)) {
+            query.categorias = { $in: [new mongoose.Types.ObjectId(filtros.categoria)] };
+        } else {
+            query.categorias = filtros.categoria;
+        }
+    }
     if (filtros.precioMin || filtros.precioMax) {
         query.precio = {};
         if (filtros.precioMin) query.precio.$gte = filtros.precioMin;

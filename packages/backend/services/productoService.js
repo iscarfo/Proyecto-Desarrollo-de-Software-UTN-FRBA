@@ -255,4 +255,14 @@ export class ProductoService {
             throw new Error(`Error al buscar producto: ${error.message}`);
         }
     }
+
+    async obtenerCategorias(){
+        try {
+            const categorias = await this.productoRepository.obtenerCategorias();
+            if (!categorias) throw new Error('Categorias no encontradas');
+            return categorias;
+        } catch (error) {
+            throw new Error(`Error al buscar categorias: ${error.message}`);
+        }
+    }
 }
