@@ -1,4 +1,3 @@
-"use client";
 import "./globals.css";
 import { AppRouterCacheProvider } from "@mui/material-nextjs/v15-appRouter";
 import { Poppins } from "next/font/google";
@@ -13,6 +12,10 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
+export const metadata = {
+  title: "Tienda Sol",
+  description: "Trabajo Práctico de Desarrollo de Software - Grupo 6",
+};
 
 export default function RootLayout({
   children,
