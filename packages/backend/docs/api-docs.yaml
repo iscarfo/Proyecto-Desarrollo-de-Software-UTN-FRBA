@@ -393,6 +393,31 @@ paths:
         '404':
           description: Producto no encontrado
 
+  /productos/categorias:
+    get:
+      summary: Obtener todas las categorías de productos
+      tags: [Productos]
+      description: Devuelve una lista de todas las categorías disponibles, mostrando su identificador y nombre.
+      responses:
+        '200':
+          description: Lista de categorías disponibles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Categoria'
+        '404':
+          description: No se encontraron categorías
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: "No se encontraron categorías"
+
   ############################
   # NOTIFICACIONES
   ############################
@@ -562,6 +587,19 @@ components:
           format: date-time
           description: Fecha y hora de última actualización
           example: "2025-10-06T13:31:49.334Z"
+
+    Categoria:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: ID único de la categoría
+          example: "6737c8d4215f5b1b58a9a001"
+        nombre:
+          type: string
+          description: Nombre descriptivo de la categoría
+          example: "Electrodomésticos"
+
 
     ItemPedido:
       type: object

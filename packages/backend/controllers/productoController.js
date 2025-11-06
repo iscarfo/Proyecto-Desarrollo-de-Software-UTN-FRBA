@@ -118,6 +118,21 @@ export class ProductoController {
       res.status(500).json({ error: err.message });
     }
   }
+
+  // GET: categorias
+  async obtenerCategorias(req, res) {
+    try {
+      const categorias = await this.productoService.obtenerCategorias();
+
+      if (!categorias || categorias.length === 0) {
+        return res.status(204).send();
+      }
+      res.status(200).json(categorias);
+
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
 }
 
 export const ProductoSchema = z.object({

@@ -27,7 +27,7 @@ export default function ProductosPage() {
   const [error, setError] = useState<string | null>(null);
 
   // filtros
-  const [nombre, setNombre] = useState("");
+  const [categorias, setCategorias] = useState<{ _id: string; nombre: string }[]>([]);
   const [precioMin, setPrecioMin] = useState("");
   const [precioMax, setPrecioMax] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -82,6 +82,19 @@ export default function ProductosPage() {
   useEffect(() => {
     fetchProducts();
   }, [currentPage, sort]);
+
+  //obtener categorias del back
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const res = await axios.get("http://localhost:3001/productos/categorias");
+        setCategorias(res.data || []);
+      } catch (err) {
+        console.error("Error al cargar categorías", err);
+      }
+    };
+    fetchCategorias();
+  }, []);
 
   //busqueda en navbar
   useEffect(() => {
@@ -140,14 +153,21 @@ export default function ProductosPage() {
 
             <Divider sx={{ my: 3 }} />
 
-            <Typography variant="h6" fontWeight={700} mb={2}>Categoría</Typography>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Ej: remeras"
-              value={categoria}
-              onChange={(e) => setCategoria(e.target.value)}
-            />
+            <FormControl fullWidth size="small">
+              <InputLabel>Categoría</InputLabel>
+              <Select
+                value={categoria}
+                label="Categoría"
+                onChange={(e) => setCategoria(e.target.value)}
+              >
+                <MenuItem value="">Todas</MenuItem>
+                {categorias.map((cat) => (
+                  <MenuItem key={cat._id} value={cat._id}>
+                    {cat.nombre}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
 
             <Divider sx={{ my: 3 }} />
 
