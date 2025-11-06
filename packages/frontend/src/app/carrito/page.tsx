@@ -53,13 +53,13 @@ export default function CarritoPage() {
     }
   };
 
-  // ✅ ABRIR MODAL
+  
   const handleComprar = () => {
     if (cart.length === 0) return;
     setOpen(true);
   };
 
-  // ✅ IR A CHECKOUT
+  
   const goToCheckout = () => {
     setOpen(false);
     router.push("/checkout");
@@ -200,7 +200,7 @@ export default function CarritoPage() {
 
       <Footer />
 
-      {/* ✅ MODAL DE CONFIRMACIÓN — ESTILIZADO */}
+      {/*MODAL DE CONFIRMACIÓN*/}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}

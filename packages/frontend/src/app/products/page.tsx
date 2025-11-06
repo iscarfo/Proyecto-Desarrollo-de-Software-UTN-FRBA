@@ -37,13 +37,13 @@ export default function ProductosPage() {
 
   const pageSize = 6;
 
-  // estado del buscador del Navbar
+  
   const [searchTerm, setSearchTerm] = useState("");
 
-  //leer params de la url
+  
   const searchParams = useSearchParams();
 
-  //cuando cambia el parámetro "search" en la URL, actualizamos el estado
+  
   useEffect(() => {
     const param = searchParams.get("search");
     if (param) {
@@ -79,12 +79,12 @@ export default function ProductosPage() {
     }
   };
 
-  // Fetch inicial o cuando cambian filtros / sort / pagina
+  
   useEffect(() => {
     fetchProducts();
   }, [currentPage, sort]);
 
-  //busqueda en navbar
+  
   useEffect(() => {
     const delay = setTimeout(() => {
       setCurrentPage(1);

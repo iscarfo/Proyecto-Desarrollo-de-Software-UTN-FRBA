@@ -12,7 +12,7 @@ export function useForm(initialValues, onSubmit, validate) {
     const newValues = { ...values, [name]: value };
     setValues(newValues);
 
-    // Marca como touched en el primer cambio
+    
     setTouched((prev) => ({
       ...prev,
       [name]: true,
@@ -58,7 +58,7 @@ export function useForm(initialValues, onSubmit, validate) {
     setTriedSubmit(false);
   };
 
-  // Mostrar errores si el campo fue tocado o si intentaste guardar
+  
   const showError = (name) =>
     (touched[name] || triedSubmit) && errors[name] ? errors[name] : '';
 
