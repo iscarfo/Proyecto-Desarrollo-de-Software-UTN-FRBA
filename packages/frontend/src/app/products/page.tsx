@@ -18,8 +18,11 @@ import {
   MenuItem,
 } from "@mui/material";
 import axios from "axios";
+import { useCart } from "../../store/CartContext";
 
 export default function ProductosPage() {
+  const { addToCart } = useCart();
+
   const [products, setProducts] = useState<Product[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -27,7 +30,6 @@ export default function ProductosPage() {
   const [error, setError] = useState<string | null>(null);
 
   // filtros
-  const [nombre, setNombre] = useState("");
   const [precioMin, setPrecioMin] = useState("");
   const [precioMax, setPrecioMax] = useState("");
   const [categoria, setCategoria] = useState("");
@@ -35,13 +37,13 @@ export default function ProductosPage() {
 
   const pageSize = 6;
 
-  // estado del buscador del Navbar
+  
   const [searchTerm, setSearchTerm] = useState("");
 
-  //leer params de la url
+  
   const searchParams = useSearchParams();
 
-  //cuando cambia el parámetro "search" en la URL, actualizamos el estado
+  
   useEffect(() => {
     const param = searchParams.get("search");
     if (param) {
@@ -59,14 +61,13 @@ export default function ProductosPage() {
         limit: pageSize.toString(),
       };
 
-      // si hay un término de búsqueda, lo enviamos como filtro de texto
       if (search) params.nombre = search;
       if (precioMin) params.precioMin = precioMin;
       if (precioMax) params.precioMax = precioMax;
       if (categoria) params.categoria = categoria;
       if (sort) params.sort = sort;
 
-      const res = await axios.get("http://localhost:3001/productos", { params });
+      const res = await axios.get("http://localhost:3000/productos", { params });
 
       setProducts(res.data.data || []);
       setTotalPages(res.data.totalPaginas || 1);
@@ -78,27 +79,25 @@ export default function ProductosPage() {
     }
   };
 
-  // Fetch inicial o cuando cambian filtros / sort / pagina
+  
   useEffect(() => {
     fetchProducts();
   }, [currentPage, sort]);
 
-  //busqueda en navbar
+  
   useEffect(() => {
     const delay = setTimeout(() => {
       setCurrentPage(1);
       fetchProducts(1, searchTerm);
-    }, 500); // debounce: espera medio segundo antes de buscar
+    }, 500); // debounce
     return () => clearTimeout(delay);
   }, [searchTerm]);
 
-  // Aplica filtros y reinicia a página 1
   const handleApplyFilters = () => {
     setCurrentPage(1);
     fetchProducts(1);
   };
 
-  // cambio de pagina
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     fetchProducts(page);
@@ -106,7 +105,6 @@ export default function ProductosPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-platinum">
-      {/*Navbar con buscador */}
       <Navbar
         userType="buyer"
         showSearch={true}
@@ -181,28 +179,22 @@ export default function ProductosPage() {
 
           {/* GRID DE PRODUCTOS */}
           <Box className="flex-1">
-            {loading && (
-              <Typography align="center" mt={4}>Cargando productos...</Typography>
-            )}
-            {error && (
-              <Typography color="error" align="center" mt={4}>{error}</Typography>
-            )}
+            {loading && <Typography align="center" mt={4}>Cargando productos...</Typography>}
+            {error && <Typography color="error" align="center" mt={4}>{error}</Typography>}
             {!loading && !error && products.length === 0 && (
               <Typography align="center" mt={4}>No se encontraron productos.</Typography>
             )}
             {!loading && !error && products.length > 0 && (
               <>
-                <div
-                  className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center"
-                >
-                  {products.map((prod) => (
-                    <ProductCard
-                      key={prod._id}
-                      product={prod}
-                      onAddToCart={() => alert("Agregar al carrito: " + prod.titulo)}
-                    />
-                  ))}
-                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-10 justify-items-center">
+                {products.map((prod) => (
+                <ProductCard
+                key={prod._id}
+                product={prod}
+                userType="buyer"
+                />
+                ))}
+              </div>
 
                 {/* PAGINACIÓN */}
                 <Box sx={{ marginTop: 4 }} aria-label="Paginación de productos">
