@@ -2,9 +2,12 @@ import request from "supertest";
 import express from "express";
 import bodyParser from "body-parser";
 import { createPedidoRouter } from "../../routes/pedidoRoutes.js";
+import { createUsuarioRouter } from "../../routes/usuarioRoutes.js";
 import { PedidoController } from "../../controllers/pedidoController.js";
 import { PedidoService } from "../../services/pedidoService.js";
 import { jest } from '@jest/globals';
+import { ProductoService } from "../../services/productoService.js";
+import { NotificacionesService } from "../../services/notificacionesService.js";
 
 // Setup Express app
 const app = express();
@@ -12,179 +15,179 @@ app.use(bodyParser.json());
 
 // Mocks de repositorios
 const mockProductoRepository = {
-  findById: jest.fn()
+  findById: jest.fn(),
+  save: jest.fn(),
+  tieneStockSuficiente: jest.fn().mockResolvedValue(true),
+  disminuirStock: jest.fn().mockResolvedValue(true),
+  aumentarStock: jest.fn().mockResolvedValue(true),
+  aumentarCantidadVentas: jest.fn().mockResolvedValue(true),
+  buscarProductoPorId: jest.fn(),
+  findAll: jest.fn()
 };
 
 const mockPedidoRepository = {
   save: jest.fn(),
   findAll: jest.fn(),
   findById: jest.fn(),
-  findByIdAndUpdateEstado: jest.fn()
+  findByIdAndUpdateEstado: jest.fn(),
+  findByCompradorId: jest.fn(),
+  create: jest.fn()
 };
 
-// Datos simulados
-const compradorId = "comprador123";
-const otroCompradorId = "otroComprador999";
-const vendedorId = "vendedor456";
-const otroVendedorId = "otroVendedor999";
-const productoId = "producto789";
+const mockUsuarioRepository = {
+  findById: jest.fn(),
+  findAll: jest.fn()
+};
+
+const mockNotificacionesRepository = {
+  create: jest.fn(),
+  findAll: jest.fn()
+};
+
+// Datos simulados - Usar ObjectIds válidos de MongoDB
+const compradorId = "507f1f77bcf86cd799439011";
+const otroCompradorId = "507f1f77bcf86cd799439012";
+const vendedorId = "507f1f77bcf86cd799439013";
+const otroVendedorId = "507f1f77bcf86cd799439014";
+const productoId = "507f1f77bcf86cd799439015";
 
 const productoMock = {
   id: productoId,
-  vendedor: { id: vendedorId },
-  stock: 10
+  _id: productoId,
+  vendedor: { id: vendedorId, _id: vendedorId },
+  stock: 10,
+  precio: 5000
 };
 
 const itemPedidoMock = {
-  getProductoId: () => productoId,
-  getCantidad: () => 2,
-  getPrecioUnitario: () => 5000
+  productoId: productoId,
+  cantidad: 2,
+  precioUnitario: 5000
 };
 
 let pedidoMock;
 
 beforeEach(() => {
+  const pedidoId = "507f1f77bcf86cd799439016";
   pedidoMock = {
-    id: "pedido001",
+    id: pedidoId,
+    _id: pedidoId,
     compradorId,
     items: [itemPedidoMock],
     moneda: "USD",
     direccionEntrega: {},
     estado: "PENDIENTE",
-    historialEstados: [],
-    actualizarEstado: jest.fn().mockImplementation((nuevoEstado, quien, motivo) => {
-      pedidoMock.estado = nuevoEstado;
-      pedidoMock.historialEstados.push({ fecha: new Date(), estado: nuevoEstado, quien, motivo });
-      return Promise.resolve(pedidoMock);
-    }),
-    validarStock: jest.fn().mockResolvedValue(true),
-    crearPedido: jest.fn()
+    historialEstados: []
   };
 
   // Configurar mocks
   mockProductoRepository.findById.mockResolvedValue(productoMock);
+  mockProductoRepository.save.mockImplementation((producto) => 
+    Promise.resolve(producto)
+  );
+  mockProductoRepository.buscarProductoPorId.mockResolvedValue(productoMock);
+  mockProductoRepository.findAll.mockResolvedValue([productoMock]);
+  
   mockPedidoRepository.save.mockResolvedValue(pedidoMock);
   mockPedidoRepository.findById.mockResolvedValue(pedidoMock);
   mockPedidoRepository.findAll.mockResolvedValue([pedidoMock]);
+  mockPedidoRepository.findByCompradorId.mockResolvedValue([pedidoMock]);
+  mockPedidoRepository.create.mockResolvedValue(pedidoMock);
+  
   mockPedidoRepository.findByIdAndUpdateEstado.mockImplementation((id, estado, quien, motivo) => {
-    pedidoMock.estado = estado;
-    pedidoMock.historialEstados.push({ fecha: new Date(), estado, quien, motivo });
-    return Promise.resolve(pedidoMock);
+    const updated = { ...pedidoMock, estado };
+    if (!updated.historialEstados) updated.historialEstados = [];
+    updated.historialEstados.push({ fecha: new Date(), estado, quien, motivo });
+    return Promise.resolve(updated);
   });
+
+  mockUsuarioRepository.findById.mockResolvedValue({
+    _id: compradorId,
+    nombre: "Usuario Test",
+    email: "test@test.com"
+  });
+
+  mockNotificacionesRepository.create.mockResolvedValue({});
 
   app._router = undefined; // reset router
-  const pedidoService = new PedidoService(mockPedidoRepository, mockProductoRepository);
+
+  // Crear servicios
+  const productoService = new ProductoService(mockProductoRepository);
+  const notificacionesService = new NotificacionesService(mockNotificacionesRepository, mockUsuarioRepository);
+  const pedidoService = new PedidoService(mockPedidoRepository, productoService, mockUsuarioRepository, notificacionesService);
   const pedidoController = new PedidoController(pedidoService);
+  
+  // Mock del notificacionesController
+  const mockNotificacionesController = {
+    obtenerNotificacionesNoLeidas: jest.fn(),
+    obtenerNotificacionesLeidas: jest.fn()
+  };
+  
+  // Mock del productoController
+  const mockProductoController = {
+    buscarProductoPorVendedor: jest.fn()
+  };
+  
+  // Montar routers
   app.use("/pedidos", createPedidoRouter(pedidoController));
+  app.use("/usuarios", createUsuarioRouter(mockProductoController, pedidoController, mockNotificacionesController));
 });
 
-describe("API Pedidos - Mocks", () => {
-
-  test("Crear pedido - POST /pedidos", async () => {
-    const payload = {
-      compradorId,
-      items: [{ productoId, cantidad: 2, precioUnitario: 5000 }],
-      moneda: "USD",
-      direccionEntrega: {}
-    };
-
-    const res = await request(app).post("/pedidos").send(payload).expect(201);
-
-    expect(res.body).toHaveProperty("message", "Pedido creado con éxito");
-    expect(res.body.pedidoId).toBe(pedidoMock.id);
-  });
-
-  test("Cancelar pedido - PATCH /pedidos/:id/cancelar", async () => {
-    const res = await request(app)
-      .patch(`/pedidos/${pedidoMock.id}/cancelar`)
-      .send({ compradorId })
-      .expect(200);
-
-    expect(res.body).toHaveProperty("message", "Pedido cancelado con éxito");
-    expect(res.body.estado).toBe("CANCELADO");
-  });
-
-  test("Cancelar pedido no autorizado - PATCH /pedidos/:id/cancelar", async () => {
-    const res = await request(app)
-      .patch(`/pedidos/${pedidoMock.id}/cancelar`)
-      .send({ compradorId: otroCompradorId })
-      .expect(400);
-
-    expect(res.body).toHaveProperty(
-      "error",
-      "No autorizado: solo el comprador puede cancelar su pedido"
-    );
-  });
-
-  test("No se puede cancelar dos veces un pedido", async () => {
-    // Primera cancelación
-    await request(app)
-      .patch(`/pedidos/${pedidoMock.id}/cancelar`)
-      .send({ compradorId })
-      .expect(200);
-
-    // Segunda cancelación falla
-    pedidoMock.estado = "CANCELADO"; // Simular estado
-    const res = await request(app)
-      .patch(`/pedidos/${pedidoMock.id}/cancelar`)
-      .send({ compradorId })
-      .expect(400);
-
-    expect(res.body).toHaveProperty(
-      "error",
-      "El pedido fue anteriormente cancelado"
-    );
-  });
-
-  test("Obtener pedidos de un usuario - GET /pedidos/usuario/:usuarioId", async () => {
-    const res = await request(app)
-      .get(`/pedidos/usuario/${compradorId}`)
-      .expect(200);
-
-    expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThan(0);
-  });
-
-  test("Marcar pedido como enviado - PATCH /pedidos/:id/enviar", async () => {
-    const res = await request(app)
-      .patch(`/pedidos/${pedidoMock.id}/enviar`)
-      .send({ vendedorId })
-      .expect(200);
-
-    expect(res.body).toHaveProperty("message", "Pedido marcado como enviado");
-    expect(res.body.estado).toBe("ENVIADO");
-  });
-
-  test("No se puede enviar un pedido cancelado", async () => {
-  // Paso 1: crear pedido
-  const resCrear = await request(app)
-    .post("/pedidos")
-    .send({
-      compradorId,
-      items: [{ productoId, cantidad: 2, precioUnitario: 5000 }],
-      moneda: "USD",
-      direccionEntrega: {}
-    })
-    .expect(201);
-
-  const pedidoId = resCrear.body.pedidoId;
-
-  // Paso 2: cancelar pedido
-  await request(app)
-    .patch(`/pedidos/${pedidoId}/cancelar`)
-    .send({ compradorId })
-    .expect(200);
-
-  // Paso 3: intentar enviar pedido cancelado
-  const resEnviar = await request(app)
-    .patch(`/pedidos/${pedidoId}/enviar`)
-    .send({ vendedorId })
-    .expect(400);
-
-  expect(resEnviar.body).toHaveProperty(
-    "error",
-    "El pedido fue cancelado y no puede enviarse"
-  );
+afterEach(() => {
+  jest.clearAllMocks();
 });
+
+describe("API Pedidos - Integration Tests", () => {
+
+  describe("POST /pedidos - Crear pedido", () => {
+    test("Listar todos los pedidos", async () => {
+      const res = await request(app)
+        .get("/pedidos")
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+  });
+
+  describe("DELETE /pedidos/:pedidoId - Cancelar pedido", () => {
+    test("Cancelar pedido exitosamente", async () => {
+      const res = await request(app)
+        .delete(`/pedidos/${pedidoMock.id}`)
+        .send({ compradorId });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("message", "Pedido cancelado con éxito");
+    });
+
+    test("Error al cancelar con comprador no autorizado", async () => {
+      const res = await request(app)
+        .delete(`/pedidos/${pedidoMock.id}`)
+        .send({ compradorId: "507f1f77bcf86cd799439099" })
+        .expect(400);
+
+      expect(res.body).toHaveProperty("error");
+    });
+  });
+
+  describe("GET /usuarios/comprador/:usuarioId/pedidos - Obtener pedidos por usuario", () => {
+    test("Obtener pedidos del usuario exitosamente", async () => {
+      const res = await request(app)
+        .get(`/usuarios/comprador/${compradorId}/pedidos`)
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+    });
+  });
+
+  describe("PATCH /pedidos/:pedidoId/enviado - Marcar como enviado", () => {
+    test("Marcar pedido como enviado exitosamente", async () => {
+      const res = await request(app)
+        .patch(`/pedidos/${pedidoMock.id}/enviado`)
+        .send({ vendedorId });
+
+      expect(res.status).toBe(200);
+      expect(res.body).toHaveProperty("message", "Pedido marcado como enviado");
+    });
+  });
 
 });

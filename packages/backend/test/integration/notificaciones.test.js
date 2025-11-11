@@ -6,6 +6,11 @@ import { NotificacionesController } from "../../controllers/notificacionesContro
 import { NotificacionesService } from "../../services/notificacionesService.js";
 import { jest } from '@jest/globals';
 import mongoose from 'mongoose';
+import { createUsuarioRouter } from "../../routes/usuarioRoutes.js";
+import { PedidoController } from "../../controllers/pedidoController.js";
+import { PedidoService } from "../../services/pedidoService.js";
+import { ProductoService } from "../../services/productoService.js";
+import { ProductoController } from "../../controllers/productoController.js";
 
 // Setup Express app
 const app = express();
@@ -21,6 +26,24 @@ const mockNotificacionesRepository = {
 
 const mockUsuarioRepository = {
   findById: jest.fn()
+};
+
+const mockPedidoRepository = {
+  findByUsuarioAndLeida: jest.fn(),
+  findById: jest.fn(),
+  save: jest.fn(),
+  create: jest.fn(),
+  findAll: jest.fn(),
+  findByCompradorId: jest.fn()
+};
+
+const mockProductoRepository = {
+  findByUsuarioAndLeida: jest.fn(),
+  findById: jest.fn(),
+  save: jest.fn(),
+  create: jest.fn(),
+  findByPage: jest.fn(),
+  contarTodos: jest.fn()
 };
 
 // IDs de prueba válidos
@@ -70,10 +93,25 @@ beforeEach(() => {
     fechaLectura: new Date()
   });
 
+  mockProductoRepository.findByPage.mockResolvedValue([]);
+  mockProductoRepository.contarTodos.mockResolvedValue(0);
+  mockPedidoRepository.findByCompradorId.mockResolvedValue([]);
+
   // Reset router
   app._router = undefined;
+  
+  // Crear servicios
+  const productoService = new ProductoService(mockProductoRepository);
   const notificacionesService = new NotificacionesService(mockNotificacionesRepository, mockUsuarioRepository);
+  const pedidoService = new PedidoService(mockPedidoRepository, productoService, mockUsuarioRepository, notificacionesService);
+
+  // Crear controladores
+  const productoController = new ProductoController(productoService);
   const notificacionesController = new NotificacionesController(notificacionesService);
+  const pedidoController = new PedidoController(pedidoService);
+
+  // Montar rutas en el app
+  app.use("/usuarios", createUsuarioRouter(productoController, pedidoController, notificacionesController));
   app.use("/notificaciones", createNotificacionesRouter(notificacionesController));
 });
 
@@ -83,10 +121,10 @@ afterEach(() => {
 
 describe("API Notificaciones - Integration Tests", () => {
 
-  describe("GET /notificaciones/unread/:usuarioId", () => {
+  describe("GET /:usuarioId/notificaciones/unread", () => {
     test("Obtener notificaciones no leídas con éxito", async () => {
       const res = await request(app)
-        .get(`/notificaciones/unread/${usuarioId}`)
+        .get(`/usuarios/${usuarioId}/notificaciones/unread`)
         .expect(200);
 
       expect(res.body).toHaveProperty("data");
@@ -99,7 +137,7 @@ describe("API Notificaciones - Integration Tests", () => {
 
     test("Obtener notificaciones no leídas con paginación personalizada", async () => {
       const res = await request(app)
-        .get(`/notificaciones/unread/${usuarioId}`)
+        .get(`/usuarios/${usuarioId}/notificaciones/unread`)
         .query({ page: 2, limit: 5 })
         .expect(200);
 
@@ -110,7 +148,7 @@ describe("API Notificaciones - Integration Tests", () => {
 
     test("Error con ID de usuario inválido", async () => {
       const res = await request(app)
-        .get(`/notificaciones/unread/${usuarioIdInvalido}`)
+        .get(`/usuarios/${usuarioIdInvalido}/notificaciones/unread`)
         .expect(400);
 
       expect(res.body).toHaveProperty("error");
@@ -121,7 +159,7 @@ describe("API Notificaciones - Integration Tests", () => {
       mockUsuarioRepository.findById.mockResolvedValueOnce(null);
 
       const res = await request(app)
-        .get(`/notificaciones/unread/${usuarioId}`)
+        .get(`/usuarios/${usuarioId}/notificaciones/unread`)
         .expect(404);
 
       expect(res.body).toHaveProperty("error");
@@ -129,7 +167,7 @@ describe("API Notificaciones - Integration Tests", () => {
     });
   });
 
-  describe("GET /notificaciones/read/:usuarioId", () => {
+  describe("GET /:usuarioId/notificaciones/read", () => {
     test("Obtener notificaciones leídas con éxito", async () => {
       mockNotificacionesRepository.findByUsuarioAndLeida.mockResolvedValueOnce({
         data: [notificacionLeidaMock],
@@ -140,7 +178,7 @@ describe("API Notificaciones - Integration Tests", () => {
       });
 
       const res = await request(app)
-        .get(`/notificaciones/read/${usuarioId}`)
+        .get(`/usuarios/${usuarioId}/notificaciones/read`)
         .expect(200);
 
       expect(res.body).toHaveProperty("data");
@@ -152,7 +190,7 @@ describe("API Notificaciones - Integration Tests", () => {
 
     test("Obtener notificaciones leídas con paginación personalizada", async () => {
       const res = await request(app)
-        .get(`/notificaciones/read/${usuarioId}`)
+        .get(`/usuarios/${usuarioId}/notificaciones/read`)
         .query({ page: 3, limit: 20 })
         .expect(200);
 
@@ -162,7 +200,7 @@ describe("API Notificaciones - Integration Tests", () => {
 
     test("Error con ID de usuario inválido", async () => {
       const res = await request(app)
-        .get(`/notificaciones/read/${usuarioIdInvalido}`)
+        .get(`/usuarios/${usuarioIdInvalido}/notificaciones/read`)
         .expect(400);
 
       expect(res.body).toHaveProperty("error");

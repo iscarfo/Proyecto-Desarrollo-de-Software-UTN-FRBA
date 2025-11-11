@@ -18,7 +18,7 @@ export class Pedido {
     this.items = Array.isArray(items) ? items : []; // [ItemPedido]
     this.moneda = moneda;
     this.direccionEntrega = direccionEntrega; // DireccionEntrega
-    this.estado = EstadoPedido.CONFIRMADO;
+    this.estado = EstadoPedido.PENDIENTE;
     this.fechaCreacion = new Date();
     this.historialEstados = [];
   }
