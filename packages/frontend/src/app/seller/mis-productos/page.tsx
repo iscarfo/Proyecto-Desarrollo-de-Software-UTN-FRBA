@@ -17,6 +17,8 @@ import {
   Fab,
   MenuItem
 } from "@mui/material";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 import AddIcon from "@mui/icons-material/Add";
 import axios from "axios";
 
@@ -24,6 +26,8 @@ export default function AdminProductsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
   const vendedorId = "68d82ab654219bb082182057";
+
+  const [alerta, setAlerta] = useState({ open: false, tipo: "success", mensaje: "" });
 
   const [products, setProducts] = useState<Product[]>([]);
   const [totalPages, setTotalPages] = useState(1);
@@ -156,9 +160,18 @@ export default function AdminProductsPage() {
 
         setOpenDialog(false);
         // feedback visual
-        alert("Producto creado con éxito.");
+        setAlerta({
+          open: true,
+          tipo: "success",
+          mensaje: "Producto creado con éxito.",
+        });
+
       } else {
-        alert(`Error al crear producto. Código: ${res.status}`);
+        setAlerta({
+          open: true,
+          tipo: "error",
+          mensaje: "No se ha podido crear el producto",
+        });
       }
     } catch (error: any) {
       console.error("Error en POST /productos:", error);
@@ -166,18 +179,32 @@ export default function AdminProductsPage() {
       if (error.response) {
         // respuesta del servidor con error
         console.error("Respuesta del servidor:", error.response.data);
-        alert("Error del servidor: " + JSON.stringify(error.response.data));
+        setAlerta({
+          open: true,
+          tipo: "error",
+          mensaje: "Error del servidor: " + JSON.stringify(error.response.data),
+        });
       } else if (error.request) {
         console.error("No hubo respuesta (posible CORS o network):", error.request);
-        alert("No hubo respuesta del servidor. Verifica CORS y que el backend esté corriendo.");
+        setAlerta({
+          open: true,
+          tipo: "error",
+          mensaje: "No hubo respuesta del servidor. Verifica CORS y que el backend esté corriendo.",
+        });
       } else {
-        alert("Error: " + error.message);
+        setAlerta({
+          open: true,
+          tipo: "error",
+          mensaje: "Error: " + error.message,
+        });
       }
     }
   };
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedProducts = products.slice(startIndex, startIndex + pageSize);
+  //const startIndex = (currentPage - 1) * pageSize;
+  //const paginatedProducts = products.slice(startIndex, startIndex + pageSize);
+  const paginatedProducts = products;
+
 
   return (
     <div className="min-h-screen flex flex-col bg-platinum">
@@ -303,6 +330,86 @@ export default function AdminProductsPage() {
           </DialogActions>
         </Dialog>
       </main>
+
+       {editingProduct && (
+        <Dialog
+          open={!!editingProduct}
+          onClose={() => setEditingProduct(null)}
+          aria-labelledby="editar-producto"
+          fullWidth
+          maxWidth="sm"
+        >
+          <DialogTitle id="editar-producto">Editar producto</DialogTitle>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
+            <TextField
+              label="Título"
+              variant="outlined"
+              fullWidth
+              value={editingProduct.titulo}
+              onChange={(e) =>
+                setEditingProduct(prev =>
+                  prev ? { ...prev, titulo: e.target.value } : prev
+                )
+              }
+            />
+            <TextField
+              label="Descripción"
+              fullWidth
+              value={editingProduct.descripcion}
+              onChange={(e) =>
+                setEditingProduct(prev =>
+                  prev ? { ...prev, descripcion: e.target.value } : prev
+                )
+              }
+            />
+            <TextField
+              label="Precio"
+              type="number"
+              fullWidth
+              value={editingProduct.precio}
+              onChange={(e) =>
+                setEditingProduct(prev =>
+                  prev ? { ...prev, precio: parseFloat(e.target.value) } : prev
+                )
+              }
+            />
+            <TextField
+              label="Stock"
+              type="number"
+              fullWidth
+              value={editingProduct.stock}
+              onChange={(e) =>
+                setEditingProduct(prev =>
+                  prev ? { ...prev, stock: parseInt(e.target.value) } : prev
+                )
+              }
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditingProduct(null)}>Cancelar</Button>
+            <Button variant="contained" onClick={handleSaveChanges}>
+              Guardar
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
+
+      <Snackbar
+        open={alerta.open}
+        autoHideDuration={4000}
+        onClose={() => setAlerta((prev) => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          severity={alerta.tipo === "error" ? "error" : "success"}
+          variant="filled"
+          onClose={() => setAlerta((prev) => ({ ...prev, open: false }))}
+          sx={{ width: "100%" }}
+        >
+          {alerta.mensaje}
+        </Alert>
+      </Snackbar>
+
 
       <Footer />
     </div>
