@@ -1,6 +1,6 @@
 'use client'
 import React, { useState } from 'react'
-import { Box, Button, TextField, Typography, Paper } from '@mui/material'
+import { Box, Button, TextField, Typography, Paper, Link } from '@mui/material'
 import Navbar from '@/components/Navbar/Navbar'
 
 export default function RegisterUserPage() {
@@ -148,6 +148,16 @@ export default function RegisterUserPage() {
           >
             Crear cuenta
           </Button>
+
+          <Box sx={{ mt: 2 }}>
+            <Link
+              href="/sesiones/registro/vendedores"
+              underline="hover"
+              aria-label="Registrarme como vendedor"
+            >
+              Registrarme como vendedor
+            </Link>
+          </Box>
         </Paper>
       </Box>
     </>
