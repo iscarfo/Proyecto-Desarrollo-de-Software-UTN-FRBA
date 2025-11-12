@@ -32,7 +32,7 @@ export class ProductoController {
   // GET: todos los productos paginados
   async listarProductos(req, res) {
     try {
-      const { page = 1, limit = 10, nombre, descripcion, categoria, precioMin, precioMax, sort } = req.query;
+      const { page = 1, limit = 10, nombre, descripcion, categoria, precioMin, precioMax, sort, vendedorId } = req.query;
 
       const filtros = {
         nombre,
@@ -42,7 +42,7 @@ export class ProductoController {
         precioMax: precioMax ? Number(precioMax) : undefined
       };
 
-      const productosPaginados = await this.productoService.listarProductos(page, limit, filtros, sort);
+      const productosPaginados = await this.productoService.listarProductos(page, limit, filtros, sort, vendedorId);
 
       if (!productosPaginados || productosPaginados.length === 0) {
         return res.status(204).send();
