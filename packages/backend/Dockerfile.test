@@ -1,0 +1,18 @@
+FROM node:18-bullseye
+
+WORKDIR /app
+
+# Instalar libssl1.1 (necesario para mongodb-memory-server en Debian/Ubuntu moderno)
+RUN apt-get update && apt-get install -y libssl1.1 && rm -rf /var/lib/apt/lists/*
+
+# Copiar package.json y package-lock.json
+COPY package*.json ./
+
+# Instalar dependencias (incluyendo dev)
+RUN npm install
+
+# Copiar el código fuente
+COPY . .
+
+# Comando para ejecutar tests
+CMD ["npm", "test"]

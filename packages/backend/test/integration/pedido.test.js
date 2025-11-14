@@ -5,189 +5,248 @@ import { createPedidoRouter } from "../../routes/pedidoRoutes.js";
 import { createUsuarioRouter } from "../../routes/usuarioRoutes.js";
 import { PedidoController } from "../../controllers/pedidoController.js";
 import { PedidoService } from "../../services/pedidoService.js";
-import { jest } from '@jest/globals';
 import { ProductoService } from "../../services/productoService.js";
 import { NotificacionesService } from "../../services/notificacionesService.js";
+import { PedidoRepository } from "../../repositories/pedidoRepository.js";
+import { ProductoRepository } from "../../repositories/productoRepository.js";
+import { UsuarioRepository } from "../../repositories/usuarioRepository.js";
+import { NotificacionesRepository } from "../../repositories/notificacionesRepository.js";
+import { connect, closeDatabase, clearDatabase } from "../utils/mongoMemory.js";
+import { TestDataFactory } from "../fixtures/testData.js";
+import { Usuario } from "../../models/Usuario.js";
+import { EstadoPedido } from "../../domain/pedido/enums.js";
+import { describe, test, expect, beforeEach, beforeAll, afterAll, afterEach } from "@jest/globals";
 
-// Setup Express app
-const app = express();
-app.use(bodyParser.json());
+/**
+ * Pedido API Integration Tests con BD en memoria
+ */
+let app;
+let comprador;
+let vendedor;
+let producto;
 
-// Mocks de repositorios
-const mockProductoRepository = {
-  findById: jest.fn(),
-  save: jest.fn(),
-  tieneStockSuficiente: jest.fn().mockResolvedValue(true),
-  disminuirStock: jest.fn().mockResolvedValue(true),
-  aumentarStock: jest.fn().mockResolvedValue(true),
-  aumentarCantidadVentas: jest.fn().mockResolvedValue(true),
-  buscarProductoPorId: jest.fn(),
-  findAll: jest.fn()
-};
+// Conectar a BD en memoria antes de todas las pruebas
+beforeAll(async () => {
+  await connect();
+  setupExpress();
+});
 
-const mockPedidoRepository = {
-  save: jest.fn(),
-  findAll: jest.fn(),
-  findById: jest.fn(),
-  findByIdAndUpdateEstado: jest.fn(),
-  findByCompradorId: jest.fn(),
-  create: jest.fn()
-};
+// Limpiar BD después de cada test
+afterEach(async () => {
+  await clearDatabase();
+});
 
-const mockUsuarioRepository = {
-  findById: jest.fn(),
-  findAll: jest.fn()
-};
+// Desconectar después de todas las pruebas
+afterAll(async () => {
+  await closeDatabase();
+});
 
-const mockNotificacionesRepository = {
-  create: jest.fn(),
-  findAll: jest.fn()
-};
+function setupExpress() {
+  app = express();
+  app.use(bodyParser.json());
 
-// Datos simulados - Usar ObjectIds válidos de MongoDB
-const compradorId = "507f1f77bcf86cd799439011";
-const otroCompradorId = "507f1f77bcf86cd799439012";
-const vendedorId = "507f1f77bcf86cd799439013";
-const otroVendedorId = "507f1f77bcf86cd799439014";
-const productoId = "507f1f77bcf86cd799439015";
-
-const productoMock = {
-  id: productoId,
-  _id: productoId,
-  vendedor: { id: vendedorId, _id: vendedorId },
-  stock: 10,
-  precio: 5000
-};
-
-const itemPedidoMock = {
-  productoId: productoId,
-  cantidad: 2,
-  precioUnitario: 5000
-};
-
-let pedidoMock;
-
-beforeEach(() => {
-  const pedidoId = "507f1f77bcf86cd799439016";
-  pedidoMock = {
-    id: pedidoId,
-    _id: pedidoId,
-    compradorId,
-    items: [itemPedidoMock],
-    moneda: "USD",
-    direccionEntrega: {},
-    estado: "PENDIENTE",
-    historialEstados: []
-  };
-
-  // Configurar mocks
-  mockProductoRepository.findById.mockResolvedValue(productoMock);
-  mockProductoRepository.save.mockImplementation((producto) => 
-    Promise.resolve(producto)
-  );
-  mockProductoRepository.buscarProductoPorId.mockResolvedValue(productoMock);
-  mockProductoRepository.findAll.mockResolvedValue([productoMock]);
-  
-  mockPedidoRepository.save.mockResolvedValue(pedidoMock);
-  mockPedidoRepository.findById.mockResolvedValue(pedidoMock);
-  mockPedidoRepository.findAll.mockResolvedValue([pedidoMock]);
-  mockPedidoRepository.findByCompradorId.mockResolvedValue([pedidoMock]);
-  mockPedidoRepository.create.mockResolvedValue(pedidoMock);
-  
-  mockPedidoRepository.findByIdAndUpdateEstado.mockImplementation((id, estado, quien, motivo) => {
-    const updated = { ...pedidoMock, estado };
-    if (!updated.historialEstados) updated.historialEstados = [];
-    updated.historialEstados.push({ fecha: new Date(), estado, quien, motivo });
-    return Promise.resolve(updated);
-  });
-
-  mockUsuarioRepository.findById.mockResolvedValue({
-    _id: compradorId,
-    nombre: "Usuario Test",
-    email: "test@test.com"
-  });
-
-  mockNotificacionesRepository.create.mockResolvedValue({});
-
-  app._router = undefined; // reset router
+  // Crear instancias de repositorios (usar los reales con BD en memoria)
+  const usuarioRepository = new UsuarioRepository();
+  const productoRepository = new ProductoRepository();
+  const pedidoRepository = new PedidoRepository();
+  const notificacionesRepository = new NotificacionesRepository();
 
   // Crear servicios
-  const productoService = new ProductoService(mockProductoRepository);
-  const notificacionesService = new NotificacionesService(mockNotificacionesRepository, mockUsuarioRepository);
-  const pedidoService = new PedidoService(mockPedidoRepository, productoService, mockUsuarioRepository, notificacionesService);
+  const productoService = new ProductoService(productoRepository);
+  const notificacionesService = new NotificacionesService(
+    notificacionesRepository,
+    usuarioRepository
+  );
+  const pedidoService = new PedidoService(
+    pedidoRepository,
+    productoService,
+    usuarioRepository,
+    notificacionesService
+  );
+
+  // Crear controladores
   const pedidoController = new PedidoController(pedidoService);
-  
-  // Mock del notificacionesController
+
+  // Mock del notificacionesController (para rutas que lo requieren)
   const mockNotificacionesController = {
-    obtenerNotificacionesNoLeidas: jest.fn(),
-    obtenerNotificacionesLeidas: jest.fn()
+    obtenerNotificacionesNoLeidas: (req, res) => res.json([]),
+    obtenerNotificacionesLeidas: (req, res) => res.json([])
   };
-  
-  // Mock del productoController
+
+  // Mock del productoController (para rutas que lo requieren)
   const mockProductoController = {
-    buscarProductoPorVendedor: jest.fn()
+    buscarProductoPorVendedor: (req, res) => res.json([])
   };
-  
+
   // Montar routers
   app.use("/pedidos", createPedidoRouter(pedidoController));
-  app.use("/usuarios", createUsuarioRouter(mockProductoController, pedidoController, mockNotificacionesController));
+  app.use(
+    "/usuarios",
+    createUsuarioRouter(mockProductoController, pedidoController, mockNotificacionesController)
+  );
+}
+
+// Crear datos de prueba antes de cada test
+beforeEach(async () => {
+  // Crear usuarios en la BD
+  const compradorData = TestDataFactory.createUsuario({
+    nombre: "Juan Comprador",
+    rol: "comprador"
+  });
+  comprador = await Usuario.create(compradorData);
+
+  const vendedorData = TestDataFactory.createUsuario({
+    nombre: "María Vendedora",
+    rol: "vendedor"
+  });
+  vendedor = await Usuario.create(vendedorData);
+
+  // Crear producto en la BD
+  const productoRepository = new ProductoRepository();
+  const productoData = TestDataFactory.createProducto(vendedor, {
+    stock: 50,
+    precio: 5000
+  });
+  producto = await productoRepository.create(productoData);
 });
 
-afterEach(() => {
-  jest.clearAllMocks();
-});
-
-describe("API Pedidos - Integration Tests", () => {
-
-  describe("POST /pedidos - Crear pedido", () => {
-    test("Listar todos los pedidos", async () => {
-      const res = await request(app)
-        .get("/pedidos")
-        .expect(200);
+describe("API Pedidos - Integration Tests (BD Real)", () => {
+  describe("GET /pedidos - Listar todos los pedidos", () => {
+    test("Retorna lista vacía cuando no hay pedidos", async () => {
+      const res = await request(app).get("/pedidos").expect(200);
 
       expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBe(0);
+    });
+
+    test("Retorna lista de pedidos creados", async () => {
+      // Crear un pedido mediante el repositorio
+      const pedidoRepository = new PedidoRepository();
+      const pedidoData = TestDataFactory.createPedido(comprador, {
+        vendedorId: vendedor._id,
+        items: [
+          TestDataFactory.createItemPedido(producto._id, {
+            cantidad: 2,
+            vendedorId: vendedor._id
+          })
+        ]
+      });
+      await pedidoRepository.create(pedidoData);
+
+      const res = await request(app).get("/pedidos").expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBe(1);
+      // La respuesta del controlador devuelve objetos con { id, estado, fechaCreacion }
+      expect(res.body[0]).toHaveProperty("id");
+      expect(res.body[0]).toHaveProperty("estado", EstadoPedido.PENDIENTE);
     });
   });
 
   describe("DELETE /pedidos/:pedidoId - Cancelar pedido", () => {
-    test("Cancelar pedido exitosamente", async () => {
-      const res = await request(app)
-        .delete(`/pedidos/${pedidoMock.id}`)
-        .send({ compradorId });
+    test("Cancela pedido exitosamente", async () => {
+      // Crear un pedido
+      const pedidoRepository = new PedidoRepository();
+      const pedidoData = TestDataFactory.createPedido(comprador, {
+        vendedorId: vendedor._id,
+        items: [
+          TestDataFactory.createItemPedido(producto._id, {
+            cantidad: 2,
+            vendedorId: vendedor._id
+          })
+        ]
+      });
+      const pedido = await pedidoRepository.create(pedidoData);
 
-      expect(res.status).toBe(200);
+      const res = await request(app)
+        .delete(`/pedidos/${pedido._id.toString()}`)
+        .send({ compradorId: comprador._id.toString() })
+        .expect(200);
+
       expect(res.body).toHaveProperty("message", "Pedido cancelado con éxito");
     });
 
     test("Error al cancelar con comprador no autorizado", async () => {
+      // Crear un pedido
+      const pedidoRepository = new PedidoRepository();
+      const pedidoData = TestDataFactory.createPedido(comprador, {
+        vendedorId: vendedor._id
+      });
+      const pedido = await pedidoRepository.create(pedidoData);
+
+      // Crear otro comprador
+      const otraCompradora = await Usuario.create(
+        TestDataFactory.createUsuario({ nombre: "Otro comprador" })
+      );
+
       const res = await request(app)
-        .delete(`/pedidos/${pedidoMock.id}`)
-        .send({ compradorId: "507f1f77bcf86cd799439099" })
+        .delete(`/pedidos/${pedido._id.toString()}`)
+        .send({ compradorId: otraCompradora._id.toString() })
         .expect(400);
 
       expect(res.body).toHaveProperty("error");
     });
   });
 
-  describe("GET /usuarios/comprador/:usuarioId/pedidos - Obtener pedidos por usuario", () => {
+  describe("GET /usuarios/comprador/:usuarioId/pedidos", () => {
     test("Obtener pedidos del usuario exitosamente", async () => {
+      // Crear un pedido
+      const pedidoRepository = new PedidoRepository();
+      const pedidoData = TestDataFactory.createPedido(comprador, {
+        vendedorId: vendedor._id,
+        items: [
+          TestDataFactory.createItemPedido(producto._id, {
+            cantidad: 1,
+            vendedorId: vendedor._id
+          })
+        ]
+      });
+      await pedidoRepository.create(pedidoData);
+
       const res = await request(app)
-        .get(`/usuarios/comprador/${compradorId}/pedidos`)
+        .get(`/usuarios/comprador/${comprador._id.toString()}/pedidos`)
         .expect(200);
 
       expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBe(1);
+      // El endpoint de historial devuelve { id, estado, fechaCreacion }
+      expect(res.body[0].id.toString()).toBeDefined();
+    });
+
+    test("Retorna lista vacía si usuario no tiene pedidos", async () => {
+      const res = await request(app)
+        .get(`/usuarios/comprador/${comprador._id.toString()}/pedidos`)
+        .expect(200);
+
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBe(0);
     });
   });
 
   describe("PATCH /pedidos/:pedidoId/enviado - Marcar como enviado", () => {
-    test("Marcar pedido como enviado exitosamente", async () => {
-      const res = await request(app)
-        .patch(`/pedidos/${pedidoMock.id}/enviado`)
-        .send({ vendedorId });
+    test("Marca pedido como enviado exitosamente", async () => {
+      // Crear un pedido en estado CONFIRMADO
+      const pedidoRepository = new PedidoRepository();
+      const pedidoData = TestDataFactory.createPedido(comprador, {
+        vendedorId: vendedor._id,
+        estado: EstadoPedido.CONFIRMADO,
+        items: [
+          TestDataFactory.createItemPedido(producto._id, {
+            cantidad: 1,
+            vendedorId: vendedor._id
+          })
+        ]
+      });
+      const pedido = await pedidoRepository.create(pedidoData);
 
-      expect(res.status).toBe(200);
+      const res = await request(app)
+        .patch(`/pedidos/${pedido._id.toString()}/enviado`)
+        .send({ vendedorId: vendedor._id.toString() })
+        .expect(200);
+
       expect(res.body).toHaveProperty("message", "Pedido marcado como enviado");
+      // El controlador devuelve el estado en el campo `estado` junto al message
+      expect(res.body).toHaveProperty("estado", EstadoPedido.ENVIADO);
     });
   });
-
 });
