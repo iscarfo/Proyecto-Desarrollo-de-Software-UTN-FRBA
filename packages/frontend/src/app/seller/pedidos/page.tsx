@@ -72,9 +72,30 @@ export default function AdminPedidosPage() {
     }
   };
 
-  const handleSendOrder = (orderId: string) => {
-    console.log(`Enviando pedido: ${orderId}`);
-    alert(`Pedido ${orderId} enviado`);
+  const handleSendOrder = async (orderId: string, vendedorId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/pedidos/${orderId}/enviado`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendedorId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al marcar pedido como enviado");
+      }
+
+      const data = await response.json();
+      alert(`Pedido ${data.pedido} marcado como ${data.estado}`);
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "ENVIADO" } : o
+        )
+      );
+    } catch (err: any) {
+      alert(`Error al enviar pedido: ${err.message}`);
+    }
   };
 
   return (
@@ -105,7 +126,8 @@ export default function AdminPedidosPage() {
                 products={order.products}
                 userType="seller"
                 onConfirm={handleConfirmOrder}
-                onSend={handleSendOrder}
+                // TODO: pasar el vendedorId real cuando tengamos sesiones
+                onSend={(orderId) => handleSendOrder(orderId, "68d82ab654219bb082182057")} 
                 onCancelSeller={handleCancelOrderSeller}
                 onCancel={() => {}}
                 onRepurchase={() => {}}
