@@ -27,11 +27,26 @@ export class PedidoController {
     }
   };
 
-  listarPedidos = async (req, res) => { // lista todos los pedidos que existen en el sistema
+  listarPedidos = async (req, res) => {
     try {
       const pedidos = await this.pedidoService.listarPedidos();
-      res.json(pedidos.map(p => ({ id: p._id, estado: p.estado, fechaCreacion: p.fechaCreacion })));
+
+      console.log("Items del primer pedido:", pedidos[0].items);
+
+      const pedidosDTO = pedidos.map((p) => ({
+        id: p._id.toString(),
+        estado: p.estado,
+        deliveryAddress: `${p.direccionEntrega.calle} ${p.direccionEntrega.altura}, ${p.direccionEntrega.ciudad}`,
+        products: (p.items || []).map((i) => ({
+          name: i.productoId.titulo,          // viene del populate
+          imageUrl: i.productoId.fotos?.[0],  // primera foto
+          quantity: i.cantidad
+        }))
+      }));
+
+      res.json(pedidosDTO);
     } catch (err) {
+      console.error("Error en listarPedidos:", err);
       res.status(400).json({ error: err.message });
     }
   };
