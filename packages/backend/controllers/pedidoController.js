@@ -31,8 +31,6 @@ export class PedidoController {
     try {
       const pedidos = await this.pedidoService.listarPedidos();
 
-      console.log("Items del primer pedido:", pedidos[0].items);
-
       const pedidosDTO = pedidos.map((p) => ({
         id: p._id.toString(),
         estado: p.estado,
@@ -93,6 +91,22 @@ export class PedidoController {
       const pedido = await this.pedidoService.marcarComoEnviado(pedidoId, vendedorId);
       res.json({
         message: "Pedido marcado como enviado",
+        pedido: pedido.id,
+        estado: pedido.estado
+      });
+    } catch (err) {
+      res.status(400).json({ error: err.message });
+    }
+  };
+
+  marcarPedidoConfirmado = async (req, res) => {
+    try {
+      const { pedidoId } = req.params;
+      const { vendedorId } = req.body;
+      const pedido = await this.pedidoService.marcarComoConfirmado(pedidoId, vendedorId);
+
+      res.json({
+        message: "Pedido confirmado correctamente",
         pedido: pedido.id,
         estado: pedido.estado
       });

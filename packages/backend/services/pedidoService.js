@@ -182,6 +182,24 @@ export class PedidoService {
     return await this.actualizarEstadoPedido(pedido._id, EstadoPedido.ENVIADO, vendedorId, "Pedido marcado como enviado");
   }
 
+  async marcarComoConfirmado(pedidoId, vendedorId) {
+    const pedido = await this.pedidoRepository.findById(pedidoId);
+    if (!pedido) throw new NotFoundError("Pedido", pedidoId);
+
+    // Validación: solo se puede confirmar si está pendiente
+    if (pedido.estado !== "PENDIENTE") {
+      throw new Error("El pedido solo puede confirmarse si está en estado PENDIENTE");
+    }
+
+    // Actualizar estado
+    return await this.actualizarEstadoPedido(
+      pedido._id,
+      EstadoPedido.CONFIRMADO,
+      vendedorId,
+      "Pedido confirmado"
+    );
+  }
+
   async rehidratarPedido(pedidoDb) {
     // Crear items con vendedorId obtenido de cada producto
     const itemsInstancia = await Promise.all(

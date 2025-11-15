@@ -48,9 +48,33 @@ export default function AdminPedidosPage() {
   const paginatedOrders = orders.slice(startIndex, endIndex);
 
   // --- Handlers para las acciones del vendedor ---
-  const handleConfirmOrder = (orderId: string) => {
-    console.log(`Confirmando pedido: ${orderId}`);
-    alert(`Pedido ${orderId} confirmado`);
+  const handleConfirmOrder = async (orderId: string, vendedorId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/pedidos/${orderId}/confirmar`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ vendedorId }), // 👈 enviar vendedorId
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al confirmar pedido");
+      }
+
+      const data = await response.json();
+      alert(`Pedido ${data.pedido} marcado como ${data.estado}`);
+
+      // 🔹 Actualizar estado local sin recargar
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "CONFIRMADO" } : o
+        )
+      );
+    } catch (err: any) {
+      alert(`Error al confirmar pedido: ${err.message}`);
+    }
   };
 
   const handleCancelOrderSeller = async (orderId: string) => {
@@ -125,7 +149,8 @@ export default function AdminPedidosPage() {
                 deliveryAddress={order.deliveryAddress}
                 products={order.products}
                 userType="seller"
-                onConfirm={handleConfirmOrder}
+                // TODO: pasar el vendedorId real cuando tengamos sesiones
+                onConfirm={(orderId) => handleConfirmOrder(orderId, "68d82ab654219bb082182057")}
                 // TODO: pasar el vendedorId real cuando tengamos sesiones
                 onSend={(orderId) => handleSendOrder(orderId, "68d82ab654219bb082182057")} 
                 onCancelSeller={handleCancelOrderSeller}
