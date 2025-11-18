@@ -4,6 +4,7 @@ import { ItemPedido } from "../domain/pedido/ItemPedido.js";
 import { EstadoPedido } from '../domain/pedido/enums.js';
 import { DireccionEntrega } from "../domain/pedido/DireccionEntrega.js";
 import { InvalidIdError, NotFoundError, ValidationError } from '../errors/AppError.js';
+import { PedidoModel } from '../models/PedidoModel.js';
 
 export class PedidoService {
   constructor(pedidoRepository, productoService, usuarioRepository, notificacionesService) {
@@ -84,7 +85,7 @@ export class PedidoService {
 
     //Despachar notificaciones tras creación del pedido (asincrónico)
     await this.notificacionesService
-      .despacharPorEstado(pedido, EstadoPedido.CONFIRMADO)
+      .despacharPorEstado(pedido, EstadoPedido.PENDIENTE)
       .catch((err) => console.error("Error al notificar pedido:", err));
 
     return pedidoCreado;
@@ -92,7 +93,10 @@ export class PedidoService {
 
   // Listar todos los pedidos
   async listarPedidos() {
-    return await this.pedidoRepository.findAll();
+    return await PedidoModel.find().populate({
+      path: "items.productoId",
+      select: "titulo fotos" 
+    });
   }
 
   async actualizarEstadoPedido(pedidoId, nuevoEstado, quien, motivo) {
@@ -125,9 +129,11 @@ export class PedidoService {
     const pedido = await this.pedidoRepository.findById(pedidoId);
     if (!pedido) throw new NotFoundError('Pedido', pedidoId);
 
+    // TODO: descomentar cuando se implemente autenticación
+    /*
     if (pedido.compradorId.toString() !== compradorId.toString()) {
       throw new Error("No autorizado: solo el comprador puede cancelar su pedido");
-    }
+    }*/
 
     if (pedido.estado === "ENVIADO") {
       throw new Error("El pedido ya fue enviado y no puede cancelarse");
@@ -174,6 +180,24 @@ export class PedidoService {
     }
 
     return await this.actualizarEstadoPedido(pedido._id, EstadoPedido.ENVIADO, vendedorId, "Pedido marcado como enviado");
+  }
+
+  async marcarComoConfirmado(pedidoId, vendedorId) {
+    const pedido = await this.pedidoRepository.findById(pedidoId);
+    if (!pedido) throw new NotFoundError("Pedido", pedidoId);
+
+    // Validación: solo se puede confirmar si está pendiente
+    if (pedido.estado !== "PENDIENTE") {
+      throw new Error("El pedido solo puede confirmarse si está en estado PENDIENTE");
+    }
+
+    // Actualizar estado
+    return await this.actualizarEstadoPedido(
+      pedido._id,
+      EstadoPedido.CONFIRMADO,
+      vendedorId,
+      "Pedido confirmado"
+    );
   }
 
   async rehidratarPedido(pedidoDb) {

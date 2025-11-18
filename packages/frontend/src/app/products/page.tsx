@@ -89,7 +89,7 @@ export default function ProductosPage() {
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const res = await axios.get("http://localhost:3001/productos/categorias");
+        const res = await axios.get("http://localhost:3000/productos/categorias");
         setCategorias(res.data || []);
       } catch (err) {
         console.error("Error al cargar categorías", err);

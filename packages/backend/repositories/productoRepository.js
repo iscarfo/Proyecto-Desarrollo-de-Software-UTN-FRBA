@@ -67,9 +67,9 @@ export class ProductoRepository {
     }
 
     // ===== Buscar todos con paginación + filtros + orden =====
-    async findByPage(numeroPagina = 1, elementosXPagina = 10, filtros = {}, sortParam = null) {
+    async findByPage(numeroPagina = 1, elementosXPagina = 10, filtros = {}, sortParam = null, vendedorId = null) {
         const skip = (numeroPagina - 1) * elementosXPagina;
-        const query = buildQuery(filtros, null);
+        const query = buildQuery(filtros, vendedorId);
         const sortOptions = buildSort(sortParam);
 
         return await Producto.find(query)

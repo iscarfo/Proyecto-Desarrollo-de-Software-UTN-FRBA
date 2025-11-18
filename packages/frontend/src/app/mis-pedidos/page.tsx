@@ -14,7 +14,7 @@ export default function MisPedidosPage() {
   const sampleOrders = [
     {
       orderId: "#00001",
-      status: "Enviado" as const,
+      status: "ENVIADO" as const,
       deliveryAddress: "Av. Monroe 3506",
       products: [
         { name: "Remera blanca", imageUrl: "https://acdn-us.mitiendanube.com/stores/001/203/421/products/an29-110415-removebg-preview-4f8315b62c4aa1287917563899571320-480-0.png", size: "L", quantity: 1 }
@@ -22,7 +22,7 @@ export default function MisPedidosPage() {
     },
     {
       orderId: "#00002",
-      status: "Pendiente" as const,
+      status: "PENDIENTE" as const,
       deliveryAddress: "Av. Rivadavia 9012",
       products: [
         { name: "Sweater cremita", imageUrl: "https://static.wixstatic.com/media/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png", size: "S", quantity: 1 }
@@ -30,7 +30,7 @@ export default function MisPedidosPage() {
     },
     {
       orderId: "#00003",
-      status: "Confirmado" as const,
+      status: "CONFIRMADO" as const,
       deliveryAddress: "Calle Falsa 123",
       products: [
         { name: "Pantalón negro", imageUrl: "https://juanperez.com.ar/cdn/shop/files/5488801.T38_284_29.jpg?v=1729261528", quantity: 2 }
@@ -38,7 +38,7 @@ export default function MisPedidosPage() {
     },
     {
       orderId: "#00004",
-      status: "Cancelado" as const,
+      status: "CANCELADO" as const,
       deliveryAddress: "Av. Libertador 4500",
       products: [
         { name: "Camisa azul", imageUrl: "https://www.wessi.com/cdn/shop/files/4_59a965a0-1caf-4241-b0aa-e24ed8d5fc5f.jpg?v=1726733385&width=1080", size: "M", quantity: 1 }
@@ -46,7 +46,7 @@ export default function MisPedidosPage() {
     },
     {
       orderId: "#00005",
-      status: "Pendiente" as const,
+      status: "PENDIENTE" as const,
       deliveryAddress: "Calle Corrientes 2200",
       products: [
         { name: "Zapatillas rojas", imageUrl: "https://http2.mlstatic.com/D_693634-MLA83771250445_042025-O.jpg", size: "42", quantity: 1 }
