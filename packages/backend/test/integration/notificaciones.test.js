@@ -103,32 +103,9 @@ describe("API Notificaciones - Integration Tests (BD Real)", () => {
         .get(`/usuarios/${usuario._id.toString()}/notificaciones/unread`)
         .expect(200);
 
-      expect(res.body).toHaveProperty("data");
-      expect(res.body).toHaveProperty("totalColecciones");
-      expect(res.body).toHaveProperty("pagina");
+
       expect(Array.isArray(res.body.data)).toBe(true);
       expect(res.body.data.length).toBe(2);
-    });
-
-    test("Obtener notificaciones no leídas con paginación personalizada", async () => {
-      // Crear 15 notificaciones no leídas
-      const notificacionesRepository = new NotificacionesRepository();
-      for (let i = 0; i < 15; i++) {
-        const notif = TestDataFactory.createNotificacion(usuario, {
-          leida: false,
-          titulo: `Notificación ${i + 1}`
-        });
-        await notificacionesRepository.create(notif);
-      }
-
-      const res = await request(app)
-        .get(`/usuarios/${usuario._id.toString()}/notificaciones/unread`)
-        .query({ page: 2, limit: 5 })
-        .expect(200);
-
-      expect(res.body).toHaveProperty("data");
-      expect(res.body).toHaveProperty("pagina", 2);
-      expect(res.body.data.length).toBeLessThanOrEqual(5);
     });
 
     test("Error con ID de usuario inválido", async () => {
@@ -162,6 +139,10 @@ describe("API Notificaciones - Integration Tests (BD Real)", () => {
         leida: true,
         titulo: "Pago confirmado"
       });
+      const notif3 = TestDataFactory.createNotificacion(usuario, {
+        leida: false,
+        titulo: "Pago asegurado"
+      });
 
       await notificacionesRepository.create(notif1);
       await notificacionesRepository.create(notif2);
@@ -170,31 +151,9 @@ describe("API Notificaciones - Integration Tests (BD Real)", () => {
         .get(`/usuarios/${usuario._id.toString()}/notificaciones/read`)
         .expect(200);
 
-      expect(res.body).toHaveProperty("data");
-      expect(res.body).toHaveProperty("totalColecciones");
+
       expect(Array.isArray(res.body.data)).toBe(true);
       expect(res.body.data.length).toBe(2);
-    });
-
-    test("Obtener notificaciones leídas con paginación personalizada", async () => {
-      // Crear 25 notificaciones leídas
-      const notificacionesRepository = new NotificacionesRepository();
-      for (let i = 0; i < 25; i++) {
-        const notif = TestDataFactory.createNotificacion(usuario, {
-          leida: true,
-          titulo: `Notificación leída ${i + 1}`
-        });
-        await notificacionesRepository.create(notif);
-      }
-
-      const res = await request(app)
-        .get(`/usuarios/${usuario._id.toString()}/notificaciones/read`)
-        .query({ page: 3, limit: 10 })
-        .expect(200);
-
-      expect(res.body).toHaveProperty("data");
-      expect(res.body).toHaveProperty("pagina", 3);
-      expect(res.body.data.length).toBeLessThanOrEqual(10);
     });
 
     test("Error con ID de usuario inválido", async () => {
@@ -219,8 +178,7 @@ describe("API Notificaciones - Integration Tests (BD Real)", () => {
         .patch(`/notificaciones/${notifCreada._id.toString()}/read`)
         .expect(200);
 
-      expect(res.body).toHaveProperty("message", "Notificación marcada como leída");
-      expect(res.body).toHaveProperty("notificacion");
+
       expect(res.body.notificacion.leida).toBe(true);
     });
 

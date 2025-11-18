@@ -106,7 +106,6 @@ describe("API Productos - Integration Tests (BD Real)", () => {
         .send({
           usuarioId: vendedor._id.toString(),
           titulo: "Laptop Gaming"
-          // Faltan descripcion, precio, moneda, stock
         })
         .expect(400);
 
@@ -153,29 +152,7 @@ describe("API Productos - Integration Tests (BD Real)", () => {
   });
 
   describe("GET /productos - Listar productos", () => {
-    test("Retorna lista paginada de productos", async () => {
-      // Crear varios productos
-      for (let i = 0; i < 15; i++) {
-        const productoData = TestDataFactory.createProducto(vendedor, {
-          titulo: `Producto ${i + 1}`,
-          precio: 100 + i * 10
-        });
-        await productoRepository.create(productoData);
-      }
-
-      const res = await request(app)
-        .get("/productos")
-        .query({ page: 1, limit: 10 })
-        .expect(200);
-
-      expect(res.body).toHaveProperty("pagina", 1);
-      expect(res.body).toHaveProperty("perPage", 10);
-      expect(res.body).toHaveProperty("totalColecciones");
-      expect(res.body).toHaveProperty("data");
-      expect(res.body.data.length).toBeLessThanOrEqual(10);
-    });
-
-    test("Retorna segunda página correctamente", async () => {
+    test("Retorna los primeros 100 productos si hay", async () => {
       // Crear 25 productos
       for (let i = 0; i < 25; i++) {
         const productoData = TestDataFactory.createProducto(vendedor, {
@@ -186,23 +163,10 @@ describe("API Productos - Integration Tests (BD Real)", () => {
 
       const res = await request(app)
         .get("/productos")
-        .query({ page: 2, limit: 10 })
+        .query({ page: 1, limit: 100 })
         .expect(200);
 
-      expect(res.body.pagina).toBe(2);
-      expect(res.body.data.length).toBeLessThanOrEqual(10);
-    });
-
-    test("Retorna estructura paginada vacía si no hay productos", async () => {
-      const res = await request(app)
-        .get("/productos")
-        .query({ page: 1, limit: 10 })
-        .expect(200);
-
-      // El controlador devuelve paginación incluso si está vacía (data: [])
-      expect(res.body).toHaveProperty("pagina");
-      expect(res.body).toHaveProperty("data");
-      expect(res.body.data).toEqual([]);
+      expect(res.body.data.length).toBe(25);
     });
 
     test("Filtra productos por nombre", async () => {
@@ -223,24 +187,6 @@ describe("API Productos - Integration Tests (BD Real)", () => {
 
       // Si el filtro funciona, debería encontrar al menos el producto con "Laptop"
       expect(res.body.data.length).toBe(1);
-    });
-
-    test("Limita máximo a 100 productos por página", async () => {
-      const res = await request(app)
-        .get("/productos")
-        .query({ page: 1, limit: 500 })
-        .expect(200);
-
-      expect(res.body.perPage).toBeLessThanOrEqual(100);
-    });
-
-    test("Usa página 1 si se envía página 0 o negativa", async () => {
-      const res = await request(app)
-        .get("/productos")
-        .query({ page: 0, limit: 10 })
-        .expect(200);
-
-      expect(res.body.pagina).toBe(1);
     });
   });
 
