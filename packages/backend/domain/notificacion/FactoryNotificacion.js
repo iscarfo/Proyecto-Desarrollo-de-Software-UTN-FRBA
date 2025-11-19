@@ -94,7 +94,7 @@ export class FactoryNotificacion {
   }
 
   static crearInstanciaNotificacion(usuarioDestinoId, mensaje) {
-    return new Notificacion(null, usuarioDestinoId, mensaje);
+    return new Notificacion(usuarioDestinoId, mensaje);
   }
 
   static obtenerProductosxCantidad(productos, cantidades) {
