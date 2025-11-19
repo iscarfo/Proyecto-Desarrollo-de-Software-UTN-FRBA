@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Badge from '@mui/material/Badge';
 import { useCart } from '../../src/store/CartContext';
+import NotificationPanel from '@/components/NotificationPanel/NotificationPanel';
 import {
   AppBar,
   Toolbar,
@@ -52,6 +53,16 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
   const isNotifications = pathname === '/notificaciones';
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [searchText, setSearchText] = useState('');
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  const handleNotifClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleNotifClose = () => {
+    setAnchorEl(null);
+  };
 
   const toggleDrawer = (open: boolean) => () => {
     setDrawerOpen(open);
@@ -175,17 +186,17 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 </Box>
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <IconButton
-                    aria-label="Ver notificaciones"
-                    title="Notificaciones"
-                    component={NextLink}
-                    href="/notificaciones"
-                    sx={{
-                      backgroundColor: isNotifications ? 'primary.main' : 'transparent',
-                    }}
-                  >
-                    <FiBell size={20} />
+                  <IconButton aria-label="Ver notificaciones" title="Notificaciones" onClick={handleNotifClick}>
+                    <Badge badgeContent={unreadCount} color="error" overlap="circular" invisible={unreadCount === 0}>
+                      <FiBell size={20} />
+                    </Badge>
                   </IconButton>
+
+                  <NotificationPanel
+                    anchorEl={anchorEl}
+                    onClose={handleNotifClose}
+                    onUnreadCountChange={setUnreadCount} // 👈 recibimos el número
+                  />
 
                   <IconButton
                   aria-label="Ver carrito"
@@ -246,16 +257,17 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                   </Box>
                 ))}
 
-                <IconButton
-                  aria-label="Ver notificaciones"
-                  title="Notificaciones"
-                  component={NextLink}
-                  href="/notificaciones"
-                  sx={{ backgroundColor: isNotifications ? 'primary.main' : 'transparent' }}
-                >
-                  <FiBell size={20} />
-                </IconButton>
+                  <IconButton aria-label="Ver notificaciones" title="Notificaciones" onClick={handleNotifClick}>
+                    <Badge badgeContent={unreadCount} color="error" overlap="circular" invisible={unreadCount === 0}>
+                      <FiBell size={20} />
+                    </Badge>
+                  </IconButton>
 
+                  <NotificationPanel
+                    anchorEl={anchorEl}
+                    onClose={handleNotifClose}
+                    onUnreadCountChange={setUnreadCount} // 👈 recibimos el número
+                  />
                   <IconButton
                   aria-label="Ver carrito"
                   component={NextLink}

@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { usePathname } from 'next/navigation';
+import Badge from '@mui/material/Badge';
 import {
   AppBar,
   Toolbar,
@@ -13,12 +14,13 @@ import {
   ListItemButton,
   ListItemText,
   useMediaQuery,
-  useTheme
+  useTheme,
+  Link
 } from '@mui/material';
 import { FiBell, FiMenu } from 'react-icons/fi';
 import NextLink from 'next/link';
-import { Link } from '@mui/material';
 import UsuarioMenu from '@/components/UsuarioMenu/usuarioMenu';
+import NotificationPanel from '@/components/NotificationPanel/NotificationPanel'; // 👈 import panel
 
 export interface NavLink {
   name: string;
@@ -39,16 +41,26 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
   const pathname = usePathname();
   const theme = useTheme();
   const isMobile = useMediaQuery('(max-width:900px)');
-  const isNotifications = pathname === '/notificaciones';
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  
+
+  // ✅ estado para popup de notificaciones
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const handleNotifClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleNotifClose = () => {
+    setAnchorEl(null);
+  };
 
   const toggleDrawer = (open: boolean) => () => {
     setDrawerOpen(open);
   };
 
   const getLinkStyles = (path: string) => ({
-    color: pathname === path ? 'primary.main' : 'inherit',
-    backgroundColor: pathname === path ? 'background.paper' : 'transparent',
+    color: pathname === path ? theme.palette.primary.main : 'inherit',
+    backgroundColor: pathname === path ? theme.palette.background.paper : 'transparent',
     textDecoration: 'none',
     padding: '6px 12px',
     fontSize: '14px',
@@ -56,7 +68,7 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
     borderRadius: 1,
     transition: 'all 0.2s',
     '&:hover': {
-      backgroundColor: pathname === path ? 'background.paper' : 'rgba(252, 163, 17, 0.15)',
+      backgroundColor: pathname === path ? theme.palette.background.paper : 'rgba(252, 163, 17, 0.15)',
     },
   });
 
@@ -96,15 +108,15 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
               </Box>
 
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                {/* ✅ ícono de notificaciones con popup */}
                 <IconButton
                   aria-label="Ver notificaciones"
                   title="Notificaciones"
-                  component={NextLink}
-                  href="/notificaciones"
-                  sx={{ backgroundColor: isNotifications ? 'primary.main' : 'transparent' }}
+                  onClick={handleNotifClick}
                 >
                   <FiBell size={20} />
                 </IconButton>
+                <NotificationPanel anchorEl={anchorEl} onClose={handleNotifClose} />
 
                 <UsuarioMenu userType="seller" />
               </Box>
@@ -144,15 +156,18 @@ const SellerNavbar: React.FC<SellerNavbarProps> = ({
                   </Box>
                 ))}
 
-                <IconButton
-                  aria-label="Ver notificaciones"
-                  title="Notificaciones"
-                  component={NextLink}
-                  href="/notificaciones"
-                  sx={{ backgroundColor: isNotifications ? 'white' : 'transparent' }}
-                >
-                  <FiBell size={20} />
-                </IconButton>
+                {/* ✅ ícono de notificaciones con popup */}
+                  <IconButton aria-label="Ver notificaciones" title="Notificaciones" onClick={handleNotifClick}>
+                    <Badge badgeContent={unreadCount} color="error" overlap="circular" invisible={unreadCount === 0}>
+                      <FiBell size={20} />
+                    </Badge>
+                  </IconButton>
+
+                  <NotificationPanel
+                    anchorEl={anchorEl}
+                    onClose={handleNotifClose}
+                    onUnreadCountChange={setUnreadCount} // 👈 recibimos el número
+                  />
 
                 <UsuarioMenu userType="seller" />
               </Box>
