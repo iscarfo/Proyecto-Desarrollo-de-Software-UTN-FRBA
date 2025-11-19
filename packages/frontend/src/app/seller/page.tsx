@@ -42,16 +42,24 @@ export default function SellerPage() {
             className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
           >
             {/* Tarjeta de Mis Productos */}
-            <Card className="shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent>
-                <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">
-                  Mis Productos
-                </Typography>
-                <Typography variant="body1" className="text-black">
-                  Gestiona tu catálogo de productos
-                </Typography>
-              </CardContent>
-            </Card>
+            <Link
+              href="/seller/mis-productos"
+              passHref
+              aria-label="Ir a la sección de mis productos"
+              title="Administrar mis productos"
+              style={{ textDecoration: 'none' }}
+            >
+              <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                <CardContent>
+                  <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">
+                    Mis Productos
+                  </Typography>
+                  <Typography variant="body1" className="text-black">
+                    Gestiona tu catálogo de productos
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Link>
 
             {/* Tarjeta de Pedidos con Link accesible */}
             <Link
