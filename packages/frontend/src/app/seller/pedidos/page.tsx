@@ -1,11 +1,11 @@
 'use client';
 import Navbar from '@/components/Navbar/Navbar';
 import Footer from '@/components/Footer/Footer';
-// Importamos tu OrderRow y Pagination
 import OrderRow, { Product, OrderStatus } from '@/components/OrderRow/OrderRow';
 import Pagination from '@/components/Pagination/Pagination';
 import { Typography, Box, Container } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import axios from "axios";
 
 // Definimos un tipo para el pedido completo
 type Order = {
@@ -16,109 +16,151 @@ type Order = {
 };
 
 export default function AdminPedidosPage() {
+  const [orders, setOrders] = useState<Order[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
-  const pageSize = 3; // Pedidos por página
+  const pageSize = 4; // Pedidos por página
 
-  // --- Datos de ejemplo que coinciden con tu imagen ---
-  const sampleAdminOrders: Order[] = [
-    {
-      orderId: "#00001",
-      status: "Enviado",
-      deliveryAddress: "Av. Monroe 3506",
-      products: [
-        { name: "Remera blanca", imageUrl: "https://acdn-us.mitiendanube.com/stores/001/203/421/products/an29-110415-removebg-preview-4f8315b62c4aa1287917563899571320-480-0.png", size: "L", quantity: 1 }
-      ]
-    },
-    {
-      orderId: "#00004",
-      status: "Cancelado",
-      deliveryAddress: "Av. Monroe 3506",
-      products: [
-        { name: "Jean azul", imageUrl: "https://www.jamessmart.com/home/wp-content/uploads/ART-25629-JEAN-5B-AZUL.jpg", size: "44", quantity: 2 }
-      ]
-    },
-    {
-      orderId: "#00206",
-      status: "Pendiente",
-      deliveryAddress: "Av. Monroe 3506",
-      products: [
-        { name: "Sweater cremita", imageUrl: "https://static.wixstatic.com/media/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png", size: "S", quantity: 1 }
-      ]
-    },
-    {
-      orderId: "#01789",
-      status: "Confirmado",
-      deliveryAddress: "Av. Monroe 3506",
-      products: [
-        { name: "Sweater cremita", imageUrl: "https://static.wixstatic.com/media/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png", size: "S", quantity: 1 },
-        { name: "Campera negra", imageUrl: "https://sportotalar.vtexassets.com/arquivos/ids/524650/1380871-001-21026-BLACK_1.png?v=638531908327530000", quantity: 2 },
-        { name: "Jean azul", imageUrl: "https://www.jamessmart.com/home/wp-content/uploads/ART-25629-JEAN-5B-AZUL.jpg", size: "42", quantity: 1 }
-      ]
-    },
-    // Agrega más pedidos aquí para probar la paginación
-  ];
+  // 🔹 Traer pedidos reales al montar el componente
+  useEffect(() => {
+    const fetchOrders = async () => {
+      try {
+        const res = await axios.get("http://localhost:3000/pedidos");
+        // Adaptamos la respuesta del backend al tipo Order esperado en el front
+        const mappedOrders: Order[] = res.data.map((p: any) => ({
+          orderId: p.id,
+          status: p.estado,
+          deliveryAddress: p.deliveryAddress,
+          products: p.products // ya viene con name, imageUrl, quantity
+        }));
+        setOrders(mappedOrders);
+      } catch (err: any) {
+        console.error("Error al traer pedidos:", err.message);
+      }
+    };
+    fetchOrders();
+  }, []);
 
-  const totalPages = Math.ceil(sampleAdminOrders.length / pageSize);
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const totalPages = Math.ceil(orders.length / pageSize);
+  const handlePageChange = (page: number) => setCurrentPage(page);
 
   const startIndex = (currentPage - 1) * pageSize;
   const endIndex = startIndex + pageSize;
-  const paginatedOrders = sampleAdminOrders.slice(startIndex, endIndex);
+  const paginatedOrders = orders.slice(startIndex, endIndex);
 
   // --- Handlers para las acciones del vendedor ---
-  // En un caso real, esto actualizaría el estado o llamaría a una API
-  const handleConfirmOrder = (orderId: string) => {
-    console.log(`Confirmando pedido: ${orderId}`);
-    alert(`Pedido ${orderId} confirmado`);
+  const handleConfirmOrder = async (orderId: string, vendedorId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/pedidos/${orderId}/confirmar`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ vendedorId }), // 👈 enviar vendedorId
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al confirmar pedido");
+      }
+
+      const data = await response.json();
+      alert(`Pedido ${data.pedido} marcado como ${data.estado}`);
+
+      // 🔹 Actualizar estado local sin recargar
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "CONFIRMADO" } : o
+        )
+      );
+    } catch (err: any) {
+      alert(`Error al confirmar pedido: ${err.message}`);
+    }
   };
 
-  const handleCancelOrderSeller = (orderId: string) => {
-    console.log(`Vendedor cancelando pedido: ${orderId}`);
-    alert(`Pedido ${orderId} cancelado`);
+  const handleCancelOrderSeller = async (orderId: string) => {
+    try {
+      const compradorId = "68ea5e9ea0dd042efc615598"; // simulado
+      await axios.delete(`http://localhost:3000/pedidos/${orderId}`, {
+        data: { compradorId },
+      });
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "CANCELADO" } : o
+        )
+      );
+
+      alert(`Pedido ${orderId} CANCELADO`);
+    } catch (err: any) {
+      alert(`Error al cancelar pedido: ${err.response?.data?.error || err.message}`);
+    }
   };
 
-  const handleSendOrder = (orderId: string) => {
-    console.log(`Enviando pedido: ${orderId}`);
-    alert(`Pedido ${orderId} enviado`);
+  const handleSendOrder = async (orderId: string, vendedorId: string) => {
+    try {
+      const response = await fetch(`http://localhost:3000/pedidos/${orderId}/enviado`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ vendedorId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Error al marcar pedido como enviado");
+      }
+
+      const data = await response.json();
+      alert(`Pedido ${data.pedido} marcado como ${data.estado}`);
+
+      setOrders((prev) =>
+        prev.map((o) =>
+          o.orderId === orderId ? { ...o, status: "ENVIADO" } : o
+        )
+      );
+    } catch (err: any) {
+      alert(`Error al enviar pedido: ${err.message}`);
+    }
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar userType="seller" />
 
-      <main className="flex-grow py-12" style={{ backgroundColor: '#EDEDED' }}>
+      <main
+        role="main"
+        aria-label="Sección de administración de pedidos"
+        className="flex-grow py-12"
+        style={{ backgroundColor: '#EDEDED' }}
+      >
         <Container maxWidth="lg">
           <Typography
             variant="h4"
-            sx={{ marginBottom: 4, fontWeight: 'bold' , color: 'primary.main'}}
+            sx={{ marginBottom: 4, fontWeight: 'bold', color: 'primary.main' }}
           >
             Administrar pedidos
           </Typography>
 
-          {paginatedOrders.map((order) => (
-            <OrderRow
-              key={order.orderId}
-              orderId={order.orderId}
-              status={order.status}
-              deliveryAddress={order.deliveryAddress}
-              products={order.products}
-              userType="seller" // MUY IMPORTANTE: Le decimos al componente que es la vista de vendedor
-              
-              // Pasamos los handlers del vendedor
-              onConfirm={handleConfirmOrder}
-              onSend={handleSendOrder}
-              onCancelSeller={handleCancelOrderSeller}
+          <Box role="region" aria-label="Listado de pedidos del vendedor">
+            {paginatedOrders.map((order) => (
+              <OrderRow
+                key={order.orderId}
+                orderId={order.orderId}
+                status={order.status}
+                deliveryAddress={order.deliveryAddress}
+                products={order.products}
+                userType="seller"
+                // TODO: pasar el vendedorId real cuando tengamos sesiones
+                onConfirm={(orderId) => handleConfirmOrder(orderId, "68d82ab654219bb082182057")}
+                // TODO: pasar el vendedorId real cuando tengamos sesiones
+                onSend={(orderId) => handleSendOrder(orderId, "68d82ab654219bb082182057")} 
+                onCancelSeller={handleCancelOrderSeller}
+                onCancel={() => {}}
+                onRepurchase={() => {}}
+              />
+            ))}
+          </Box>
 
-              // Pasamos dummies para las props de comprador que no usamos aquí
-              onCancel={() => {}}
-              onRepurchase={() => {}}
-            />
-          ))}
-
-          <Box sx={{ marginTop: 4 }}>
+          <Box sx={{ marginTop: 4 }} aria-label="Paginación de pedidos">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}

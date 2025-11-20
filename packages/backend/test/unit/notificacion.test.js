@@ -12,12 +12,11 @@ describe("Notificacion - pruebas básicas", () => {
   describe("Clase Notificacion", () => {
     test("Crear notificación correctamente", () => {
       const notificacion = new Notificacion(
-        "1",
         usuario.getId(),
         "Mensaje de prueba"
       );
 
-      expect(notificacion.getId()).toBe("1");
+      expect(notificacion.getId()).toBeNull(); // id es null hasta guardarse en BD
       expect(notificacion.getUsuarioDestino()).toBe(usuario.getId());
       expect(notificacion.getMensaje()).toBe("Mensaje de prueba");
       expect(notificacion.isLeida()).toBe(false);
@@ -26,7 +25,6 @@ describe("Notificacion - pruebas básicas", () => {
 
     test("Marcar notificación como leída", () => {
       const notificacion = new Notificacion(
-        "1",
         usuario.getId(),
         "Mensaje de prueba"
       );
@@ -43,7 +41,6 @@ describe("Notificacion - pruebas básicas", () => {
     test("Verificar fecha de alta", () => {
       const antes = Date.now();
       const notificacion = new Notificacion(
-        "1",
         usuario.getId(),
         "Mensaje de prueba"
       );

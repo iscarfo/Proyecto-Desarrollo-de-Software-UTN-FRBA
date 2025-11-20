@@ -2,7 +2,7 @@
 import React from 'react';
 import { Box, Button, Chip, Typography } from '@mui/material';
 
-export type OrderStatus = 'Enviado' | 'Cancelado' | 'Pendiente' | 'Confirmado';
+export type OrderStatus = 'ENVIADO' | 'CANCELADO' | 'PENDIENTE' | 'CONFIRMADO';
 
 export interface Product {
   name: string;
@@ -45,13 +45,13 @@ const OrderRow: React.FC<OrderRowProps> = ({
   // Determina el color del chip según el estado
   const getStatusStyles = (currentStatus: OrderStatus) => {
     switch (currentStatus) {
-      case 'Enviado':
+      case 'ENVIADO':
         return { bg: '#d4edda', color: '#155724' }; // Verde
-      case 'Cancelado':
+      case 'CANCELADO':
         return { bg: '#f8d7da', color: '#721c24' }; // Rojo
-      case 'Pendiente':
+      case 'PENDIENTE':
         return { bg: '#fff3cd', color: '#856404' }; // Amarillo
-      case 'Confirmado':
+      case 'CONFIRMADO':
         return { bg: '#cce5ff', color: '#004085' }; // Azul
       default:
         return { bg: '#eeeeee', color: '#333' };
@@ -62,9 +62,9 @@ const OrderRow: React.FC<OrderRowProps> = ({
 
   // --- LÓGICA DE BOTONES DEL VENDEDOR ---
   const renderSellerButtons = () => {
-    const isPending = status === 'Pendiente';
-    const isConfirmed = status === 'Confirmado';
-    const isFinished = status === 'Enviado' || status === 'Cancelado';
+    const isPending = status === 'PENDIENTE';
+    const isConfirmed = status === 'CONFIRMADO';
+    const isFinished = status === 'ENVIADO' || status === 'CANCELADO';
 
     // Estilo de los botones del admin (naranja)
     const adminButtonSx = (disabled: boolean) => ({
@@ -116,7 +116,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
 
   // --- LÓGICA DE BOTONES DEL COMPRADOR ---
   const renderBuyerButtons = () => {
-    const isCancelDisabled = status === 'Enviado' || status === 'Cancelado';
+    const isCancelDisabled = status === 'ENVIADO' || status === 'CANCELADO';
     return (
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0, minWidth: '140px' }}>
         <Button

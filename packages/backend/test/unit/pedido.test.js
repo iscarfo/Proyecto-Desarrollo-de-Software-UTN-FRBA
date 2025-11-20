@@ -4,117 +4,173 @@ import { EstadoPedido } from "../../domain/pedido/enums.js";
 import { ItemPedido } from "../../domain/pedido/ItemPedido.js";
 
 // Factory de items usando la clase real ItemPedido
-const item = (productoId, cantidad, precioUnitario) =>
-  new ItemPedido(productoId, cantidad, precioUnitario);
+const item = (productoId, cantidad, precioUnitario, vendedorId = "vendedor-001") =>
+  new ItemPedido(productoId, cantidad, precioUnitario, vendedorId);
 
-describe("Pedido - pruebas completas", () => {
+describe("Pedido - pruebas unitarias de dominio", () => {
   let pedido;
-  let repoMock;
 
   beforeEach(() => {
     const items = [
-      item(1, 2, 100), // subtotal = 200
-      item(2, 3, 50)   // subtotal = 150
+      item(1, 2, 100, "vendedor-001"), // subtotal = 200
+      item(2, 3, 50, "vendedor-002")   // subtotal = 150
     ];
 
     pedido = new Pedido(
       "comprador-123",
       items,
       "ARS",
-      { calle: "Calle 123" }
+      { calle: "Calle 123", altura: 456, codPostal: "1234", ciudad: "Buenos Aires", provincia: "CABA", pais: "Argentina" }
     );
-
-    // Repositorio mock
-    repoMock = {
-      findById: jest.fn().mockResolvedValue({ stock: 10 }),
-      findByIdAndUpdateEstado: jest.fn().mockImplementation((id, estado, usuario, motivo) => {
-        return Promise.resolve({ id, estado, usuario, motivo });
-      })
-    };
   });
 
-  // ------------------------
-  // Test de calcularTotal
-  // ------------------------
-  test("calcularTotal suma correctamente", () => {
-    expect(pedido.calcularTotal()).toBe(350);
+  // ========================
+  // Tests de calcularTotal
+  // ========================
+  describe("calcularTotal()", () => {
+    test("suma correctamente los subtotales de todos los items", () => {
+      expect(pedido.calcularTotal()).toBe(350);
+    });
+
+    test("retorna 0 para un pedido sin items", () => {
+      const pedidoVacio = new Pedido("comprador-123", [], "ARS", {});
+      expect(pedidoVacio.calcularTotal()).toBe(0);
+    });
+
+    test("suma correctamente con un único item", () => {
+      const singleItemPedido = new Pedido(
+        "comprador-123",
+        [item(1, 5, 100, "vendedor-001")],
+        "ARS",
+        {}
+      );
+      expect(singleItemPedido.calcularTotal()).toBe(500);
+    });
   });
 
-  // ------------------------
-  // Test de validarStock
-  // ------------------------
-  test("validarStock con repo mock devuelve true si todos tienen stock", async () => {
-    const result = await pedido.validarStock(repoMock);
-    expect(result).toBe(true);
+  // ========================
+  // Tests de obtenerVendedoresIds
+  // ========================
+  describe("obtenerVendedoresIds()", () => {
+    test("retorna un array de IDs de vendedores únicos", () => {
+      const vendedores = pedido.obtenerVendedoresIds();
+      expect(vendedores).toHaveLength(2);
+      expect(vendedores).toContain("vendedor-001");
+      expect(vendedores).toContain("vendedor-002");
+    });
+
+    test("filtra vendedores duplicados", () => {
+      const itemsDuplicados = [
+        item(1, 2, 100, "vendedor-001"),
+        item(2, 3, 50, "vendedor-001"),
+        item(3, 1, 200, "vendedor-002")
+      ];
+      const pedidoDuplicado = new Pedido("comprador-123", itemsDuplicados, "ARS", {});
+      const vendedores = pedidoDuplicado.obtenerVendedoresIds();
+      expect(vendedores).toHaveLength(2);
+    });
+
+    test("retorna array vacío si no hay vendedorId en los items", () => {
+      const itemsSinVendedor = [
+        new ItemPedido(1, 2, 100)
+      ];
+      const pedidoSinVendedor = new Pedido("comprador-123", itemsSinVendedor, "ARS", {});
+      const vendedores = pedidoSinVendedor.obtenerVendedoresIds();
+      expect(vendedores).toHaveLength(0);
+    });
   });
 
-  test("validarStock con repo mock devuelve false si algún producto no tiene stock", async () => {
-    const repoMockStock0 = {
-      findById: jest.fn().mockResolvedValue({ stock: 0 })
-    };
+  // ========================
+  // Tests de Getters
+  // ========================
+  describe("Getters", () => {
+    test("getId() retorna null antes de ser persistido", () => {
+      expect(pedido.getId()).toBeNull();
+    });
 
-    const pedido2 = new Pedido(
-      "c2",
-      [new ItemPedido(1, 10, 100)],
-      "ARS",
-      {}
-    );
+    test("getCompradorId() retorna el ID del comprador", () => {
+      expect(pedido.getCompradorId()).toBe("comprador-123");
+    });
 
-    const result = await pedido2.validarStock(repoMockStock0);
-    expect(result).toBe(false);
+    test("getItems() retorna todos los items", () => {
+      expect(pedido.getItems()).toHaveLength(2);
+    });
+
+    test("getDireccionEntrega() retorna la dirección", () => {
+      expect(pedido.getDireccionEntrega()).toHaveProperty("calle", "Calle 123");
+    });
+
+    test("getEstado() retorna estado PENDIENTE por defecto", () => {
+      expect(pedido.getEstado()).toBe(EstadoPedido.PENDIENTE);
+    });
+
+    test("getFechaCreacion() retorna una fecha válida", () => {
+      const fecha = pedido.getFechaCreacion();
+      expect(fecha).toBeInstanceOf(Date);
+    });
+
+    test("getHistorialEstados() retorna array vacío al inicio", () => {
+      expect(pedido.getHistorialEstados()).toHaveLength(0);
+    });
+
+    test("getMoneda() retorna la moneda del pedido", () => {
+      expect(pedido.getMoneda()).toBe("ARS");
+    });
   });
 
-  // ------------------------
-  // Test de getters
-  // ------------------------
-  test("getters devuelven los datos pasados al constructor", () => {
-    expect(pedido.getId()).toBeNull();
-    expect(pedido.getCompradorId()).toBe("comprador-123");
-    expect(pedido.getItems()).toHaveLength(2);
-    expect(pedido.getDireccionEntrega()).toEqual({ calle: "Calle 123" });
-    expect(pedido.getEstado()).toBe(EstadoPedido.PENDIENTE);
+  // ========================
+  // Tests de toJSONResumen
+  // ========================
+  describe("toJSONResumen()", () => {
+    test("retorna objeto JSON con estructura correcta", () => {
+      const json = pedido.toJSONResumen();
+      expect(json).toHaveProperty("id");
+      expect(json).toHaveProperty("items");
+      expect(json).toHaveProperty("estado");
+      expect(json).toHaveProperty("direccionEntrega");
+      expect(json).toHaveProperty("compradorId");
+      expect(json).toHaveProperty("fechaCreacion");
+      expect(json).toHaveProperty("total");
+    });
+
+    test("incluye todos los items en el resumen", () => {
+      const json = pedido.toJSONResumen();
+      expect(json.items).toHaveLength(2);
+      expect(json.items[0]).toHaveProperty("productoId");
+      expect(json.items[0]).toHaveProperty("cantidad");
+      expect(json.items[0]).toHaveProperty("precioUnitario");
+    });
+
+    test("calcula el total correctamente en el resumen", () => {
+      const json = pedido.toJSONResumen();
+      expect(json.total).toBe(350);
+    });
   });
 
-  // ------------------------
-  // Test de actualizarEstado
-  // ------------------------
-  // NOTA: Tests de actualizarEstado comentados porque requieren mock de FactoryNotificacion
-  // que causa problemas con imports de Mongoose después del teardown de Jest
+  // ========================
+  // Tests de inicialización
+  // ========================
+  describe("Inicialización", () => {
+    test("inicializa con estado PENDIENTE", () => {
+      expect(pedido.estado).toBe(EstadoPedido.PENDIENTE);
+    });
 
-  // test("cambia el estado y registra en historial", async () => {
-  //   const nuevoEstado = EstadoPedido.ENVIADO;
-  //   const usuario = "admin";
-  //   const motivo = "Preparado para envío";
+    test("inicializa con fechaCreacion como Date", () => {
+      expect(pedido.fechaCreacion).toBeInstanceOf(Date);
+    });
 
-  //   const resultado = await pedido.actualizarEstado(nuevoEstado, usuario, motivo, repoMock);
+    test("inicializa con historialEstados vacío", () => {
+      expect(pedido.historialEstados).toEqual([]);
+    });
 
-  //   // Verifica que el estado interno cambió
-  //   expect(pedido.getEstado()).toBe(nuevoEstado);
+    test("inicializa con id null", () => {
+      expect(pedido.id).toBeNull();
+    });
 
-  //   // Verifica que el historial tenga un cambio registrado
-  //   expect(pedido.getHistorialEstados()).toHaveLength(1);
-  //   const cambio = pedido.getHistorialEstados()[0];
-  //   expect(cambio).toBeInstanceOf(CambioEstadoPedido);
-  //   expect(cambio.getEstado()).toBe(nuevoEstado);
-  //   expect(cambio.getUsuario()).toBe(usuario);
-  //   expect(cambio.getMotivo()).toBe(motivo);
-
-  //   // Verifica que el repo fue llamado
-  //   expect(repoMock.findByIdAndUpdateEstado).toHaveBeenCalledWith(
-  //     pedido.getId(),
-  //     nuevoEstado,
-  //     usuario,
-  //     motivo
-  //   );
-  // });
-
-  // test("no permite cancelar un pedido ya cancelado", async () => {
-  //   // Primero cancelamos
-  //   await pedido.actualizarEstado(EstadoPedido.CANCELADO, "admin", "Motivo inicial", repoMock);
-
-  //   // Intentar cancelar nuevamente debe lanzar error
-  //   await expect(
-  //     pedido.actualizarEstado(EstadoPedido.CANCELADO, "admin", "Otro motivo", repoMock)
-  //   ).rejects.toThrow("El pedido ya fue cancelado previamente.");
-  // });
+    test("convierte items a array si se recibe array", () => {
+      const items = [item(1, 2, 100)];
+      const p = new Pedido("comp-1", items, "ARS", {});
+      expect(Array.isArray(p.items)).toBe(true);
+    });
+  });
 });

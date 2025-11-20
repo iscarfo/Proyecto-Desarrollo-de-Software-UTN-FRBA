@@ -32,7 +32,7 @@ export class ProductoController {
   // GET: todos los productos paginados
   async listarProductos(req, res) {
     try {
-      const { page = 1, limit = 10, nombre, descripcion, categoria, precioMin, precioMax, sort } = req.query;
+      const { page = 1, limit = 10, nombre, descripcion, categoria, precioMin, precioMax, sort, vendedorId } = req.query;
 
       const filtros = {
         nombre,
@@ -42,7 +42,7 @@ export class ProductoController {
         precioMax: precioMax ? Number(precioMax) : undefined
       };
 
-      const productosPaginados = await this.productoService.listarProductos(page, limit, filtros, sort);
+      const productosPaginados = await this.productoService.listarProductos(page, limit, filtros, sort, vendedorId);
 
       if (!productosPaginados || productosPaginados.length === 0) {
         return res.status(204).send();
@@ -114,6 +114,21 @@ export class ProductoController {
       if (!eliminado) return res.status(404).json({ message: "Producto no encontrado" });
 
       res.status(200).json({ message: "Producto eliminado correctamente" });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+
+  // GET: categorias
+  async obtenerCategorias(req, res) {
+    try {
+      const categorias = await this.productoService.obtenerCategorias();
+
+      if (!categorias || categorias.length === 0) {
+        return res.status(204).send();
+      }
+      res.status(200).json(categorias);
+
     } catch (err) {
       res.status(500).json({ error: err.message });
     }

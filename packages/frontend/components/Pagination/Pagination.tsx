@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Button, Box } from '@mui/material';
+import { Box } from '@mui/material';
 
 interface PaginationProps {
   currentPage: number;
@@ -19,16 +19,23 @@ const Pagination: React.FC<PaginationProps> = ({
   }
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      justifyContent: 'center', 
-      alignItems: 'center', 
-      marginTop: 4, 
-      gap: 2 
-    }}>
+    <Box
+      role="navigation"
+      aria-label="Paginación"
+      sx={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 4,
+        gap: 2
+      }}
+    >
       {pageNumbers.map((number) => (
         <Box
           key={number}
+          role="button"
+          aria-label={`Ir a la página ${number}`}
+          aria-current={number === currentPage ? 'page' : undefined}
           onClick={() => onPageChange(number)}
           sx={{
             display: 'flex',

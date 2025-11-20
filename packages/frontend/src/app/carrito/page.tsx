@@ -1,164 +1,272 @@
 'use client';
-import React, { useState } from 'react';
-import { Box, Button, Container, Typography, Divider } from '@mui/material';
-import Navbar from '@/components/Navbar/Navbar';
-import Footer from '@/components/Footer/Footer';
-import CartItem, { Product } from '@/components/Minicart/CartItem';
-import Pagination from '@/components/Pagination/Pagination';
 
-interface Order {
-  orderId: string;
-  status: 'Disponible' | 'Agotado';
-  deliveryAddress: string;
-  products: Product[];
-  quantity: number;
-  available: boolean;
-}
+import React, { useState } from "react";
+import {
+  Box,
+  Button,
+  Container,
+  Typography,
+  Divider,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  List,
+  ListItem,
+  ListItemText,
+} from "@mui/material";
+import Navbar from "@/components/Navbar/Navbar";
+import Footer from "@/components/Footer/Footer";
+import { Add, Remove, Delete } from "@mui/icons-material";
+import { useCart } from "../../store/CartContext";
+import { useRouter } from "next/navigation";
 
 export default function CarritoPage() {
-  // Simulación de pedidos
-  const [orders, setOrders] = useState<Order[]>([
-    {
-      orderId: '00001',
-      status: 'Disponible',
-      deliveryAddress: 'Calle Falsa 123, CABA',
-      products: [
-        {
-          _id: '1',
-          vendedor: 'TiendaSol',
-          titulo: 'Remera Blanca Talle L',
-          descripcion: 'Algodón premium',
-          precio: 25000,
-          moneda: 'ARS',
-          stock: 50,
-          totalVendido: 10,
-          fotos: ['https://acdn-us.mitiendanube.com/stores/001/203/421/products/an29-110415-removebg-preview-4f8315b62c4aa1287917563899571320-480-0.png'],
-        },
-      ],
-      quantity: 2,
-      available: true,
-    },
-    {
-      orderId: '00004',
-      status: 'Agotado',
-      deliveryAddress: 'Av. Siempre Viva 456, CABA',
-      products: [
-        {
-          _id: '2',
-          vendedor: 'Tienda Rosa',
-          titulo: 'Jean Azul Talle 44',
-          descripcion: 'Clásico',
-          precio: 65000,
-          moneda: 'ARS',
-          stock: 0,
-          totalVendido: 5,
-          fotos: ['https://i.postimg.cc/4dBtbbTd/bolso.jpg'],
-        },
-      ],
-      quantity: 0,
-      available: false,
-    },
-    {
-      orderId: '02104',
-      status: 'Disponible',
-      deliveryAddress: 'Calle Verde 789, CABA',
-      products: [
-        {
-          _id: '3',
-          vendedor: 'Regalos S.A.',
-          titulo: 'Sweater Cremita Talle S',
-          descripcion: 'Suave y abrigado',
-          precio: 65000,
-          moneda: 'ARS',
-          stock: 50,
-          totalVendido: 8,
-          fotos: ['https://static.wixstatic.com/media/9dcd07_866084503fb64d8e8aea6f5286674a4e~mv2.png'],
-        },
-      ],
-      quantity: 2,
-      available: true,
-    },
-  ]);
+  const router = useRouter();
+  const { cart, updateQuantity, removeFromCart } = useCart();
 
-  // Calcular totales
-  const totalProductos = orders.reduce((acc, order) => acc + order.quantity, 0);
-  const subtotal = orders.reduce(
-    (acc, order) => acc + order.products.reduce((pAcc, p) => pAcc + p.precio * order.quantity, 0),
-    0
-  );
-  const envio = 15000;
+  const [open, setOpen] = useState(false);
+
+  const handleQuantityChange = (productId: string, delta: number) => {
+    const item = cart.find((p) => p._id === productId);
+    if (!item) return;
+    const newQty = Math.max(1, Math.min(item.stock, item.cantidad + delta));
+    updateQuantity(productId, newQty);
+  };
+
+  const totalProductos = cart.reduce((acc, p) => acc + p.cantidad, 0);
+  const subtotal = cart.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
+  const envio = cart.length > 0 ? 15000 : 0;
   const total = subtotal + envio;
+
+  const formatCurrency = (moneda: string) => {
+    switch (moneda) {
+      case "PESO_ARG":
+        return "ARS";
+      case "DOLAR_USA":
+        return "USD";
+      case "REAL":
+        return "BRL";
+      default:
+        return "";
+    }
+  };
+
+  
+  const handleComprar = () => {
+    if (cart.length === 0) return;
+    setOpen(true);
+  };
+
+  
+  const goToCheckout = () => {
+    setOpen(false);
+    router.push("/checkout");
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar userType="buyer" />
 
-      <main className="flex-grow py-12" style={{ backgroundColor: '#EDEDED' }}>
+      <main className="flex-grow py-12" style={{ backgroundColor: "#EDEDED" }}>
         <Container maxWidth="lg">
-          <Typography variant="h4" sx={{ mb: 4, fontWeight: 'bold', color: 'primary.main' }}>
+          <Typography
+            variant="h4"
+            sx={{
+              mb: 4,
+              fontWeight: "bold",
+              color: "primary.main",
+              fontSize: { xs: 24, sm: 32 },
+            }}
+          >
             Mi carrito
           </Typography>
 
-          {/* Lista de pedidos */}
-          {orders.map((order) => (
-            <CartItem
-              key={order.orderId}
-              orderId={order.orderId}
-              status={order.status}
-              deliveryAddress={order.deliveryAddress}
-              products={order.products}
-              quantity={order.quantity}
-              available={order.available}
-              onRemove={() => setOrders(orders.filter((o) => o.orderId !== order.orderId))}
-            />
-          ))}
+          {cart.length === 0 ? (
+            <Typography variant="body1">Tu carrito está vacío.</Typography>
+          ) : (
+            <>
+              {cart.map((product) => (
+                <Box
+                  key={product._id}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    backgroundColor: "white",
+                    borderRadius: 2,
+                    p: 2,
+                    mb: 2,
+                    boxShadow: "0 2px 6px rgba(0,0,0,0.1)",
+                    gap: 2,
+                  }}
+                >
+                  <Box
+                    component="img"
+                    src={product.fotos?.[0] || "/placeholder.jpg"}
+                    alt={product.titulo}
+                    sx={{
+                      width: 100,
+                      height: 100,
+                      borderRadius: 2,
+                      objectFit: "cover",
+                    }}
+                  />
 
-          {/* Totales */}
-          <Box
-            sx={{
-              mt: 4,
-              p: 3,
-              backgroundColor: '#fff',
-              borderRadius: 2,
-              boxShadow: '0px 2px 6px rgba(0,0,0,0.08)',
-            }}
-          >
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography>Productos ({totalProductos})</Typography>
-              <Typography>$ {subtotal.toLocaleString()}</Typography>
-            </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-              <Typography>Envío</Typography>
-              <Typography>$ {envio.toLocaleString()}</Typography>
-            </Box>
-            <Divider sx={{ my: 1 }} />
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                TOTAL
-              </Typography>
-              <Typography variant="h6" sx={{ fontWeight: 'bold' }}>
-                ARS $ {total.toLocaleString()}
-              </Typography>
-            </Box>
+                  <Box sx={{ flex: 1 }}>
+                    <Typography sx={{ fontWeight: 600 }}>
+                      {product.titulo}
+                    </Typography>
+                    <Typography sx={{ color: "#555", fontSize: 14 }}>
+                      {product.descripcion}
+                    </Typography>
 
-            <Button
-              variant="contained"
-              sx={{
-                backgroundColor: "#ff9800",
-                fontWeight: 600,
-                fontSize: 20,
-                ":hover": { backgroundColor: "#e68900" },
-              }}
-              fullWidth
-              onClick={() => console.log('Crear Pedido')}
-            >
-              Comprar
-            </Button>
-          </Box>
+                    <Typography sx={{ mt: 1, fontWeight: 500 }}>
+                      ${product.precio.toLocaleString("es-AR")}{" "}
+                      {formatCurrency(product.moneda)}
+                    </Typography>
+                  </Box>
+
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <IconButton
+                      onClick={() => handleQuantityChange(product._id, -1)}
+                      sx={{ color: "#333" }}
+                    >
+                      <Remove />
+                    </IconButton>
+
+                    <Typography>{product.cantidad}</Typography>
+
+                    <IconButton
+                      onClick={() => handleQuantityChange(product._id, 1)}
+                      sx={{ color: "#333" }}
+                    >
+                      <Add />
+                    </IconButton>
+                  </Box>
+
+                  <Typography
+                    sx={{
+                      width: 120,
+                      textAlign: "right",
+                      fontWeight: 600,
+                    }}
+                  >
+                    ${(product.precio * product.cantidad).toLocaleString("es-AR")}{" "}
+                    {formatCurrency(product.moneda)}
+                  </Typography>
+
+                  <IconButton
+                    onClick={() => removeFromCart(product._id)}
+                    sx={{ color: "#d32f2f" }}
+                  >
+                    <Delete />
+                  </IconButton>
+                </Box>
+              ))}
+
+              <Divider sx={{ my: 3 }} />
+
+              <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 4 }}>
+                <Box sx={{ minWidth: 300 }}>
+                  <Typography sx={{ mb: 1 }}>
+                    Subtotal ({totalProductos} productos): $
+                    {subtotal.toLocaleString("es-AR")}
+                  </Typography>
+
+                  <Typography sx={{ mb: 1 }}>
+                    Envío: ${envio.toLocaleString("es-AR")}
+                  </Typography>
+
+                  <Typography sx={{ fontWeight: 700, fontSize: 18, mt: 1 }}>
+                    Total: ${total.toLocaleString("es-AR")}
+                  </Typography>
+
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    fullWidth
+                    sx={{ mt: 2 }}
+                    onClick={handleComprar}
+                  >
+                    Comprar
+                  </Button>
+                </Box>
+              </Box>
+            </>
+          )}
         </Container>
       </main>
 
       <Footer />
+
+      {/*MODAL DE CONFIRMACIÓN*/}
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 2,
+            backgroundColor: "#fafafa",
+            boxShadow: "0 6px 18px rgba(0,0,0,0.15)",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{ fontWeight: 700, fontSize: 22, textAlign: "center" }}
+        >
+          Confirmar compra
+        </DialogTitle>
+
+        <DialogContent sx={{ mt: 1 }}>
+          <Typography sx={{ mb: 2, textAlign: "center" }}>
+            Estás por comprar los siguientes productos:
+          </Typography>
+
+          <List>
+            {cart.map((item) => (
+              <ListItem
+                key={item._id}
+                sx={{
+                  backgroundColor: "white",
+                  borderRadius: 2,
+                  mb: 1,
+                  boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
+                }}
+              >
+                <ListItemText
+                  primary={item.titulo}
+                  secondary={`Cantidad: ${item.cantidad}`}
+                />
+              </ListItem>
+            ))}
+          </List>
+
+          <Divider sx={{ my: 2 }} />
+
+          <Typography sx={{ fontSize: 16, fontWeight: 600, textAlign: "right" }}>
+            Total: ${total.toLocaleString("es-AR")}
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ justifyContent: "space-between", px: 3 }}>
+          <Button onClick={() => setOpen(false)} variant="outlined" sx={{
+          backgroundColor: "#d32f2f",
+          color: "white",
+          "&:hover": {
+            backgroundColor: "#b71c1c",
+          },
+          }}>
+            Cancelar
+          </Button>
+          <Button variant="contained" onClick={goToCheckout}>
+            Ir a checkout
+          </Button>
+        </DialogActions>
+      </Dialog>
     </div>
   );
 }

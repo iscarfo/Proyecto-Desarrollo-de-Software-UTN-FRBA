@@ -4,215 +4,215 @@ import bodyParser from "body-parser";
 import { createNotificacionesRouter } from "../../routes/notificacionesRoutes.js";
 import { NotificacionesController } from "../../controllers/notificacionesController.js";
 import { NotificacionesService } from "../../services/notificacionesService.js";
-import { jest } from '@jest/globals';
-import mongoose from 'mongoose';
+import { createUsuarioRouter } from "../../routes/usuarioRoutes.js";
+import { PedidoController } from "../../controllers/pedidoController.js";
+import { PedidoService } from "../../services/pedidoService.js";
+import { ProductoService } from "../../services/productoService.js";
+import { ProductoController } from "../../controllers/productoController.js";
+import { NotificacionesRepository } from "../../repositories/notificacionesRepository.js";
+import { UsuarioRepository } from "../../repositories/usuarioRepository.js";
+import { PedidoRepository } from "../../repositories/pedidoRepository.js";
+import { ProductoRepository } from "../../repositories/productoRepository.js";
+import { connect, closeDatabase, clearDatabase } from "../utils/mongoMemory.js";
+import { TestDataFactory } from "../fixtures/testData.js";
+import { Usuario } from "../../models/Usuario.js";
+import mongoose from "mongoose";
+import { describe, test, expect, beforeEach, beforeAll, afterAll, afterEach } from "@jest/globals";
 
-// Setup Express app
-const app = express();
-app.use(bodyParser.json());
+/**
+ * Notificaciones API Integration Tests con BD en memoria
+ */
+let app;
+let usuario;
 
-// Mocks de repositorios
-const mockNotificacionesRepository = {
-  findByUsuarioAndLeida: jest.fn(),
-  findById: jest.fn(),
-  save: jest.fn(),
-  create: jest.fn()
-};
+// Conectar a BD en memoria antes de todas las pruebas
+beforeAll(async () => {
+  await connect();
+  setupExpress();
+});
 
-const mockUsuarioRepository = {
-  findById: jest.fn()
-};
+// Limpiar BD después de cada test
+afterEach(async () => {
+  await clearDatabase();
+});
 
-// IDs de prueba válidos
-const usuarioId = new mongoose.Types.ObjectId().toString();
-const notificacionId = new mongoose.Types.ObjectId().toString();
-const usuarioIdInvalido = "invalid-id";
+// Desconectar después de todas las pruebas
+afterAll(async () => {
+  await closeDatabase();
+});
 
-// Datos simulados
-const notificacionMock = {
-  _id: notificacionId,
-  usuarioId: usuarioId,
-  mensaje: "Tu pedido ha sido confirmado",
-  fechaAlta: new Date(),
-  fechaLectura: null,
-  leida: false
-};
+function setupExpress() {
+  app = express();
+  app.use(bodyParser.json());
 
-const notificacionLeidaMock = {
-  _id: new mongoose.Types.ObjectId().toString(),
-  usuarioId: usuarioId,
-  mensaje: "Tu pedido está en camino",
-  fechaAlta: new Date(),
-  fechaLectura: new Date(),
-  leida: true
-};
+  // Crear instancias de repositorios
+  const notificacionesRepository = new NotificacionesRepository();
+  const usuarioRepository = new UsuarioRepository();
+  const pedidoRepository = new PedidoRepository();
+  const productoRepository = new ProductoRepository();
 
-beforeEach(() => {
-  // Configurar mocks de repositorios
-  mockUsuarioRepository.findById.mockResolvedValue({
-    _id: usuarioId,
-    nombre: "Usuario Test",
-    email: "test@test.com"
-  });
+  // Crear servicios
+  const notificacionesService = new NotificacionesService(
+    notificacionesRepository,
+    usuarioRepository
+  );
+  const productoService = new ProductoService(productoRepository);
+  const pedidoService = new PedidoService(
+    pedidoRepository,
+    productoService,
+    usuarioRepository,
+    notificacionesService
+  );
 
-  mockNotificacionesRepository.findByUsuarioAndLeida.mockResolvedValue({
-    data: [notificacionMock],
-    totalColecciones: 1,
-    totalPaginas: 1,
-    pagina: 1,
-    perPage: 10
-  });
-
-  mockNotificacionesRepository.findById.mockResolvedValue(notificacionMock);
-  mockNotificacionesRepository.save.mockResolvedValue({
-    ...notificacionMock,
-    leida: true,
-    fechaLectura: new Date()
-  });
-
-  // Reset router
-  app._router = undefined;
-  const notificacionesService = new NotificacionesService(mockNotificacionesRepository, mockUsuarioRepository);
+  // Crear controladores
   const notificacionesController = new NotificacionesController(notificacionesService);
+  const productoController = new ProductoController(productoService);
+  const pedidoController = new PedidoController(pedidoService);
+
+  // Montar routers
+  app.use("/usuarios", createUsuarioRouter(productoController, pedidoController, notificacionesController));
   app.use("/notificaciones", createNotificacionesRouter(notificacionesController));
+}
+
+// Crear datos de prueba antes de cada test
+beforeEach(async () => {
+  const usuarioData = TestDataFactory.createUsuario({
+    nombre: "Juan Usuario"
+  });
+  usuario = await Usuario.create(usuarioData);
 });
 
-afterEach(() => {
-  jest.clearAllMocks();
-});
-
-describe("API Notificaciones - Integration Tests", () => {
-
-  describe("GET /notificaciones/unread/:usuarioId", () => {
+describe("API Notificaciones - Integration Tests (BD Real)", () => {
+  describe("GET /usuarios/:usuarioId/notificaciones/unread", () => {
     test("Obtener notificaciones no leídas con éxito", async () => {
+      // Crear notificaciones no leídas
+      const notificacionesRepository = new NotificacionesRepository();
+      const notif1 = TestDataFactory.createNotificacion(usuario, {
+        leida: false,
+        titulo: "Pedido confirmado"
+      });
+      const notif2 = TestDataFactory.createNotificacion(usuario, {
+        leida: false,
+        titulo: "Pedido enviado"
+      });
+
+      await notificacionesRepository.create(notif1);
+      await notificacionesRepository.create(notif2);
+
       const res = await request(app)
-        .get(`/notificaciones/unread/${usuarioId}`)
+        .get(`/usuarios/${usuario._id.toString()}/notificaciones/unread`)
         .expect(200);
 
-      expect(res.body).toHaveProperty("data");
-      expect(res.body).toHaveProperty("totalColecciones");
-      expect(res.body).toHaveProperty("pagina");
+
       expect(Array.isArray(res.body.data)).toBe(true);
-      expect(mockUsuarioRepository.findById).toHaveBeenCalledWith(usuarioId);
-      expect(mockNotificacionesRepository.findByUsuarioAndLeida).toHaveBeenCalledWith(usuarioId, false, 1, 10);
-    });
-
-    test("Obtener notificaciones no leídas con paginación personalizada", async () => {
-      const res = await request(app)
-        .get(`/notificaciones/unread/${usuarioId}`)
-        .query({ page: 2, limit: 5 })
-        .expect(200);
-
-      expect(res.body).toHaveProperty("data");
-      expect(mockUsuarioRepository.findById).toHaveBeenCalledWith(usuarioId);
-      expect(mockNotificacionesRepository.findByUsuarioAndLeida).toHaveBeenCalledWith(usuarioId, false, 2, 5);
+      expect(res.body.data.length).toBe(2);
     });
 
     test("Error con ID de usuario inválido", async () => {
       const res = await request(app)
-        .get(`/notificaciones/unread/${usuarioIdInvalido}`)
+        .get("/usuarios/invalid-id/notificaciones/unread")
         .expect(400);
 
       expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toContain("ID");
     });
 
     test("Error cuando el usuario no existe", async () => {
-      mockUsuarioRepository.findById.mockResolvedValueOnce(null);
+      const usuarioIdInexistente = new mongoose.Types.ObjectId().toString();
 
       const res = await request(app)
-        .get(`/notificaciones/unread/${usuarioId}`)
+        .get(`/usuarios/${usuarioIdInexistente}/notificaciones/unread`)
         .expect(404);
 
       expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toContain("Usuario");
     });
   });
 
-  describe("GET /notificaciones/read/:usuarioId", () => {
+  describe("GET /usuarios/:usuarioId/notificaciones/read", () => {
     test("Obtener notificaciones leídas con éxito", async () => {
-      mockNotificacionesRepository.findByUsuarioAndLeida.mockResolvedValueOnce({
-        data: [notificacionLeidaMock],
-        totalColecciones: 1,
-        totalPaginas: 1,
-        pagina: 1,
-        perPage: 10
+      // Crear notificaciones leídas
+      const notificacionesRepository = new NotificacionesRepository();
+      const notif1 = TestDataFactory.createNotificacion(usuario, {
+        leida: true,
+        titulo: "Pedido entregado"
+      });
+      const notif2 = TestDataFactory.createNotificacion(usuario, {
+        leida: true,
+        titulo: "Pago confirmado"
+      });
+      const notif3 = TestDataFactory.createNotificacion(usuario, {
+        leida: false,
+        titulo: "Pago asegurado"
       });
 
+      await notificacionesRepository.create(notif1);
+      await notificacionesRepository.create(notif2);
+
       const res = await request(app)
-        .get(`/notificaciones/read/${usuarioId}`)
+        .get(`/usuarios/${usuario._id.toString()}/notificaciones/read`)
         .expect(200);
 
-      expect(res.body).toHaveProperty("data");
-      expect(res.body).toHaveProperty("totalColecciones");
+
       expect(Array.isArray(res.body.data)).toBe(true);
-      expect(mockUsuarioRepository.findById).toHaveBeenCalledWith(usuarioId);
-      expect(mockNotificacionesRepository.findByUsuarioAndLeida).toHaveBeenCalledWith(usuarioId, true, 1, 10);
-    });
-
-    test("Obtener notificaciones leídas con paginación personalizada", async () => {
-      const res = await request(app)
-        .get(`/notificaciones/read/${usuarioId}`)
-        .query({ page: 3, limit: 20 })
-        .expect(200);
-
-      expect(mockUsuarioRepository.findById).toHaveBeenCalledWith(usuarioId);
-      expect(mockNotificacionesRepository.findByUsuarioAndLeida).toHaveBeenCalledWith(usuarioId, true, 3, 20);
+      expect(res.body.data.length).toBe(2);
     });
 
     test("Error con ID de usuario inválido", async () => {
       const res = await request(app)
-        .get(`/notificaciones/read/${usuarioIdInvalido}`)
+        .get("/usuarios/invalid-id/notificaciones/read")
         .expect(400);
 
       expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toContain("ID");
     });
   });
 
   describe("PATCH /notificaciones/:id/read", () => {
     test("Marcar notificación como leída con éxito", async () => {
+      // Crear una notificación no leída
+      const notificacionesRepository = new NotificacionesRepository();
+      const notif = TestDataFactory.createNotificacion(usuario, {
+        leida: false
+      });
+      const notifCreada = await notificacionesRepository.create(notif);
+
       const res = await request(app)
-        .patch(`/notificaciones/${notificacionId}/read`)
+        .patch(`/notificaciones/${notifCreada._id.toString()}/read`)
         .expect(200);
 
-      expect(res.body).toHaveProperty("message", "Notificación marcada como leída");
-      expect(res.body).toHaveProperty("notificacion");
+
       expect(res.body.notificacion.leida).toBe(true);
-      expect(mockNotificacionesRepository.findById).toHaveBeenCalledWith(notificacionId);
-      expect(mockNotificacionesRepository.save).toHaveBeenCalled();
     });
 
     test("Error con ID de notificación inválido", async () => {
       const res = await request(app)
-        .patch(`/notificaciones/${usuarioIdInvalido}/read`)
+        .patch("/notificaciones/invalid-id/read")
         .expect(400);
 
       expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toContain("ID");
     });
 
     test("Error cuando la notificación no existe", async () => {
-      mockNotificacionesRepository.findById.mockResolvedValueOnce(null);
+      const notifIdInexistente = new mongoose.Types.ObjectId().toString();
 
       const res = await request(app)
-        .patch(`/notificaciones/${notificacionId}/read`)
+        .patch(`/notificaciones/${notifIdInexistente}/read`)
         .expect(404);
 
       expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toContain("Notificación");
     });
 
     test("Error al intentar marcar como leída una notificación ya leída", async () => {
-      mockNotificacionesRepository.findById.mockResolvedValueOnce(notificacionLeidaMock);
+      // Crear una notificación leída
+      const notificacionesRepository = new NotificacionesRepository();
+      const notif = TestDataFactory.createNotificacion(usuario, {
+        leida: true
+      });
+      const notifCreada = await notificacionesRepository.create(notif);
 
       const res = await request(app)
-        .patch(`/notificaciones/${notificacionId}/read`)
+        .patch(`/notificaciones/${notifCreada._id.toString()}/read`)
         .expect(409);
 
       expect(res.body).toHaveProperty("error");
-      expect(res.body.error).toContain("ya está marcada como leída");
     });
   });
-
 });

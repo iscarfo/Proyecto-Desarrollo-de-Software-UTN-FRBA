@@ -105,48 +105,57 @@ export default function NotificationsPage() {
     const paginatedNotifs = notifications.slice(startIndex, startIndex + pageSize);
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <Navbar userType={userType} />
+    <div className="min-h-screen flex flex-col">
+        <Navbar userType={userType} />
 
-            <main className="flex-grow py-12" style={{ backgroundColor: '#EDEDED' }}>
-                <Container maxWidth="lg">
-                    <Typography
-                        variant="h4"
-                        sx={{ marginBottom: 4, fontWeight: 'bold', color: 'primary.main' }}
-                    >
-                        Notificaciones{' '}
-                        <Box
-                            component="span"
-                            sx={{
-                                fontSize: '20px',
-                                fontWeight: 400,
-                                color: 'text.secondary',
-                                marginLeft: 1
-                            }}
-                        >
-                            (sin leer {notifications.filter(n => !n.leida).length})
-                        </Box>
-                    </Typography>
+        <main
+        role="main"
+        aria-label="Sección de notificaciones"
+        className="flex-grow py-12"
+        style={{ backgroundColor: '#EDEDED' }}
+        >
+        <Container maxWidth="lg">
+            <Typography
+            variant="h4"
+            sx={{ marginBottom: 4, fontWeight: 'bold', color: 'primary.main' }}
+            >
+            Notificaciones{' '}
+            <Box
+                component="span"
+                aria-live="polite"
+                sx={{
+                fontSize: '20px',
+                fontWeight: 400,
+                color: 'text.secondary',
+                marginLeft: 1
+                }}
+            >
+                (sin leer {notifications.filter(n => !n.leida).length})
+            </Box>
+            </Typography>
 
-                    {paginatedNotifs.map((notif) => (
-                        <NotificationCard
-                            key={notif._id}
-                            notification={notif}
-                            onReadToggle={handleToggleRead}
-                        />
-                    ))}
+            <Box role="region" aria-label="Listado de notificaciones">
+            {paginatedNotifs.map((notif) => (
+                <NotificationCard
+                key={notif._id}
+                notification={notif}
+                onReadToggle={handleToggleRead}
+                />
+            ))}
+            </Box>
 
-                    <Box sx={{ marginTop: 4 }}>
-                        <Pagination
-                            currentPage={currentPage}
-                            totalPages={totalPages}
-                            onPageChange={handlePageChange}
-                        />
-                    </Box>
-                </Container>
-            </main>
+            <Box sx={{ marginTop: 4 }} aria-label="Paginación de notificaciones">
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+            />
+            </Box>
+        </Container>
+        </main>
 
-            <Footer />
-        </div>
+        <Footer />
+    </div>
     );
+
 }

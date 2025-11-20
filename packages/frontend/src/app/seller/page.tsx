@@ -9,10 +9,26 @@ export default function SellerPage() {
     <div className="min-h-screen flex flex-col">
       <Navbar userType="seller" />
 
-      <main className="flex-grow bg-platinum py-12">
+      <main
+        role="main"
+        aria-label="Panel de vendedor"
+        className="flex-grow bg-platinum py-12"
+      >
         <Container maxWidth="lg">
           <Box className="text-center mb-8">
-            <Typography variant="h2" component="h1" className="mb-4 font-bold text-oxford-blue">
+            <Typography
+              component="h1"
+              sx={{
+                fontWeight: 'bold',
+                color: 'var(--oxford-blue)',
+                mb: 4,
+                fontSize: {
+                  xs: '2rem',
+                  sm: '2.5rem',
+                  md: '3rem',
+                }
+              }}
+            >
               Panel de Vendedor
             </Typography>
             <Typography variant="h5" className="text-oxford-blue mb-4">
@@ -20,22 +36,39 @@ export default function SellerPage() {
             </Typography>
           </Box>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            
-            {/* Tarjeta de Mis Productos (sin cambios) */}
-            <Card className="shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent>
-                <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">
-                  Mis Productos
-                </Typography>
-                <Typography variant="body1" className="text-black">
-                  Gestiona tu catálogo de productos
-                </Typography>
-              </CardContent>
-            </Card>
+          <div
+            role="region"
+            aria-label="Accesos rápidos del panel"
+            className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
+          >
+            {/* Tarjeta de Mis Productos */}
+            <Link
+              href="/seller/mis-productos"
+              passHref
+              aria-label="Ir a la sección de mis productos"
+              title="Administrar mis productos"
+              style={{ textDecoration: 'none' }}
+            >
+              <Card className="shadow-lg hover:shadow-xl transition-shadow">
+                <CardContent>
+                  <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">
+                    Mis Productos
+                  </Typography>
+                  <Typography variant="body1" className="text-black">
+                    Gestiona tu catálogo de productos
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Link>
 
-            {/* Añadimos el componente Link para que envuelva la tarjeta de Pedidos */}
-            <Link href="/seller/pedidos" passHref style={{ textDecoration: 'none' }}>
+            {/* Tarjeta de Pedidos con Link accesible */}
+            <Link
+              href="/seller/pedidos"
+              passHref
+              aria-label="Ir a la sección de pedidos"
+              title="Administrar pedidos"
+              style={{ textDecoration: 'none' }}
+            >
               <Card className="shadow-lg hover:shadow-xl transition-shadow">
                 <CardContent>
                   <Typography variant="h5" className="mb-4 text-orange font-bold">
@@ -48,7 +81,7 @@ export default function SellerPage() {
               </Card>
             </Link>
 
-            {/* Tarjeta de Estadísticas (sin cambios) */}
+            {/* Tarjeta de Estadísticas */}
             <Card className="shadow-lg hover:shadow-xl transition-shadow">
               <CardContent>
                 <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">

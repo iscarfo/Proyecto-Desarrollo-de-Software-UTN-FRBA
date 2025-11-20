@@ -3,7 +3,7 @@ import React from 'react';
 import BuyerNavbar from './BuyerNavbar';
 import SellerNavbar from './SellerNavbar';
 import { NavLink } from './BuyerNavbar';
-import { Link } from '@mui/material';
+import { Link, Box } from '@mui/material';
 
 interface NavbarProps {
   userType: 'buyer' | 'seller';
@@ -11,107 +11,103 @@ interface NavbarProps {
   showSearch?: boolean;
   searchPlaceholder?: string;
   minimal?: boolean;
+  onSearch?: (value: string) => void;
 }
-
-/**
- * Componente de barra de navegación principal.
- * Renderiza la versión para comprador o vendedor según el 'userType'.
- *
- * @param {string} userType - Debe ser 'buyer' o 'seller'.
- * @param {NavLink[]} links - Array de objetos con { name: string, link: string }
- * @param {boolean} showSearch - Mostrar barra de búsqueda (solo para buyer)
- * @param {string} searchPlaceholder - Placeholder de la barra de búsqueda
- *
- * @example
- * // Buyer con links personalizados
- * <Navbar
- *   userType="buyer"
- *   links={[
- *     { name: 'HOME', link: '/' },
- *     { name: 'MIS PEDIDOS', link: '/mis-pedidos' }
- *   ]}
- * />
- *
- * @example
- * // Seller con links personalizados
- * <Navbar
- *   userType="seller"
- *   links={[
- *     { name: 'HOME', link: '/seller' },
- *     { name: 'PEDIDOS', link: '/admin-pedidos' }
- *   ]}
- * />
- */
-/*
-const Navbar: React.FC<NavbarProps> = ({ userType, links, showSearch, searchPlaceholder }) => {
-  switch (userType) {
-    case 'buyer':
-      return (
-        <BuyerNavbar
-          links={links}
-          showSearch={showSearch}
-          searchPlaceholder={searchPlaceholder}
-        />
-      );
-    case 'seller':
-      return <SellerNavbar links={links} />;
-    default:
-      console.warn(`Tipo de usuario desconocido: ${userType}. Mostrando Navbar del Comprador.`);
-      return (
-        <BuyerNavbar
-          links={links}
-          showSearch={showSearch}
-          searchPlaceholder={searchPlaceholder}
-        />
-      );
-  }
-};*/
-
 
 const Navbar: React.FC<NavbarProps> = ({
   userType,
   links,
   showSearch,
   searchPlaceholder,
-  minimal = false
+  minimal = false,
+  onSearch,
 }) => {
+  // altura estándar del navbar (ajustá según tu diseño)
+  const NAVBAR_HEIGHT = 64;
+
   if (minimal) {
     return (
-    <div style={{
-          backgroundColor: 'var(--oxford-blue)',
-          padding: '16px 24px'
-        }}>
-          <Link href="/home" style={{
-            color: 'white',
-            fontSize: '22px',
-            fontWeight: 'bold',
-            textDecoration: 'none'
-          }}>
+      <>
+        <Box
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            zIndex: 1200,
+            backgroundColor: 'var(--oxford-blue)',
+            px: { xs: 2, md: 3 },
+            py: { xs: 1, md: 2 },
+          }}
+        >
+          <Link
+            href="/home"
+            sx={{
+              color: 'white',
+              fontSize: { xs: '18px', md: '22px' },
+              fontWeight: 'bold',
+              textDecoration: 'none',
+            }}
+          >
             Tienda Sol
           </Link>
-    </div>
+        </Box>
+        {/* Espaciador invisible */}
+        <Box sx={{ height: `${NAVBAR_HEIGHT}px` }} />
+      </>
     );
   }
+
+  const commonProps = {
+    sx: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      zIndex: 1200,
+    },
+  };
+
+  const spacer = <Box sx={{ height: `${NAVBAR_HEIGHT}px` }} />;
 
   switch (userType) {
     case 'buyer':
       return (
-        <BuyerNavbar
-          links={links}
-          showSearch={showSearch}
-          searchPlaceholder={searchPlaceholder}
-        />
+        <>
+          <Box {...commonProps}>
+            <BuyerNavbar
+              links={links}
+              showSearch={showSearch}
+              searchPlaceholder={searchPlaceholder}
+              onSearch={onSearch}
+            />
+          </Box>
+          {spacer}
+        </>
       );
     case 'seller':
-      return <SellerNavbar links={links} />;
+      return (
+        <>
+          <Box {...commonProps}>
+            <SellerNavbar links={links} />
+          </Box>
+          {spacer}
+        </>
+      );
     default:
       console.warn(`Tipo de usuario desconocido: ${userType}. Mostrando Navbar del Comprador.`);
       return (
-        <BuyerNavbar
-          links={links}
-          showSearch={showSearch}
-          searchPlaceholder={searchPlaceholder}
-        />
+        <>
+          <Box {...commonProps}>
+            <BuyerNavbar
+              links={links}
+              showSearch={showSearch}
+              searchPlaceholder={searchPlaceholder}
+              onSearch={onSearch}
+            />
+          </Box>
+          {spacer}
+        </>
       );
   }
 };

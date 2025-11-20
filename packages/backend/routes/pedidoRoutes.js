@@ -16,5 +16,8 @@ export function createPedidoRouter(pedidoController) {
   // PATCH /pedidos/:id/enviado
   router.patch("/:pedidoId/enviado", pedidoController.marcarPedidoEnviado);
 
+  // pedidoRouter.js
+  router.patch("/:pedidoId/confirmar", pedidoController.marcarPedidoConfirmado);
+
   return router;
 }
