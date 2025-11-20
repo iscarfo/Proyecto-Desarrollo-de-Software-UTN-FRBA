@@ -32,6 +32,11 @@ const usuarioSchema = new mongoose.Schema({
       trim: true
     }
   },
+  tipoUsuario: {
+    type: String,
+    enum: ['comprador', 'vendedor'],
+    required: true
+  },
   activo: {
     type: Boolean,
     default: true

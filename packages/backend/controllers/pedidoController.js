@@ -8,14 +8,15 @@ export class PedidoController {
   crearPedido = async (req, res) => {
     try {
       const body = crearPedidoSchema.parse(req.body);
-      const { compradorId, items, moneda, direccionEntrega } = body;
-      
+      const { items, moneda, direccionEntrega } = body;
+      const compradorId = req.userId;
+
       const pedido = await this.pedidoService.crearPedido(compradorId, items, moneda, direccionEntrega);
       res.status(201).json({
         message: "Pedido creado con éxito",
         pedidoId: pedido.id,
       });
-      
+
     } catch (err) {
         if (err?.issues) {
           return res.status(400).json({
@@ -52,7 +53,7 @@ export class PedidoController {
   cancelarPedido = async (req, res) => {
     try {
       const { pedidoId } = req.params;
-      const { compradorId } = req.body;
+      const compradorId = req.userId;
       const pedido = await this.pedidoService.cancelarPedido(pedidoId, compradorId);
       res.json({
         message: "Pedido cancelado con éxito",
@@ -66,7 +67,7 @@ export class PedidoController {
 
   historialPedidosUsuario = async (req, res) => {
     try {
-      const usuarioId = req.params.usuarioId;
+      const usuarioId = req.userId;
       const pedidos = await this.pedidoService.obtenerPedidosDeUsuario(usuarioId);
 
       const response = pedidos.map(pedido => ({
@@ -87,7 +88,7 @@ export class PedidoController {
   marcarPedidoEnviado = async (req, res) => {
     try {
       const { pedidoId } = req.params;
-      const { vendedorId } = req.body;
+      const vendedorId = req.userId;
       const pedido = await this.pedidoService.marcarComoEnviado(pedidoId, vendedorId);
       res.json({
         message: "Pedido marcado como enviado",
@@ -102,7 +103,7 @@ export class PedidoController {
   marcarPedidoConfirmado = async (req, res) => {
     try {
       const { pedidoId } = req.params;
-      const { vendedorId } = req.body;
+      const vendedorId = req.userId;
       const pedido = await this.pedidoService.marcarComoConfirmado(pedidoId, vendedorId);
 
       res.json({
@@ -130,12 +131,10 @@ const direccionSchema = z.object({
 });
 
 export const crearPedidoSchema = z.object({
-  compradorId: z.string().regex(/^[a-fA-F0-9]{24}$/, "compradorId debe ser un ObjectId válido"),
   items: z.array(
     z.object({
       productoId: z.string().regex(/^[a-fA-F0-9]{24}$/, "productoId debe ser un ObjectId válido"),
       cantidad: z.number().int().positive("Cantidad debe ser positiva"),
-      //precioUnitario: z.number().positive("Precio unitario debe ser positivo")
     })
   ).min(1, "Debe incluir al menos un item"),
   moneda: z.enum(["DOLAR_USA", "PESO_ARG", "REAL"], { message: "Moneda inválida" }),

@@ -21,11 +21,13 @@ import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import AddIcon from "@mui/icons-material/Add";
 import axios from "axios";
+import { withRole } from "@/src/hocs";
+import { useAuth } from "@clerk/nextjs";
 
-export default function AdminProductsPage() {
+function AdminProductsPage() {
+  const { getToken } = useAuth();
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 8;
-  const vendedorId = "68d82ab654219bb082182057";
 
   const [alerta, setAlerta] = useState({ open: false, tipo: "success", mensaje: "" });
 
@@ -47,8 +49,14 @@ export default function AdminProductsPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
+        const token = await getToken();
         const res = await fetch(
-          `http://localhost:3000/productos?vendedorId=${vendedorId}&page=${currentPage}&limit=${pageSize}`
+          `${process.env.NEXT_PUBLIC_API_URL}/usuarios/productos?page=${currentPage}&limit=${pageSize}`,
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`
+            }
+          }
         );
 
         if (res.status === 204) {
@@ -80,7 +88,7 @@ export default function AdminProductsPage() {
     };
 
     fetchProducts();
-  }, [currentPage]);
+  }, [currentPage, getToken]);
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -118,23 +126,25 @@ export default function AdminProductsPage() {
   // AQUÍ: POST al endpoint. Se valida/parsea el body, se muestran logs/alerts y se actualiza la UI.
   const handleGuardarProducto = async () => {
     try {
-      // Construyo el payload exactamente como lo pediste
+      const token = await getToken();
       const payload = {
-        usuarioId: vendedorId,
         titulo: nuevoProducto.titulo,
         descripcion: nuevoProducto.descripcion,
         precio: Number(nuevoProducto.precio),
         moneda: nuevoProducto.moneda,
         stock: Number(nuevoProducto.stock),
-        categorias: nuevoProducto.categorias, // array de ids (strings)
+        categorias: nuevoProducto.categorias,
         fotos: nuevoProducto.fotos,
         activo: nuevoProducto.activo,
       };
 
       console.log("Enviando payload:", payload);
 
-      const res = await axios.post("http://localhost:3000/productos", payload, {
-        headers: { "Content-Type": "application/json" },
+      const res = await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/productos`, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
       });
 
       console.log("Respuesta POST:", res.status, res.data);
@@ -143,11 +153,16 @@ export default function AdminProductsPage() {
       if (res.status === 201 || res.status === 200) {
         const creado = res.data && (res.data._id ? res.data : (res.data.producto || res.data.data || null));
         if (creado && creado._id) {
-          setProducts((prev) => [creado, ...prev]); // lo pongo al principio
+          setProducts((prev) => [creado, ...prev]);
         } else {
-          // si no devolvió el creado, vuelvo a pedir la lista
+          const token = await getToken();
           const refetch = await fetch(
-            `http://localhost:3000/productos?vendedorId=${vendedorId}&page=${currentPage}&limit=${pageSize}`
+            `${process.env.NEXT_PUBLIC_API_URL}/usuarios/productos?page=${currentPage}&limit=${pageSize}`,
+            {
+              headers: {
+                'Authorization': `Bearer ${token}`
+              }
+            }
           );
           const data = await refetch.json();
           const lista =
@@ -208,7 +223,7 @@ export default function AdminProductsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-platinum">
-      <Navbar userType="seller" />
+      <Navbar />
 
       <main
         role="main"
@@ -415,3 +430,5 @@ export default function AdminProductsPage() {
     </div>
   );
 }
+
+export default withRole('vendedor')(AdminProductsPage);

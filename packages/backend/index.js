@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import { clerkMiddleware } from '@clerk/express';
 import { createPedidoRouter } from "./routes/pedidoRoutes.js";
 import { PedidoRepository } from "./repositories/pedidoRepository.js";
 import { PedidoService } from "./services/pedidoService.js";
@@ -13,8 +14,10 @@ import { NotificacionesRepository } from "./repositories/notificacionesRepositor
 import { UsuarioRepository } from "./repositories/usuarioRepository.js";
 import { NotificacionesService } from "./services/notificacionesService.js";
 import { NotificacionesController } from "./controllers/notificacionesController.js";
+import { UsuarioService } from "./services/usuarioService.js";
+import { UsuarioController } from "./controllers/usuarioController.js";
 import { connectDB } from "./config/database.js";
-import { initTestData } from "./config/testData.js"; // TODO: REMOVER EN PRODUCCIÓN
+import { initTestData } from "./config/testData.js";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 import path from "path";
@@ -38,11 +41,14 @@ app.use(
   }),
 );
 
+app.use(clerkMiddleware({
+  secretKey: process.env.CLERK_SECRET_KEY,
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+}));
+
 // Conectar a MongoDB
 await connectDB();
 
-// TODO: REMOVER EN PRODUCCIÓN - Inicializar datos de prueba
-await initTestData();
 
 // Health endpoint
 app.get("/health", (req, res) => {
@@ -65,17 +71,19 @@ const notificacionesRepository = new NotificacionesRepository();
 const productoService = new ProductoService(productoRepository);
 const notificacionesService = new NotificacionesService(notificacionesRepository, usuarioRepository);
 const pedidoService = new PedidoService(pedidoRepository, productoService, usuarioRepository, notificacionesService);
+const usuarioService = new UsuarioService(usuarioRepository);
 
 //controller
 const productoController = new ProductoController(productoService);
 const notificacionesController = new NotificacionesController(notificacionesService);
 const pedidoController = new PedidoController(pedidoService);
+const usuarioController = new UsuarioController(usuarioService);
 
 // Usar router con controller inyectado
 app.use("/pedidos", createPedidoRouter(pedidoController));
 app.use("/productos", createProductoRouter(productoController));
 app.use("/notificaciones", createNotificacionesRouter(notificacionesController));
-app.use("/usuarios", createUsuarioRouter(productoController, pedidoController, notificacionesController));
+app.use("/usuarios", createUsuarioRouter(usuarioController, productoController, pedidoController, notificacionesController));
 
 const swaggerDocument = YAML.load(path.join(__dirname, "docs", "api-docs.yaml"));
 

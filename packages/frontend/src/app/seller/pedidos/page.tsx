@@ -6,8 +6,9 @@ import Pagination from '@/components/Pagination/Pagination';
 import { Typography, Box, Container } from '@mui/material';
 import { useState, useEffect } from 'react';
 import axios from "axios";
+import { withRole } from '@/src/hocs';
+import { useAuth } from '@clerk/nextjs';
 
-// Definimos un tipo para el pedido completo
 type Order = {
   orderId: string;
   status: OrderStatus;
@@ -15,22 +16,26 @@ type Order = {
   products: Product[];
 };
 
-export default function AdminPedidosPage() {
+function AdminPedidosPage() {
+  const { getToken } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 4; // Pedidos por página
 
-  // 🔹 Traer pedidos reales al montar el componente
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/pedidos");
-        // Adaptamos la respuesta del backend al tipo Order esperado en el front
+        const token = await getToken();
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/pedidos`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const mappedOrders: Order[] = res.data.map((p: any) => ({
           orderId: p.id,
           status: p.estado,
           deliveryAddress: p.deliveryAddress,
-          products: p.products // ya viene con name, imageUrl, quantity
+          products: p.products
         }));
         setOrders(mappedOrders);
       } catch (err: any) {
@@ -38,7 +43,7 @@ export default function AdminPedidosPage() {
       }
     };
     fetchOrders();
-  }, []);
+  }, [getToken]);
 
   const totalPages = Math.ceil(orders.length / pageSize);
   const handlePageChange = (page: number) => setCurrentPage(page);
@@ -48,14 +53,15 @@ export default function AdminPedidosPage() {
   const paginatedOrders = orders.slice(startIndex, endIndex);
 
   // --- Handlers para las acciones del vendedor ---
-  const handleConfirmOrder = async (orderId: string, vendedorId: string) => {
+  const handleConfirmOrder = async (orderId: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/pedidos/${orderId}/confirmar`, {
+      const token = await getToken();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pedidos/${orderId}/confirmar`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
         },
-        body: JSON.stringify({ vendedorId }), // 👈 enviar vendedorId
       });
 
       if (!response.ok) {
@@ -79,9 +85,11 @@ export default function AdminPedidosPage() {
 
   const handleCancelOrderSeller = async (orderId: string) => {
     try {
-      const compradorId = "68ea5e9ea0dd042efc615598"; // simulado
-      await axios.delete(`http://localhost:3000/pedidos/${orderId}`, {
-        data: { compradorId },
+      const token = await getToken();
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/pedidos/${orderId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
       });
 
       setOrders((prev) =>
@@ -96,12 +104,15 @@ export default function AdminPedidosPage() {
     }
   };
 
-  const handleSendOrder = async (orderId: string, vendedorId: string) => {
+  const handleSendOrder = async (orderId: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/pedidos/${orderId}/enviado`, {
+      const token = await getToken();
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/pedidos/${orderId}/enviado`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ vendedorId }),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
       });
 
       if (!response.ok) {
@@ -124,7 +135,7 @@ export default function AdminPedidosPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar userType="seller" />
+      <Navbar />
 
       <main
         role="main"
@@ -149,10 +160,8 @@ export default function AdminPedidosPage() {
                 deliveryAddress={order.deliveryAddress}
                 products={order.products}
                 userType="seller"
-                // TODO: pasar el vendedorId real cuando tengamos sesiones
-                onConfirm={(orderId) => handleConfirmOrder(orderId, "68d82ab654219bb082182057")}
-                // TODO: pasar el vendedorId real cuando tengamos sesiones
-                onSend={(orderId) => handleSendOrder(orderId, "68d82ab654219bb082182057")} 
+                onConfirm={handleConfirmOrder}
+                onSend={handleSendOrder}
                 onCancelSeller={handleCancelOrderSeller}
                 onCancel={() => {}}
                 onRepurchase={() => {}}
@@ -174,3 +183,5 @@ export default function AdminPedidosPage() {
     </div>
   );
 }
+
+export default withRole('vendedor')(AdminPedidosPage);

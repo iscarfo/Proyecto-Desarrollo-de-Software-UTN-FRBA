@@ -67,7 +67,7 @@ export default function CarritoPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar userType="buyer" />
+      <Navbar />
 
       <main className="flex-grow py-12" style={{ backgroundColor: "#EDEDED" }}>
         <Container maxWidth="lg">

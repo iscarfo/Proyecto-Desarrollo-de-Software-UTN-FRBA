@@ -5,11 +5,11 @@ export class ProductoController {
     this.productoService = productoService;
   }
 
-  // POST: Crear producto
   async crearProducto(req, res) {
     try {
       const body = ProductoSchema.parse(req.body);
-      const { usuarioId, ...productoData } = body;
+      const { ...productoData } = body;
+      const usuarioId = req.userId;
 
       const productoCreado = await this.productoService.crearProducto(productoData, usuarioId);
 
@@ -54,11 +54,10 @@ export class ProductoController {
     }
   }
 
-  // GET: productos de un vendedor paginados + filtros
   async buscarProductoPorVendedor(req, res) {
     try {
       const { page = 1, limit = 10, nombre, descripcion, categoria, precioMin, precioMax, sort } = req.query;
-      const { vendedorId } = req.params;
+      const vendedorId = req.userId;
 
       const filtros = {
         nombre,
@@ -136,8 +135,6 @@ export class ProductoController {
 }
 
 export const ProductoSchema = z.object({
-  usuarioId: z.string()
-    .regex(/^[a-fA-F0-9]{24}$/, "usuarioId debe ser un ObjectId válido"),
   titulo: z.string().min(1, "El título es obligatorio"),
   descripcion: z.string().min(1, "La descripción es obligatoria"),
   precio: z.number().positive("El precio debe ser un número positivo"),
@@ -145,8 +142,6 @@ export const ProductoSchema = z.object({
     message: "Moneda inválida",
   }),
   stock: z.number().int().nonnegative("El stock debe ser un número entero positivo o cero"),
-
-  // Campos opcionales
   categorias: z.array(
     z.string().regex(/^[a-fA-F0-9]{24}$/, "Cada categoría debe ser un ObjectId válido")
   )

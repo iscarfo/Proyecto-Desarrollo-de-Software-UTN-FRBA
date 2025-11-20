@@ -68,7 +68,7 @@ export default function ProductosPage() {
       if (categoria) params.categoria = categoria;
       if (sort) params.sort = sort;
 
-      const res = await axios.get("http://localhost:3000/productos", { params });
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/productos`, { params });
 
       setProducts(res.data.data || []);
       setTotalPages(res.data.totalPaginas || 1);
@@ -89,7 +89,7 @@ export default function ProductosPage() {
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const res = await axios.get("http://localhost:3000/productos/categorias");
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/productos/categorias`);
         setCategorias(res.data || []);
       } catch (err) {
         console.error("Error al cargar categorías", err);
@@ -120,7 +120,6 @@ export default function ProductosPage() {
   return (
     <div className="min-h-screen flex flex-col bg-platinum">
       <Navbar
-        userType="buyer"
         showSearch={true}
         searchPlaceholder="Buscar productos..."
         onSearch={setSearchTerm}

@@ -7,9 +7,6 @@ import { useState } from 'react';
 import NotificationCard from '@/components/NotificationCard/NotificationCard';
 
 export default function NotificationsPage() {
-    //TODO: AJUSTAR SEGUN SESION DE USUARIO
-    const userType: 'buyer' | 'seller' = 'buyer';
-
     const [currentPage, setCurrentPage] = useState(1);
     const pageSize = 5; // notifs por página
 
@@ -106,7 +103,7 @@ export default function NotificationsPage() {
 
     return (
     <div className="min-h-screen flex flex-col">
-        <Navbar userType={userType} />
+        <Navbar />
 
         <main
         role="main"
