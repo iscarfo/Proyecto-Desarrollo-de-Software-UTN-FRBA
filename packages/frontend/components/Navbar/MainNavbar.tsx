@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Badge from '@mui/material/Badge';
 import { useCart } from '../../src/store/CartContext';
@@ -21,27 +21,26 @@ import {
   useTheme,
   Link
 } from '@mui/material';
-import { FiShoppingCart, FiBell, FiSearch, FiMenu } from 'react-icons/fi';
+import { FiShoppingCart, FiBell, FiSearch, FiMenu, FiUser } from 'react-icons/fi';
 import NextLink from 'next/link';
 import UsuarioMenu from '@/components/UsuarioMenu/usuarioMenu';
+import { useUser } from '@clerk/nextjs';
+import { Skeleton } from '@mui/material';
 
 export interface NavLink {
   name: string;
   link: string;
 }
 
-interface BuyerNavbarProps {
+interface MainNavbarProps {
   links?: NavLink[];
   showSearch?: boolean;
   searchPlaceholder?: string;
   onSearch?: (text: string) => void;
 }
 
-const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
-  links = [
-    { name: 'HOME', link: '/home' },
-    { name: 'MIS PEDIDOS', link: '/mis-pedidos' },
-  ],
+const MainNavbar: React.FC<MainNavbarProps> = ({
+  links: linksProp,
   showSearch = true,
   searchPlaceholder = 'Buscar productos, marcas y más...',
   onSearch
@@ -55,6 +54,32 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
   const [searchText, setSearchText] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { user, isLoaded } = useUser();
+  const [links, setLinks] = useState<NavLink[]>([
+    { name: 'MIS PEDIDOS', link: '/mis-pedidos' }
+  ]);
+
+  useEffect(() => {
+    if (linksProp) {
+      setLinks(linksProp);
+      return;
+    }
+
+    if (isLoaded && user) {
+      const tipoUsuario = user.publicMetadata?.tipoUsuario as string;
+      const isVendedor = tipoUsuario === 'vendedor';
+
+      const baseLinks: NavLink[] = [
+        { name: 'MIS PEDIDOS', link: '/mis-pedidos' }
+      ];
+
+      if (isVendedor) {
+        baseLinks.push({ name: 'MIS VENTAS', link: '/seller' });
+      }
+
+      setLinks(baseLinks);
+    }
+  }, [linksProp, user, isLoaded]);
 
   const handleNotifClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -195,7 +220,7 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                   <NotificationPanel
                     anchorEl={anchorEl}
                     onClose={handleNotifClose}
-                    onUnreadCountChange={setUnreadCount} // 👈 recibimos el número
+                    onUnreadCountChange={setUnreadCount} 
                   />
 
                   <IconButton
@@ -213,7 +238,11 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 </Badge>
                 </IconButton>
 
-                  <UsuarioMenu userType="buyer" />
+                  {isLoaded ? (
+                    <UsuarioMenu />
+                  ) : (
+                    <Skeleton variant="circular" width={32} height={32} />
+                  )}
                 </Box>
               </Box>
 
@@ -266,7 +295,7 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                   <NotificationPanel
                     anchorEl={anchorEl}
                     onClose={handleNotifClose}
-                    onUnreadCountChange={setUnreadCount} // 👈 recibimos el número
+                    onUnreadCountChange={setUnreadCount}
                   />
                   <IconButton
                   aria-label="Ver carrito"
@@ -283,7 +312,11 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
                 </Badge>
                 </IconButton>
 
-                <UsuarioMenu userType="buyer" />
+                {isLoaded ? (
+                  <UsuarioMenu />
+                ) : (
+                  <Skeleton variant="circular" width={32} height={32} />
+                )}
               </Box>
             </Box>
           )}
@@ -313,4 +346,4 @@ const BuyerNavbar: React.FC<BuyerNavbarProps> = ({
   );
 };
 
-export default BuyerNavbar;
+export default MainNavbar;

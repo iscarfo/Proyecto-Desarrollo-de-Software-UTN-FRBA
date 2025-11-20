@@ -7,7 +7,7 @@ import { SignIn } from '@clerk/nextjs'
 export default function InicioSesionPage() {
   return (
     <>
-      <Navbar userType="buyer" minimal />
+      <Navbar minimal />
       <Box sx={{
         display: 'flex',
         flexDirection: 'column',
@@ -17,6 +17,7 @@ export default function InicioSesionPage() {
         backgroundColor: '#f1f1f1'
       }}>
         <SignIn
+          afterSignInUrl="/home"
           appearance={{
             elements: {
               rootBox: {

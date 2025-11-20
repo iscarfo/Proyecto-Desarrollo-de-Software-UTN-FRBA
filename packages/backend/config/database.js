@@ -5,12 +5,12 @@ export const connectDB = async () => {
     // Usar MONGODB_URI si está disponible, sino usar variables individuales
     const mongoURI = process.env.MONGODB_URI || (() => {
       const {
-        MONGODB_HOST = 'localhost',
-        MONGODB_PORT = '27017',
-        MONGODB_DATABASE = 'tpa_db',
-        MONGODB_USERNAME,
-        MONGODB_PASSWORD,
-        MONGODB_AUTH_SOURCE = 'admin'
+        MONGODB_HOST = process.env.MONGODB_HOST,
+        MONGODB_PORT = process.env.MONGODB_PORT,
+        MONGODB_DATABASE = process.env.MONGODB_DATABASE,
+        MONGODB_USERNAME = process.env.MONGODB_USERNAME,
+        MONGODB_PASSWORD = process.env.MONGODB_PASSWORD,
+        MONGODB_AUTH_SOURCE = process.env.MONGODB_AUTH_SOURCE
       } = process.env;
 
       if (MONGODB_USERNAME && MONGODB_PASSWORD) {

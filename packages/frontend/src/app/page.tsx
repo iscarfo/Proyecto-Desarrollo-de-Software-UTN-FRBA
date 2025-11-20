@@ -5,7 +5,7 @@ import Link from 'next/link';
 
 const LandingPage: React.FC = () => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md')); // <960px
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   return (
     <Box
@@ -21,7 +21,6 @@ const LandingPage: React.FC = () => {
         overflow: 'hidden'
       }}
     >
-      {/* Botones superiores */}
       <Box
         sx={{
           position: 'absolute',
@@ -32,41 +31,18 @@ const LandingPage: React.FC = () => {
           zIndex: 2
         }}
       >
-<<<<<<< HEAD
         <Link href="/registro" passHref>
-||||||| 652cc4f
-        <Link href="/sesiones/registro/compradores" passHref>
-=======
-        <Link
-          href="/sesiones/registro/compradores"
-          passHref
-          aria-label="Crear cuenta como comprador"
-          title="Crear cuenta"
-        >
->>>>>>> development
           <Button variant="outlined" sx={{ color: 'white', borderColor: 'white' }}>
             Crear Cuenta
           </Button>
         </Link>
-<<<<<<< HEAD
         <Link href="/inicio-sesion" passHref>
-||||||| 652cc4f
-        <Link href="/sesiones/inicio" passHref>
-=======
-        <Link
-          href="/sesiones/inicio"
-          passHref
-          aria-label="Iniciar sesión en Tienda Sol"
-          title="Iniciar sesión"
-        >
->>>>>>> development
           <Button variant="outlined" sx={{ color: 'white', borderColor: 'white' }}>
             Iniciar Sesión
           </Button>
         </Link>
       </Box>
 
-      {/* Sección izquierda */}
       <Box
         role="region"
         aria-label="Mensaje de bienvenida"
@@ -123,7 +99,6 @@ const LandingPage: React.FC = () => {
         </Link>
       </Box>
 
-      {/* Sección derecha */}
       <Box
         sx={{
           flex: 1,

@@ -10,10 +10,9 @@ import Slider from 'react-slick';
 import 'slick-carousel/slick/slick.css';
 import 'slick-carousel/slick/slick-theme.css';
 import { useCart } from "@/src/store/CartContext";
+import { withAuth } from '@/src/hocs';
 
-
-
-export default function Home() {
+function Home() {
   const { addToCart } = useCart();
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +22,7 @@ export default function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get('http://localhost:3000/productos?page=1&limit=3&sort=mas_vendidos');
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/productos?page=1&limit=3&sort=mas_vendidos`);
         setProducts(res.data.data || []);
       } catch (err) {
         console.error(err);
@@ -71,7 +70,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar userType="buyer" />
+      <Navbar />
 
       <main
         role="main"
@@ -124,7 +123,6 @@ export default function Home() {
           <ProductCard
             key={prod._id}
             product={prod}
-            userType="buyer"
           />
           ))}
           </div>
@@ -176,3 +174,5 @@ export default function Home() {
     </div>
   );
 }
+
+export default withAuth(Home);

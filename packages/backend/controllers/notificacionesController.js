@@ -7,7 +7,7 @@ export class NotificacionesController {
 
   obtenerNotificacionesNoLeidas = async (req, res) => {
     try {
-      const { usuarioId } = req.params;
+      const usuarioId = req.userId;
       const { page = 1, limit = 10 } = req.query;
 
       const resultado = await this.notificacionesService.obtenerNotificacionesNoLeidas(usuarioId, page, limit);
@@ -19,7 +19,7 @@ export class NotificacionesController {
 
   obtenerNotificacionesLeidas = async (req, res) => {
     try {
-      const { usuarioId } = req.params;
+      const usuarioId = req.userId;
       const { page = 1, limit = 10 } = req.query;
 
       const resultado = await this.notificacionesService.obtenerNotificacionesLeidas(usuarioId, page, limit);

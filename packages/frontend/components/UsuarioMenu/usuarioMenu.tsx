@@ -1,17 +1,14 @@
 'use client';
 import React, { useState } from 'react';
-import { IconButton, Menu, MenuItem, Button } from '@mui/material';
+import { IconButton, Menu, MenuItem, Avatar } from '@mui/material';
 import { FiUser } from 'react-icons/fi';
 import LogoutIcon from '@mui/icons-material/Logout';
-import Link from 'next/link';
 import { useClerk, useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 
-interface UsuarioMenuProps {
-  userType: 'buyer' | 'seller';
-}
+interface UsuarioMenuProps {}
 
-const UsuarioMenu: React.FC<UsuarioMenuProps> = ({ userType }) => {
+const UsuarioMenu: React.FC<UsuarioMenuProps> = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
   const { signOut } = useClerk();
@@ -32,9 +29,6 @@ const UsuarioMenu: React.FC<UsuarioMenuProps> = ({ userType }) => {
     router.push('/inicio-sesion');
   };
 
-  const oppositeView = userType === 'buyer' ? '/seller' : '/home';
-  const oppositeLabel = userType === 'buyer' ? 'Vista de Vendedor' : 'Vista de Comprador';
-
   if (!user) {
     return (
       <IconButton
@@ -49,8 +43,16 @@ const UsuarioMenu: React.FC<UsuarioMenuProps> = ({ userType }) => {
 
   return (
     <>
-      <IconButton aria-label="Perfil de Usuario" onClick={handleClick} sx={{ color: 'white' }}>
-        <FiUser size={20} />
+      <IconButton aria-label="Perfil de Usuario" onClick={handleClick} sx={{ color: 'white', p: 0.5 }}>
+        {user.imageUrl ? (
+          <Avatar
+            src={user.imageUrl}
+            alt={user.fullName || 'Usuario'}
+            sx={{ width: 32, height: 32 }}
+          />
+        ) : (
+          <FiUser size={20} />
+        )}
       </IconButton>
 
       <Menu
@@ -74,18 +76,6 @@ const UsuarioMenu: React.FC<UsuarioMenuProps> = ({ userType }) => {
           <LogoutIcon fontSize="small" />
           Cerrar sesión
         </MenuItem>
-
-        <Link href={oppositeView} passHref>
-          <Button
-            variant="contained"
-            color="secondary"
-            fullWidth
-            sx={{ mt: 2 }}
-            onClick={handleClose}
-          >
-            {oppositeLabel}
-          </Button>
-        </Link>
       </Menu>
     </>
   );

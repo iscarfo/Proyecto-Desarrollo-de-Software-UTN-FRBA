@@ -7,7 +7,7 @@ import { SignUp } from '@clerk/nextjs'
 export default function RegistroPage() {
   return (
     <>
-      <Navbar userType="buyer" minimal />
+      <Navbar minimal />
       <Box
         sx={{
           display: 'flex',
@@ -19,6 +19,7 @@ export default function RegistroPage() {
         }}
       >
         <SignUp
+          afterSignUpUrl="/completar-registro"
           appearance={{
             elements: {
               rootBox: {

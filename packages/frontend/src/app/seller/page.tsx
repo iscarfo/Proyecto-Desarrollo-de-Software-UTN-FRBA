@@ -3,11 +3,12 @@ import Navbar from '@/components/Navbar/Navbar';
 import Footer from '@/components/Footer/Footer';
 import { Typography, Box, Container, Card, CardContent, Button } from '@mui/material';
 import Link from 'next/link';
+import { withRole } from '@/src/hocs';
 
-export default function SellerPage() {
+function SellerPage() {
   return (
     <div className="min-h-screen flex flex-col">
-      <Navbar userType="seller" />
+      <Navbar />
 
       <main
         role="main"
@@ -100,3 +101,5 @@ export default function SellerPage() {
     </div>
   );
 }
+
+export default withRole('vendedor')(SellerPage);
