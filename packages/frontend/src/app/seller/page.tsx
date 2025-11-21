@@ -1,99 +1,106 @@
 'use client';
+import React, { useState } from 'react';
 import Navbar from '@/components/Navbar/Navbar';
 import Footer from '@/components/Footer/Footer';
-import { Typography, Box, Container, Card, CardContent, Button } from '@mui/material';
-import Link from 'next/link';
+import {
+  Container,
+  Box,
+  Typography,
+  ToggleButtonGroup,
+  ToggleButton,
+} from '@mui/material';
+import { FiPackage, FiShoppingCart } from 'react-icons/fi';
 import { withRole } from '@/src/hocs';
 
-function SellerPage() {
+// Importa tus componentes existentes
+import MisProductosView from '@/components/SellerViews/MisProductosView';
+import AdministrarPedidosView from '@/components/SellerViews/AdministrarPedidosView';
+
+function SellerDashboardPage() {
+  const [selectedView, setSelectedView] = useState<'orders' | 'products'>('orders');
+
+  const handleViewChange = (
+    event: React.MouseEvent<HTMLElement>,
+    newView: 'orders' | 'products' | null
+  ) => {
+    if (newView !== null) {
+      setSelectedView(newView);
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-platinum">
       <Navbar />
 
-      <main
-        role="main"
-        aria-label="Panel de vendedor"
-        className="flex-grow bg-platinum py-12"
-      >
+      <main role="main" aria-label="Panel de vendedor" className="flex-grow py-12">
         <Container maxWidth="lg">
-          <Box className="text-center mb-8">
+          {/* Header con título y selector */}
+          <Box sx={{ mb: 4 }}>
             <Typography
-              component="h1"
+              variant="h4"
               sx={{
                 fontWeight: 'bold',
-                color: 'var(--oxford-blue)',
-                mb: 4,
-                fontSize: {
-                  xs: '2rem',
-                  sm: '2.5rem',
-                  md: '3rem',
-                }
+                color: 'primary.main',
+                mb: 3,
+                textAlign: 'center'
               }}
             >
               Panel de Vendedor
             </Typography>
-            <Typography variant="h5" className="text-oxford-blue mb-4">
-              Gestiona tus productos y pedidos
-            </Typography>
+
+            {/* Toggle Button Group como Slider */}
+            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+              <ToggleButtonGroup
+                value={selectedView}
+                exclusive
+                onChange={handleViewChange}
+                aria-label="selector de vista"
+                sx={{
+                  bgcolor: 'background.paper',
+                  borderRadius: 2,
+                  boxShadow: 2,
+                  '& .MuiToggleButton-root': {
+                    px: 4,
+                    py: 1.5,
+                    border: 'none',
+                    textTransform: 'none',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    gap: 1,
+                    '&.Mui-selected': {
+                      bgcolor: 'primary.main',
+                      color: 'white',
+                      '&:hover': {
+                        bgcolor: 'primary.dark',
+                      }
+                    },
+                    '&:not(.Mui-selected)': {
+                      color: 'text.secondary',
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                      }
+                    }
+                  }
+                }}
+              >
+                <ToggleButton value="orders" aria-label="administrar pedidos">
+                  <FiShoppingCart size={20} />
+                  Administrar Pedidos
+                </ToggleButton>
+                <ToggleButton value="products" aria-label="mis productos">
+                  <FiPackage size={20} />
+                  Mis Productos
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Box>
           </Box>
 
-          <div
-            role="region"
-            aria-label="Accesos rápidos del panel"
-            className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12"
-          >
-            {/* Tarjeta de Mis Productos */}
-            <Link
-              href="/seller/mis-productos"
-              passHref
-              aria-label="Ir a la sección de mis productos"
-              title="Administrar mis productos"
-              style={{ textDecoration: 'none' }}
-            >
-              <Card className="shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent>
-                  <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">
-                    Mis Productos
-                  </Typography>
-                  <Typography variant="body1" className="text-black">
-                    Gestiona tu catálogo de productos
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Link>
-
-            {/* Tarjeta de Pedidos con Link accesible */}
-            <Link
-              href="/seller/pedidos"
-              passHref
-              aria-label="Ir a la sección de pedidos"
-              title="Administrar pedidos"
-              style={{ textDecoration: 'none' }}
-            >
-              <Card className="shadow-lg hover:shadow-xl transition-shadow">
-                <CardContent>
-                  <Typography variant="h5" className="mb-4 text-orange font-bold">
-                    Pedidos
-                  </Typography>
-                  <Typography variant="body1" className="text-black">
-                    Administra los pedidos de tus clientes
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Link>
-
-            {/* Tarjeta de Estadísticas */}
-            <Card className="shadow-lg hover:shadow-xl transition-shadow">
-              <CardContent>
-                <Typography variant="h5" className="mb-4 text-oxford-blue font-bold">
-                  Estadísticas
-                </Typography>
-                <Typography variant="body1" className="text-black">
-                  Revisa tus métricas de ventas
-                </Typography>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Renderizado condicional de componentes */}
+          {selectedView === 'orders' ? (
+            <AdministrarPedidosView />
+          ) : (
+            <MisProductosView />
+          )}
         </Container>
       </main>
 
@@ -102,4 +109,4 @@ function SellerPage() {
   );
 }
 
-export default withRole('vendedor')(SellerPage);
+export default withRole('vendedor')(SellerDashboardPage);

@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 
 export const connectDB = async () => {
   try {
+    console.log(process.env.MONGODB_URI);
     // Usar MONGODB_URI si está disponible, sino usar variables individuales
     const mongoURI = process.env.MONGODB_URI || (() => {
       const {

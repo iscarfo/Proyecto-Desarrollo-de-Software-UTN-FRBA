@@ -74,7 +74,7 @@ const MainNavbar: React.FC<MainNavbarProps> = ({
       ];
 
       if (isVendedor) {
-        baseLinks.push({ name: 'MIS VENTAS', link: '/seller' });
+        baseLinks.push({ name: 'PANEL DE VENDEDOR', link: '/seller' });
       }
 
       setLinks(baseLinks);
