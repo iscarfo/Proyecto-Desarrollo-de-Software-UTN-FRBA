@@ -11,14 +11,23 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Fab,
   MenuItem,
   Snackbar,
   Alert
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
+
+const Moneda = Object.freeze({
+  PESO_ARG: "PESO_ARG",
+  DOLAR_USA: "DOLAR_USA",
+  REAL: "REAL",
+});
+
+interface Categoria {
+  _id: string;
+  nombre: string;
+}
 
 export default function MisProductosView() {
   const { getToken } = useAuth();
@@ -30,6 +39,7 @@ export default function MisProductosView() {
   const [totalPages, setTotalPages] = useState(1);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   
   const [nuevoProducto, setNuevoProducto] = useState({
     titulo: "",
@@ -42,11 +52,22 @@ export default function MisProductosView() {
     activo: true,
   });
 
-  const categoriasDisponibles = [
-    { value: "68e2d9437062c45d2163793a", label: "Running" },
-    { value: "68e2d9437062c45d2163793b", label: "Calzado" },
-    { value: "68e2d9437062c45d2163793d", label: "Indumentaria" },
-  ];
+  // Cargar categorías desde el backend
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/productos/categorias`);
+        if (res.ok) {
+          const data = await res.json();
+          setCategorias(data);
+        }
+      } catch (error) {
+        console.error("Error al cargar categorías:", error);
+      }
+    };
+
+    fetchCategorias();
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -136,7 +157,7 @@ export default function MisProductosView() {
     }
   };
 
-const handleSaveChanges = async () => {
+  const handleSaveChanges = async () => {
     if (!editingProduct) return;
 
     try {
@@ -225,6 +246,16 @@ const handleSaveChanges = async () => {
         }
 
         setOpenDialog(false);
+        setNuevoProducto({
+          titulo: "",
+          descripcion: "",
+          precio: 0,
+          moneda: "PESO_ARG",
+          stock: 0,
+          categorias: [],
+          fotos: [],
+          activo: true,
+        });
         setAlerta({
           open: true,
           tipo: "success",
@@ -242,7 +273,6 @@ const handleSaveChanges = async () => {
   };
 
   return (
-
     <Box>
       <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: 'primary.main' }}>
         Catálogo de Productos
@@ -253,7 +283,7 @@ const handleSaveChanges = async () => {
         color="primary"
         onClick={() => setOpenDialog(true)}
         sx={{ mb: 3 }}
-        >
+      >
         Agregar producto
       </Button>
 
@@ -280,7 +310,6 @@ const handleSaveChanges = async () => {
           onPageChange={handlePageChange}
         />
       </Box>
-
 
       {/* Dialog para crear producto */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="sm">
@@ -312,6 +341,19 @@ const handleSaveChanges = async () => {
             }
           />
           <TextField
+            select
+            label="Moneda"
+            fullWidth
+            value={nuevoProducto.moneda}
+            onChange={(e) =>
+              setNuevoProducto((prev) => ({ ...prev, moneda: e.target.value }))
+            }
+          >
+            <MenuItem value={Moneda.PESO_ARG}>Peso Argentino</MenuItem>
+            <MenuItem value={Moneda.DOLAR_USA}>Dólar Estadounidense</MenuItem>
+            <MenuItem value={Moneda.REAL}>Real Brasileño</MenuItem>
+          </TextField>
+          <TextField
             label="Stock"
             type="number"
             fullWidth
@@ -329,9 +371,9 @@ const handleSaveChanges = async () => {
               setNuevoProducto((prev) => ({ ...prev, categorias: [e.target.value] }))
             }
           >
-            {categoriasDisponibles.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
+            {categorias.map((cat) => (
+              <MenuItem key={cat._id} value={cat._id}>
+                {cat.nombre.charAt(0).toUpperCase() + cat.nombre.slice(1)}
               </MenuItem>
             ))}
           </TextField>
