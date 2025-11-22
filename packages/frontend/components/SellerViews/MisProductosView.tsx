@@ -102,17 +102,82 @@ export default function MisProductosView() {
     }
   };
 
-  const handleDelete = (productId: string) => {
-    console.log("Eliminar producto:", productId);
+  const handleDelete = async (productId: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      const res = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/productos/${productId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.status === 200 || res.status === 204) {
+        setProducts((prev) => prev.filter((p) => p._id !== productId));
+        setAlerta({
+          open: true,
+          tipo: "success",
+          mensaje: "Producto eliminado con éxito.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error al eliminar producto:", error);
+      setAlerta({
+        open: true,
+        tipo: "error",
+        mensaje: error.response?.data?.message || "Error al eliminar el producto",
+      });
+    }
   };
 
-  const handleSaveChanges = () => {
+const handleSaveChanges = async () => {
     if (!editingProduct) return;
-    setProducts((prev) =>
-      prev.map((p) => (p._id === editingProduct._id ? editingProduct : p))
-    );
-    console.log("Producto actualizado:", editingProduct);
-    setEditingProduct(null);
+
+    try {
+      const token = await getToken();
+      const payload = {
+        titulo: editingProduct.titulo,
+        descripcion: editingProduct.descripcion,
+        precio: Number(editingProduct.precio),
+        stock: Number(editingProduct.stock),
+      };
+
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/productos/${editingProduct._id}`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.status === 200 || res.status === 204) {
+        setProducts((prev) =>
+          prev.map((p) => (p._id === editingProduct._id ? editingProduct : p))
+        );
+        setEditingProduct(null);
+        setAlerta({
+          open: true,
+          tipo: "success",
+          mensaje: "Producto actualizado con éxito.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error al actualizar producto:", error);
+      setAlerta({
+        open: true,
+        tipo: "error",
+        mensaje: error.response?.data?.message || "Error al actualizar el producto",
+      });
+    }
   };
 
   const handleGuardarProducto = async () => {
