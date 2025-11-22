@@ -4,15 +4,11 @@ import { Card, TextField, Button, Typography, Divider, Box } from "@mui/material
 import { useRouter } from "next/navigation";
 import { useForm } from "../hooks/useForm";
 import { useCart } from "../../store/CartContext";
-import { useAuth, useUser } from "@clerk/nextjs";
+import { useAuth } from "@clerk/nextjs";
 import axios from "axios";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
 const initialValues = {
-  nombre: "",
-  apellido: "",
-  email: "",
-  repetirEmail: "",
   calle: "",
   altura: "",
   piso: "",
@@ -25,21 +21,6 @@ const initialValues = {
 
 function validate(values: any) {
   const errors: any = {};
-
-  if (!values.nombre) errors.nombre = "El nombre es obligatorio";
-  if (!values.apellido) errors.apellido = "El apellido es obligatorio";
-
-  if (!values.email) {
-    errors.email = "El email es obligatorio";
-  } else if (!/\S+@\S+\.\S+/.test(values.email)) {
-    errors.email = "El email no es válido";
-  }
-
-  if (!values.repetirEmail) {
-    errors.repetirEmail = "Debe repetir el email";
-  } else if (values.email !== values.repetirEmail) {
-    errors.repetirEmail = "Los emails no coinciden";
-  }
 
   if (!values.calle) errors.calle = "La calle es obligatoria";
   if (!values.altura) errors.altura = "La altura es obligatoria";
@@ -54,29 +35,12 @@ function validate(values: any) {
 export default function CheckoutPage() {
   const { cart, clearCart } = useCart();
   const { getToken } = useAuth();
-  const { user } = useUser();
   const router = useRouter();
   const [error, setError] = useState("");
 
   const subtotal = cart.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
   const envio = cart.length > 0 ? 15000 : 0;
   const total = subtotal + envio;
-
-  // Valores iniciales con datos de la sesión
-  const getInitialValues = () => ({
-    nombre: user?.firstName || "",
-    apellido: user?.lastName || "",
-    email: user?.primaryEmailAddress?.emailAddress || "",
-    repetirEmail: user?.primaryEmailAddress?.emailAddress || "",
-    calle: "",
-    altura: "",
-    piso: "",
-    departamento: "",
-    codPostal: "",
-    ciudad: "",
-    provincia: "",
-    pais: "",
-  });
 
   const {
     values,
@@ -87,7 +51,6 @@ export default function CheckoutPage() {
     handleSubmit,
     showError,
     resetForm,
-    setValues,
   } = useForm(
     initialValues,
     async () => {
@@ -152,13 +115,6 @@ export default function CheckoutPage() {
     validate
   );
 
-  // Autocompletar con datos del usuario cuando cargue
-  useEffect(() => {
-    if (user) {
-      setValues(getInitialValues());
-    }
-  }, [user]);
-
   if (cart.length === 0) {
     return (
       <div className="min-h-screen bg-gray-100 flex justify-center items-center px-4">
@@ -211,7 +167,7 @@ export default function CheckoutPage() {
         {/* FORMULARIO */}
         <Card className="p-6 shadow-lg rounded-2xl">
           <Typography variant="h5" className="font-semibold text-gray-800 mb-4">
-            Datos del comprador
+            Dirección de entrega
           </Typography>
 
           <Divider sx={{ mb: 3 }} />
@@ -224,69 +180,11 @@ export default function CheckoutPage() {
 
           <form onSubmit={handleSubmit}>
             <TextField
-              name="nombre"
-              label="Nombre"
-              fullWidth
-              variant="outlined"
-              value={values.nombre}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={!!showError("nombre")}
-              helperText={showError("nombre")}
-              sx={{ mb: 3 }}
-            />
-
-            <TextField
-              name="apellido"
-              label="Apellido"
-              fullWidth
-              variant="outlined"
-              value={values.apellido}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={!!showError("apellido")}
-              helperText={showError("apellido")}
-              sx={{ mb: 3 }}
-            />
-
-            <TextField
-              name="email"
-              label="Email"
-              fullWidth
-              variant="outlined"
-              value={values.email}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={!!showError("email")}
-              helperText={showError("email")}
-              sx={{ mb: 3 }}
-            />
-
-            <TextField
-              name="repetirEmail"
-              label="Repetir Email"
-              fullWidth
-              variant="outlined"
-              value={values.repetirEmail}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              error={!!showError("repetirEmail")}
-              helperText={showError("repetirEmail")}
-              sx={{ mb: 3 }}
-            />
-
-            <Divider sx={{ my: 3 }}>
-              <Typography variant="body2" color="textSecondary">
-                Dirección de entrega
-              </Typography>
-            </Divider>
-
-            <TextField
               name="calle"
               label="Calle"
               fullWidth
               variant="outlined"
-              value={values.calle}
+              value={values.calle || ""}
               onChange={handleChange}
               onBlur={handleBlur}
               error={!!showError("calle")}
@@ -301,7 +199,7 @@ export default function CheckoutPage() {
                 type="number"
                 fullWidth
                 variant="outlined"
-                value={values.altura}
+                value={values.altura || ""}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={!!showError("altura")}
@@ -313,7 +211,7 @@ export default function CheckoutPage() {
                 label="Piso (opcional)"
                 fullWidth
                 variant="outlined"
-                value={values.piso}
+                value={values.piso || ""}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />
@@ -325,7 +223,7 @@ export default function CheckoutPage() {
                 label="Departamento (opcional)"
                 fullWidth
                 variant="outlined"
-                value={values.departamento}
+                value={values.departamento || ""}
                 onChange={handleChange}
                 onBlur={handleBlur}
               />
@@ -335,7 +233,7 @@ export default function CheckoutPage() {
                 label="Código Postal"
                 fullWidth
                 variant="outlined"
-                value={values.codPostal}
+                value={values.codPostal || ""}
                 onChange={handleChange}
                 onBlur={handleBlur}
                 error={!!showError("codPostal")}
@@ -348,7 +246,7 @@ export default function CheckoutPage() {
               label="Ciudad"
               fullWidth
               variant="outlined"
-              value={values.ciudad}
+              value={values.ciudad || ""}
               onChange={handleChange}
               onBlur={handleBlur}
               error={!!showError("ciudad")}
@@ -361,7 +259,7 @@ export default function CheckoutPage() {
               label="Provincia"
               fullWidth
               variant="outlined"
-              value={values.provincia}
+              value={values.provincia || ""}
               onChange={handleChange}
               onBlur={handleBlur}
               error={!!showError("provincia")}
@@ -374,7 +272,7 @@ export default function CheckoutPage() {
               label="País"
               fullWidth
               variant="outlined"
-              value={values.pais}
+              value={values.pais || ""}
               onChange={handleChange}
               onBlur={handleBlur}
               error={!!showError("pais")}
