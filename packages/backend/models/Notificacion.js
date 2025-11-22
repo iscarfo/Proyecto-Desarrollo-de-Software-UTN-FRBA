@@ -2,9 +2,8 @@ import mongoose from 'mongoose';
 
 const notificacionSchema = new mongoose.Schema({
   usuarioDestinoId: {
-    type: mongoose.Schema.Types.ObjectId,
+    type: String,
     required: true,
-    ref: 'Usuario',
     index: true
   },
   mensaje: {

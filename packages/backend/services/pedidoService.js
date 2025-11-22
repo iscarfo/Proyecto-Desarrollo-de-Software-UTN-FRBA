@@ -10,17 +10,13 @@ export class PedidoService {
   constructor(pedidoRepository, productoService, usuarioRepository, notificacionesService) {
     this.pedidoRepository = pedidoRepository;
     this.productoService = productoService;
-    this.notificacionesService = notificacionesService
     this.usuarioRepository = usuarioRepository;
+    this.notificacionesService = notificacionesService;
   }
 
   // Crear un nuevo pedido
   async crearPedido(compradorId, items, moneda, direccionEntrega) {
-    if (!mongoose.Types.ObjectId.isValid(compradorId)) {
-      throw new InvalidIdError('Usuario ID');
-    }
-
-    //Validar que comprador exista/tenga cuenta creada
+    // Validar que comprador exista
     const comprador = await this.usuarioRepository.findById(compradorId);
     if (!comprador) {
       throw new NotFoundError('Comprador', compradorId);

@@ -1,10 +1,10 @@
 import mongoose from 'mongoose';
-import { Usuario } from '../models/Usuario.js';
 import { InvalidIdError, NotFoundError } from '../errors/AppError.js';
 
 export class ProductoService {
-    constructor(productoRepository) {
-        this.productoRepository = productoRepository
+    constructor(productoRepository, usuarioRepository) {
+        this.productoRepository = productoRepository;
+        this.usuarioRepository = usuarioRepository;
     }
 
     // Representa la capa de servicio para Productos.
@@ -13,12 +13,8 @@ export class ProductoService {
 
     // ===== Crear producto nuevo =====
     async crearProducto(productoData, usuarioId) {
-        if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
-            throw new InvalidIdError('Usuario ID');
-        }
-
         // Verificar que el usuario existe
-        const usuario = await Usuario.findById(usuarioId);
+        const usuario = await this.usuarioRepository.findById(usuarioId);
         if (!usuario) {
             throw new NotFoundError('Usuario', usuarioId);
         }
@@ -80,12 +76,8 @@ export class ProductoService {
 
     // ===== Buscar productos de un vendedor con filtros y paginación =====
     async buscarProductosVendedor(page, limit, filtros, sortParam, vendedorId) {
-        if (!mongoose.Types.ObjectId.isValid(vendedorId)) {
-            throw new InvalidIdError('Usuario ID');
-        }
-
         // Verificar que el usuario existe
-        const usuario = await Usuario.findById(vendedorId);
+        const usuario = await this.usuarioRepository.findById(vendedorId);
         if (!usuario) {
             throw new NotFoundError('Usuario', vendedorId);
         }

@@ -3,114 +3,114 @@ import { useState, useEffect } from 'react';
 import { Typography, Box, Container, Popover } from '@mui/material';
 import Pagination from '@/components/Pagination/Pagination';
 import NotificationCard from '@/components/NotificationCard/NotificationCard';
+import { useAuth } from '@clerk/nextjs';
+import axios from 'axios';
 
 interface NotificationPanelProps {
   anchorEl: HTMLElement | null;
   onClose: () => void;
-  onUnreadCountChange?: (count: number) => void; // 👈 nueva prop
+  onUnreadCountChange?: (count: number) => void;
 }
 
 export default function NotificationPanel({ anchorEl, onClose, onUnreadCountChange }: NotificationPanelProps) {
   const open = Boolean(anchorEl);
+  const { getToken } = useAuth();
 
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 5;
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [totalPages, setTotalPages] = useState(1);
 
-  // ✅ Tu array tal cual lo definiste
-  const sampleNotif = [
-    {
-      "_id": "68ec4090c7e27dfd142b099f",
-      "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-      "mensaje": "Tu pedido ha sido enviado.",
-      "leida": false,
-      "fechaCreacion": "2025-10-12T23:58:08.157Z",
-      "fechaLectura": null,
-      "createdAt": "2025-10-12T23:58:08.158Z",
-      "updatedAt": "2025-10-12T23:58:08.158Z"
-    },
-    {
-      "_id": "68ec4090c7e27dfd142b097f",
-      "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-      "mensaje": "Tu pedido ha sido enviado.",
-      "leida": false,
-      "fechaCreacion": "2025-10-12T23:58:08.157Z",
-      "fechaLectura": null,
-      "createdAt": "2025-10-12T23:58:08.158Z",
-      "updatedAt": "2025-10-12T23:58:08.158Z"
-    },
-    {
-      "_id": "68ec408ac7e27dfd142b098f",
-      "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-      "mensaje": "Felicidades, tu pedido ha sido confirmado! Te avisaremos cuando esté en camino.",
-      "leida": false,
-      "fechaCreacion": "2025-10-12T23:58:02.757Z",
-      "fechaLectura": null,
-      "createdAt": "2025-10-12T23:58:02.757Z",
-      "updatedAt": "2025-10-12T23:58:02.757Z"
-    },
-    {
-      "_id": "68ec4090c7e27dfd142b098a",
-      "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-      "mensaje": "Tu pedido ha sido enviado.",
-      "leida": false,
-      "fechaCreacion": "2025-10-12T23:58:08.157Z",
-      "fechaLectura": null,
-      "createdAt": "2025-10-12T23:58:08.158Z",
-      "updatedAt": "2025-10-12T23:58:08.158Z"
-    },
-    {
-      "_id": "68ec4090c7e27dfd142b098b",
-      "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-      "mensaje": "Tu pedido ha sido enviado.",
-      "leida": false,
-      "fechaCreacion": "2025-10-12T23:58:08.157Z",
-      "fechaLectura": null,
-      "createdAt": "2025-10-12T23:58:08.158Z",
-      "updatedAt": "2025-10-12T23:58:08.158Z"
-    },
-    {
-      "_id": "68ec407ac7e27dfd142b0970",
-      "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-      "mensaje": "Tu pedido ha sido cancelado.",
-      "leida": false,
-      "fechaCreacion": "2025-10-12T23:57:46.967Z",
-      "fechaLectura": null,
-      "createdAt": "2025-10-12T23:57:46.969Z",
-      "updatedAt": "2025-10-12T23:57:46.969Z"
-    },
-    {
-      "_id": "68ec4052c7e27dfd142b0960",
-      "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-      "mensaje": "Felicidades, tu pedido ha sido confirmado! Te avisaremos cuando esté en camino.",
-      "leida": false,
-      "fechaCreacion": "2025-10-12T23:57:06.880Z",
-      "fechaLectura": null,
-      "createdAt": "2025-10-12T23:57:06.880Z",
-      "updatedAt": "2025-10-12T23:57:06.880Z"
-    },
-  ];
+  // Fetch notificaciones no leídas del backend
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      try {
+        setLoading(true);
+        const token = await getToken();
 
-  const [notifications, setNotifications] = useState(sampleNotif);
-  const unreadCount = notifications.filter(n => !n.leida).length;
+        if (!token) {
+          console.error('No se pudo obtener el token de autenticación');
+          return;
+        }
 
-  // cada vez que cambia, avisamos a la Navbar
+        const url = `${process.env.NEXT_PUBLIC_API_URL}/usuarios/notificaciones/no-leidas`;
+        console.log('Fetching notifications from:', url);
+        console.log('With params:', { page: currentPage, limit: pageSize });
+
+        const response = await axios.get(url, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+          params: {
+            page: currentPage,
+            limit: pageSize,
+          },
+        });
+
+        console.log('Response:', response.data);
+        setNotifications(response.data.data || []);
+        setTotalPages(response.data.totalPaginas || 1);
+      } catch (error) {
+        console.error('Error al obtener notificaciones:', error);
+        if (axios.isAxiosError(error)) {
+          console.error('Response status:', error.response?.status);
+          console.error('Response data:', error.response?.data);
+          console.error('Request URL:', error.config?.url);
+
+          // Si el usuario no ha completado el registro, redirigir
+          if (error.response?.data?.requiresRegistration) {
+            window.location.href = '/completar-registro';
+          }
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (open) {
+      fetchNotifications();
+    }
+  }, [open, currentPage, getToken]);
+
+  const unreadCount = notifications.length;
+
+  // Avisar a la Navbar cuando cambia el conteo
   useEffect(() => {
     if (onUnreadCountChange) {
       onUnreadCountChange(unreadCount);
     }
   }, [unreadCount, onUnreadCountChange]);
 
-  const totalPages = Math.ceil(notifications.length / pageSize);
-
   const handlePageChange = (page: number) => setCurrentPage(page);
-  const handleToggleRead = (id: string) => {
-    setNotifications(prev =>
-      prev.map(n => (n._id === id ? { ...n, leida: !n.leida } : n))
-    );
-  };
 
-  const startIndex = (currentPage - 1) * pageSize;
-  const paginatedNotifs = notifications.slice(startIndex, startIndex + pageSize);
+  const handleToggleRead = async (id: string) => {
+    try {
+      const token = await getToken();
+
+      if (!token) {
+        console.error('No se pudo obtener el token de autenticación');
+        return;
+      }
+
+      await axios.patch(
+        `${process.env.NEXT_PUBLIC_API_URL}/notificaciones/${id}/read`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      // Actualizar localmente
+      setNotifications(prev =>
+        prev.filter(n => n._id !== id)
+      );
+    } catch (error) {
+      console.error('Error al marcar notificación como leída:', error);
+    }
+  };
 
   return (
         <Popover
@@ -143,25 +143,35 @@ export default function NotificationPanel({ anchorEl, onClose, onUnreadCountChan
           <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 2 }}>
             Notificaciones{' '}
             <Box component="span" sx={{ fontWeight: 400, color: 'text.secondary', ml: 1 }}>
-              (sin leer {notifications.filter(n => !n.leida).length})
+              (sin leer {unreadCount})
             </Box>
           </Typography>
 
-          {paginatedNotifs.map((notif) => (
-            <NotificationCard
-              key={notif._id}
-              notification={notif}
-              onReadToggle={handleToggleRead}
-            />
-          ))}
+          {loading ? (
+            <Typography>Cargando...</Typography>
+          ) : notifications.length === 0 ? (
+            <Typography>No tienes notificaciones sin leer</Typography>
+          ) : (
+            <>
+              {notifications.map((notif) => (
+                <NotificationCard
+                  key={notif._id}
+                  notification={notif}
+                  onReadToggle={handleToggleRead}
+                />
+              ))}
 
-          <Box sx={{ mt: 2 }}>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </Box>
+              {totalPages > 1 && (
+                <Box sx={{ mt: 2 }}>
+                  <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPageChange={handlePageChange}
+                  />
+                </Box>
+              )}
+            </>
+          )}
         </Container>
       </Box>
     </Popover>
