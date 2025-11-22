@@ -20,7 +20,10 @@ export function withAuth<P extends object>(Component: ComponentType<P>) {
         }
 
         const metadata = user?.publicMetadata;
-        const hasCompletedRegistration = metadata?.usuarioId && metadata?.tipoUsuario;
+        const hasCompletedRegistration =
+          metadata?.tipoUsuario &&
+          metadata?.telefono &&
+          metadata?.direccion;
 
         if (!hasCompletedRegistration && pathname !== '/completar-registro') {
           router.push('/completar-registro');
@@ -42,7 +45,10 @@ export function withAuth<P extends object>(Component: ComponentType<P>) {
     }
 
     const metadata = user?.publicMetadata;
-    const hasCompletedRegistration = metadata?.usuarioId && metadata?.tipoUsuario;
+    const hasCompletedRegistration =
+      metadata?.tipoUsuario &&
+      metadata?.telefono &&
+      metadata?.direccion;
 
     if (!hasCompletedRegistration && pathname !== '/completar-registro') {
       return (

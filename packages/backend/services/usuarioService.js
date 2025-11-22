@@ -4,24 +4,19 @@ export class UsuarioService {
   }
 
   async registrarUsuario(datosUsuario) {
-    const { email, nombre, telefono, direccion, tipoUsuario } = datosUsuario;
+    const { id, telefono, direccion, tipoUsuario } = datosUsuario;
 
-    const usuarioExistente = await this.usuarioRepository.findByEmail(email);
-    if (usuarioExistente) {
-      throw new Error('Ya existe un usuario con ese email');
-    }
-
-    const nuevoUsuario = await this.usuarioRepository.create({
-      nombre,
-      email,
+    // Crear/actualizar usuario con el metadata
+    const usuario = await this.usuarioRepository.create({
+      id,
       telefono,
       direccion,
       tipoUsuario,
       activo: true,
-      fechaRegistro: new Date()
+      fechaRegistro: new Date().toISOString()
     });
 
-    return nuevoUsuario;
+    return usuario;
   }
 
   async obtenerUsuarioPorId(id) {

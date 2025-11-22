@@ -9,10 +9,6 @@ export class NotificacionesService {
   }
 
   async obtenerNotificacionesNoLeidas(usuarioDestinoId, page = 1, limit = 10) {
-    if (!mongoose.Types.ObjectId.isValid(usuarioDestinoId)) {
-      throw new InvalidIdError('Usuario ID');
-    }
-
     // Verificar que el usuario existe
     const usuario = await this.usuarioRepository.findById(usuarioDestinoId);
     if (!usuario) {
@@ -27,10 +23,6 @@ export class NotificacionesService {
   }
 
   async obtenerNotificacionesLeidas(usuarioDestinoId, page = 1, limit = 10) {
-    if (!mongoose.Types.ObjectId.isValid(usuarioDestinoId)) {
-      throw new InvalidIdError('Usuario ID');
-    }
-
     // Verificar que el usuario existe
     const usuario = await this.usuarioRepository.findById(usuarioDestinoId);
     if (!usuario) {
@@ -69,10 +61,6 @@ export class NotificacionesService {
   }
 
   async crearNotificacion(usuarioDestinoId, titulo, mensaje, tipo = 'sistema') {
-    if (!mongoose.Types.ObjectId.isValid(usuarioDestinoId)) {
-      throw new InvalidIdError('Usuario ID');
-    }
-
     // Verificar que el usuario existe
     const usuario = await this.usuarioRepository.findById(usuarioDestinoId);
     if (!usuario) {

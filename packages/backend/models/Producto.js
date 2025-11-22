@@ -14,9 +14,9 @@ export const Categoria = mongoose.model("Categoria", categoriaSchema);
 
 const productoSchema = new mongoose.Schema({
     vendedor: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Usuario',
-        required: true
+        type: String,
+        required: true,
+        index: true
     },
     titulo: {
         type: String,

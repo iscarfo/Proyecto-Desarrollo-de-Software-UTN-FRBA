@@ -26,15 +26,15 @@ const HistorialEstadoSchema = new mongoose.Schema({
     enum: ["PENDIENTE", "CONFIRMADO", "EN_PREPARACION", "ENVIADO", "ENTREGADO", "CANCELADO"],
     required: true
   },
-  quien: { type: mongoose.Schema.Types.ObjectId, ref: "Usuario", required: true },
+  quien: { type: String, required: true },
   motivo: { type: String }
 });
 
 const PedidoSchema = new mongoose.Schema({
   compradorId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Usuario',
-    required: true
+    type: String,
+    required: true,
+    index: true
   },
   items: [ItemPedidoSchema],
   moneda: {
