@@ -26,19 +26,12 @@ const LandingPage: React.FC = () => {
           position: 'absolute',
           top: 16,
           right: 24,
-          display: 'flex',
-          gap: 2,
           zIndex: 2
         }}
       >
-        <Link href="/registro" passHref>
-          <Button variant="outlined" sx={{ color: 'white', borderColor: 'white' }}>
-            Crear Cuenta
-          </Button>
-        </Link>
         <Link href="/inicio-sesion" passHref>
           <Button variant="outlined" sx={{ color: 'white', borderColor: 'white' }}>
-            Iniciar Sesión
+            Ingresar
           </Button>
         </Link>
       </Box>

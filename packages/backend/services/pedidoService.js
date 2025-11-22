@@ -147,11 +147,12 @@ export class PedidoService {
 
   // Obtener pedidos de un usuario
   async obtenerPedidosDeUsuario(usuarioId) {
-    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
-      throw new InvalidIdError('Usuario ID');
-    }
-
     const pedidos = await this.pedidoRepository.findByCompradorId(usuarioId);
+    return pedidos;
+  }
+
+  async obtenerPedidosDeVendedor(vendedorId) {
+    const pedidos = await this.pedidoRepository.findByVendedor(vendedorId);
     return pedidos;
   }
 

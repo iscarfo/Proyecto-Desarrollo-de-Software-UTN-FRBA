@@ -43,7 +43,7 @@ export class PedidoRepository {
       return await PedidoModel.findById(id)
         .populate({
           path: "items.productoId",
-          populate: { path: "vendedor", model: "Usuario" }
+          select: "titulo fotos precio vendedor"
         })
         .lean(false);
 
@@ -108,9 +108,81 @@ export class PedidoRepository {
 
   async findByCompradorId(usuarioId) {
     try {
-      return await PedidoModel.find({ compradorId: usuarioId }).lean();
+      return await PedidoModel.find({ compradorId: usuarioId })
+        .populate({
+          path: "items.productoId",
+          select: "titulo fotos"
+        })
+        .lean();
     } catch (error) {
       throw new Error(`Error al buscar pedidos del usuario: ${error.message}`);
+    }
+  }
+
+  async findByVendedor(vendedorId) {
+    try {
+      const pedidos = await PedidoModel.aggregate([
+        {
+          $lookup: {
+            from: "productos",
+            localField: "items.productoId",
+            foreignField: "_id",
+            as: "productosInfo"
+          }
+        },
+        {
+          $addFields: {
+            items: {
+              $map: {
+                input: "$items",
+                as: "item",
+                in: {
+                  $mergeObjects: [
+                    "$$item",
+                    {
+                      productoId: {
+                        $arrayElemAt: [
+                          {
+                            $filter: {
+                              input: "$productosInfo",
+                              cond: { $eq: ["$$this._id", "$$item.productoId"] }
+                            }
+                          },
+                          0
+                        ]
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        {
+          $addFields: {
+            items: {
+              $filter: {
+                input: "$items",
+                cond: { $eq: ["$$this.productoId.vendedor", vendedorId] }
+              }
+            }
+          }
+        },
+        {
+          $match: {
+            "items.0": { $exists: true }
+          }
+        },
+        {
+          $project: {
+            productosInfo: 0
+          }
+        }
+      ]);
+
+      return pedidos;
+    } catch (error) {
+      throw new Error(`Error al buscar pedidos del vendedor: ${error.message}`);
     }
   }
 }

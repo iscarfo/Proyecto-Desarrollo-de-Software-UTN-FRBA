@@ -28,27 +28,6 @@ export class PedidoController {
     }
   };
 
-  listarPedidos = async (req, res) => {
-    try {
-      const pedidos = await this.pedidoService.listarPedidos();
-
-      const pedidosDTO = pedidos.map((p) => ({
-        id: p._id.toString(),
-        estado: p.estado,
-        deliveryAddress: `${p.direccionEntrega.calle} ${p.direccionEntrega.altura}, ${p.direccionEntrega.ciudad}`,
-        products: (p.items || []).map((i) => ({
-          name: i.productoId.titulo,          // viene del populate
-          imageUrl: i.productoId.fotos?.[0],  // primera foto
-          quantity: i.cantidad
-        }))
-      }));
-
-      res.json(pedidosDTO);
-    } catch (err) {
-      console.error("Error en listarPedidos:", err);
-      res.status(400).json({ error: err.message });
-    }
-  };
 
   cancelarPedido = async (req, res) => {
     try {
@@ -70,16 +49,24 @@ export class PedidoController {
       const usuarioId = req.userId;
       const pedidos = await this.pedidoService.obtenerPedidosDeUsuario(usuarioId);
 
-      const response = pedidos.map(pedido => ({
-        id: pedido._id,
-        estado: pedido.estado,
-        fechaCreacion: pedido.fechaCreacion
-      }));
-
-      res.json(response);
+      res.json(pedidos);
 
     } catch (err) {
       console.error("Error en historialPedidosUsuario:", err.message);
+      res.status(400).json({ error: err.message });
+    }
+
+  };
+
+  historialPedidosVendedor = async (req, res) => {
+    try {
+      const vendedorId = req.userId;
+      const pedidos = await this.pedidoService.obtenerPedidosDeVendedor(vendedorId);
+
+      res.json(pedidos);
+
+    } catch (err) {
+      console.error("Error en historialPedidosVendedor:", err.message);
       res.status(400).json({ error: err.message });
     }
 

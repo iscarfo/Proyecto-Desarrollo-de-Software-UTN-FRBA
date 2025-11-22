@@ -4,9 +4,9 @@ import { Card, TextField, Button, Typography, Divider, Box } from "@mui/material
 import { useRouter } from "next/navigation";
 import { useForm } from "../hooks/useForm";
 import { useCart } from "../../store/CartContext";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import axios from "axios";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const initialValues = {
   calle: "",
@@ -35,6 +35,7 @@ function validate(values: any) {
 export default function CheckoutPage() {
   const { cart, clearCart } = useCart();
   const { getToken } = useAuth();
+  const { user } = useUser();
   const router = useRouter();
   const [error, setError] = useState("");
 
@@ -51,6 +52,7 @@ export default function CheckoutPage() {
     handleSubmit,
     showError,
     resetForm,
+    setValues,
   } = useForm(
     initialValues,
     async () => {
@@ -114,6 +116,19 @@ export default function CheckoutPage() {
     },
     validate
   );
+
+  // Pre-rellenar el formulario con los datos del usuario
+  useEffect(() => {
+    if (user?.publicMetadata?.direccion) {
+      const direccion = user.publicMetadata.direccion as any;
+      setValues((prev: any) => ({
+        ...prev,
+        calle: direccion.calle || "",
+        codPostal: direccion.codigoPostal || "",
+        ciudad: direccion.ciudad || "",
+      }));
+    }
+  }, [user]);
 
   if (cart.length === 0) {
     return (

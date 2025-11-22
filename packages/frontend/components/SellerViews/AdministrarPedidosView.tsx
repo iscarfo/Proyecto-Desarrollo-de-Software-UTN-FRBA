@@ -32,20 +32,13 @@ export default function AdministrarPedidosView() {
     const fetchOrders = async () => {
       try {
         const token = await getToken();
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/pedidos`, {
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/pedidos/vendedor`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
 
-        const mappedOrders: Order[] = res.data.map((p: any) => ({
-          orderId: p.id,
-          status: p.estado,
-          deliveryAddress: p.deliveryAddress,
-          products: p.products
-        }));
-
-        setOrders(mappedOrders);
+        setOrders(res.data);
       } catch (err: any) {
         console.error("Error al traer pedidos:", err.message);
       }
@@ -159,13 +152,17 @@ export default function AdministrarPedidosView() {
       </Typography>
 
       <Box role="region" aria-label="Listado de pedidos del vendedor">
-        {paginatedOrders.map((order) => (
+        {paginatedOrders.map((order: any) => (
           <OrderRow
-            key={order.orderId}
-            orderId={order.orderId}
-            status={order.status}
-            deliveryAddress={order.deliveryAddress}
-            products={order.products}
+            key={order._id}
+            orderId={order._id}
+            status={order.estado}
+            deliveryAddress={`${order.direccionEntrega.calle} ${order.direccionEntrega.altura}, ${order.direccionEntrega.ciudad}`}
+            products={(order.items || []).map((item: any) => ({
+              name: item.productoId?.titulo || 'Producto',
+              imageUrl: item.productoId?.fotos?.[0],
+              quantity: item.cantidad
+            }))}
             userType="seller"
             onConfirm={handleConfirmOrder}
             onSend={handleSendOrder}

@@ -32,7 +32,7 @@ const UsuarioMenu: React.FC<UsuarioMenuProps> = () => {
   if (!user) {
     return (
       <IconButton
-        aria-label="Iniciar sesión"
+        aria-label="Ingresar"
         onClick={() => router.push('/inicio-sesion')}
         sx={{ color: 'white' }}
       >
