@@ -1,31 +1,31 @@
 export class Notificacion {
-  #id
-  #usuarioDestino
-  #mensaje
-  #fechaAlta
-  #fechaLeida
-  #leida
+  id
+  usuarioDestinoId
+  mensaje
+  fechaAlta
+  fechaLeida
+  leida
 
-  constructor(id, usuarioDestino, mensaje, fechaAlta) {
-    this.#id = id;
-    this.#usuarioDestino = usuarioDestino;
-    this.#mensaje = mensaje;
-    this.#fechaAlta = fechaAlta;
-    this.#fechaLeida = null;
-    this.#leida = false;
+  constructor(usuarioDestinoId, mensaje) {
+    this.id = null; // Se asigna al guardar en BD
+    this.usuarioDestinoId = usuarioDestinoId; // Id de usuario
+    this.mensaje = mensaje;
+    this.fechaAlta = Date.now();
+    this.fechaLeida = null;
+    this.leida = false;
   }
 
   marcarComoLeida() {
-    this.#fechaLeida = new Date();
-    this.#leida = true;
+    this.fechaLeida = new Date();
+    this.leida = true;
   }
 
   // Getters si es necesario
-  getId() { return this.#id; }
-  getUsuarioDestino() { return this.#usuarioDestino; }
-  getMensaje() { return this.#mensaje; }
-  getFechaAlta() { return this.#fechaAlta; }
-  getFechaLeida() { return this.#fechaLeida; }
-  isLeida() { return this.#leida; }
+  getId() { return this.id; }
+  getUsuarioDestino() { return this.usuarioDestinoId; }
+  getMensaje() { return this.mensaje; }
+  getFechaAlta() { return this.fechaAlta; }
+  getFechaLeida() { return this.fechaLeida; }
+  isLeida() { return this.leida; }
 }
 

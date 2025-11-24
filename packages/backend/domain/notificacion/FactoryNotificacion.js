@@ -1,58 +1,107 @@
+import { EstadoPedido } from "../pedido/enums.js";
 import { Notificacion } from "./Notificacion.js";
+
 export class FactoryNotificacion {
+  
+  static crearNotificacion(pedido, estado) {
+    try {
+      switch (estado) {
+        case EstadoPedido.CONFIRMADO:
+          return this.crearNotificacionConfirmado(pedido);
+          break;
+        case EstadoPedido.ENVIADO:
+          return this.crearNotificacionEnviado(pedido);
+          break;
+        case EstadoPedido.CANCELADO:
+          return this.crearNotificacionCancelado(pedido);
+          break;
+        default:
+          throw new Error("Estado desconocido para notificación");
+      }
+    } catch (error) {
+      throw new Error(`Error al crear notificación: ${error.message}`);
+    }
+  }
+
+  static crearNotificacionConfirmado(pedido) {
+    const notificaciones = [];
+
+    //MENSAJE A COMPRADOR
+    notificaciones.push(
+      new Notificacion(
+        pedido.compradorId, //destinatarioId
+        `Felicidades, tu pedido ha sido confirmado! Te avisaremos cuando esté en camino.`
+      )
+    );
+
+    //MENSAJE A VENDEDORES
+    for (const vendedorId of pedido.obtenerVendedoresIds()) {
+      notificaciones.push(
+        new Notificacion(
+          vendedorId,
+          `Se ha confirmado un pedido con los productos: Recuerda preparar el envío.`
+        )
+      );
+    }
+    return notificaciones;
+  }
+
+  static crearNotificacionCancelado(pedido) {
+    const notificaciones = [];
+
+    notificaciones.push(
+      new Notificacion(
+        pedido.compradorId,
+        `Tu pedido ha sido cancelado.`
+      )
+    );
+
+    for (const vendedorId of pedido.obtenerVendedoresIds()) {
+      notificaciones.push(
+        new Notificacion(
+          vendedorId,
+          `El pedido fue cancelado por el comprador.`
+        )
+      );
+    }
+    return notificaciones;
+  }
+
+  static crearNotificacionEnviado(pedido) {
+    const notificaciones = [];
+
+    notificaciones.push(
+      new Notificacion(
+        pedido.compradorId,
+        `Tu pedido ha sido enviado.`
+      )
+    );
+
+    for (const vendedorId of pedido.obtenerVendedoresIds()) {
+      notificaciones.push(
+        new Notificacion(
+          vendedorId,
+          `El pedido ha sido marcado como enviado.`
+        )
+      );
+    }
+
+    return notificaciones; 
+  }
+
   static crearSegunEstadoPedido(estadoPedido) {
     return `El pedido pasó al estado: ${estadoPedido}`;
   }
 
-  static crearSegunPedido(pedido) {
-    return new Notificacion(
-      Date.now().toString(),
-      pedido.getComprador(),
-      `Pedido realizado por ${pedido.getComprador().getNombre()}, total: ${pedido.calcularTotal()}, entrega en: ${pedido.direccionEntrega.calle} ${pedido.direccionEntrega.altura}`,
-      new Date(),
-    );
+  static crearInstanciaNotificacion(usuarioDestinoId, mensaje) {
+    return new Notificacion(usuarioDestinoId, mensaje);
   }
 
-  static crearNotificacionNuevoPedido(pedido, vendedor) {
-    const productos = pedido.getItems()
-      .filter((item) => item.getProducto().getVendedor().getId() === vendedor.getId())
-      .map((item) => `${item.getProducto().getTitulo()} (x${item.getCantidad()})`)
-      .join(", ");
-
-    const mensaje = `Nuevo pedido de ${pedido.getComprador().getNombre()}. Productos: ${productos}. Total: ${pedido.calcularTotal()}. Entrega en: ${pedido.getDireccionEntrega().getCalle()} ${pedido.getDireccionEntrega().getAltura()}.`;
-
-    return new Notificacion(
-      Date.now().toString(),
-      vendedor,
-      mensaje,
-      new Date(),
-    );
-  }
-
-  static crearNotificacionEnvio(pedido) {
-    const mensaje = `Tu pedido #${pedido.getId()} ha sido enviado y está en camino.`;
-
-    return new Notificacion(
-      Date.now().toString(),
-      pedido.getComprador(),
-      mensaje,
-      new Date(),
-    );
-  }
-
-  static crearNotificacionCancelacion(pedido, vendedor) {
-    const productos = pedido.getItems()
-      .filter((item) => item.getProducto().getVendedor().getId() === vendedor.getId())
-      .map((item) => `${item.getProducto().getTitulo()} (x${item.getCantidad()})`)
-      .join(", ");
-
-    const mensaje = `El pedido #${pedido.getId()} con productos ${productos} ha sido cancelado por el comprador ${pedido.getComprador().getNombre()}.`;
-
-    return new Notificacion(
-      Date.now().toString(),
-      vendedor,
-      mensaje,
-      new Date(),
-    );
+  static obtenerProductosxCantidad(productos, cantidades) {
+    const productosStr = [];
+    for (let i = 0; i < productos.length; i++) {
+      productosStr.push(`${productos[i].titulo} (x${cantidades[i]})`);
+    }
+    return productosStr;
   }
 }

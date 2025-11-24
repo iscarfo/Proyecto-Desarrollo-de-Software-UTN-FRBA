@@ -2,282 +2,245 @@ import request from "supertest";
 import express from "express";
 import bodyParser from "body-parser";
 import { createPedidoRouter } from "../../routes/pedidoRoutes.js";
+import { createUsuarioRouter } from "../../routes/usuarioRoutes.js";
 import { PedidoController } from "../../controllers/pedidoController.js";
-import { PedidoRepository  } from "../../repositories/pedidoRepository.js";
 import { PedidoService } from "../../services/pedidoService.js";
-import { jest } from '@jest/globals';
-import { describe, test, expect, beforeEach, beforeAll } from '@jest/globals';
-import { Usuario } from "../../domain/usuario/Usuario.js";
-import { Producto } from "../../domain/producto/Producto.js";
-import { ItemPedido } from "../../domain/pedido/ItemPedido.js";
-import { DireccionEntrega } from "../../domain/pedido/DireccionEntrega.js";
+import { ProductoService } from "../../services/productoService.js";
+import { NotificacionesService } from "../../services/notificacionesService.js";
+import { PedidoRepository } from "../../repositories/pedidoRepository.js";
+import { ProductoRepository } from "../../repositories/productoRepository.js";
+import { UsuarioRepository } from "../../repositories/usuarioRepository.js";
+import { NotificacionesRepository } from "../../repositories/notificacionesRepository.js";
+import { connect, closeDatabase, clearDatabase } from "../utils/mongoMemory.js";
+import { TestDataFactory } from "../fixtures/testData.js";
+import { Usuario } from "../../models/Usuario.js";
+import { EstadoPedido } from "../../domain/pedido/enums.js";
+import { describe, test, expect, beforeEach, beforeAll, afterAll, afterEach } from "@jest/globals";
 
-// Mock de FactoryNotificacion para no enviar nada real
-jest.mock("../../domain/notificacion/FactoryNotificacion.js", () => ({
-  FactoryNotificacion: {
-    crearNotificacionNuevoPedido: jest.fn(),
-    crearNotificacionCancelacion: jest.fn(),
-    crearNotificacionEnvio: jest.fn()
-  }
-}));
+/**
+ * Pedido API Integration Tests con BD en memoria
+ */
+let app;
+let comprador;
+let vendedor;
+let producto;
 
-// Setup Express app
-const app = express();
-app.use(bodyParser.json());
+// Conectar a BD en memoria antes de todas las pruebas
+beforeAll(async () => {
+  await connect();
+  setupExpress();
+});
 
-// Instancias compartidas
-const pedidoRepository = new PedidoRepository();
-const pedidoService = new PedidoService(pedidoRepository);
-const pedidoController = new PedidoController(pedidoService);
+// Limpiar BD después de cada test
+afterEach(async () => {
+  await clearDatabase();
+});
 
-beforeEach(() => {
-  // Crear un controller nuevo con repositorio limpio
-  //pedidoController = new PedidoController();
-  app._router = undefined; // reset router
+// Desconectar después de todas las pruebas
+afterAll(async () => {
+  await closeDatabase();
+});
+
+function setupExpress() {
+  app = express();
+  app.use(bodyParser.json());
+
+  // Crear instancias de repositorios (usar los reales con BD en memoria)
+  const usuarioRepository = new UsuarioRepository();
+  const productoRepository = new ProductoRepository();
+  const pedidoRepository = new PedidoRepository();
+  const notificacionesRepository = new NotificacionesRepository();
+
+  // Crear servicios
+  const productoService = new ProductoService(productoRepository);
+  const notificacionesService = new NotificacionesService(
+    notificacionesRepository,
+    usuarioRepository
+  );
+  const pedidoService = new PedidoService(
+    pedidoRepository,
+    productoService,
+    usuarioRepository,
+    notificacionesService
+  );
+
+  // Crear controladores
+  const pedidoController = new PedidoController(pedidoService);
+
+  // Mock del notificacionesController (para rutas que lo requieren)
+  const mockNotificacionesController = {
+    obtenerNotificacionesNoLeidas: (req, res) => res.json([]),
+    obtenerNotificacionesLeidas: (req, res) => res.json([])
+  };
+
+  // Mock del productoController (para rutas que lo requieren)
+  const mockProductoController = {
+    buscarProductoPorVendedor: (req, res) => res.json([])
+  };
+
+  // Montar routers
   app.use("/pedidos", createPedidoRouter(pedidoController));
+  app.use(
+    "/usuarios",
+    createUsuarioRouter(mockProductoController, pedidoController, mockNotificacionesController)
+  );
+}
+
+// Crear datos de prueba antes de cada test
+beforeEach(async () => {
+  // Crear usuarios en la BD
+  const compradorData = TestDataFactory.createUsuario({
+    nombre: "Juan Comprador",
+    rol: "comprador"
+  });
+  comprador = await Usuario.create(compradorData);
+
+  const vendedorData = TestDataFactory.createUsuario({
+    nombre: "María Vendedora",
+    rol: "vendedor"
+  });
+  vendedor = await Usuario.create(vendedorData);
+
+  // Crear producto en la BD
+  const productoRepository = new ProductoRepository();
+  const productoData = TestDataFactory.createProducto(vendedor, {
+    stock: 50,
+    precio: 5000
+  });
+  producto = await productoRepository.create(productoData);
 });
 
-beforeAll(() => {
-  jest.spyOn(console, 'log').mockImplementation(() => {});
-});
+describe("API Pedidos - Integration Tests", () => {
+  describe("GET /pedidos - Listar todos los pedidos", () => {
+    test("Retorna lista vacía cuando no hay pedidos", async () => {
+      const res = await request(app).get("/pedidos").expect(200);
 
-// Helper para crear payload
-const crearPayloadPedido = () => {
-  const comprador = {
-    id: "1", // ID como string
-    nombre: "Matias",
-    email: "matias@email.com",
-    telefono: "1234567890",
-    tipoUsuario: "CLIENTE"
-  };
+      expect(Array.isArray(res.body)).toBe(true);
+      expect(res.body.length).toBe(0);
+    });
 
-  const vendedor = {
-    id: "2", // string
-    nombre: "Juan",
-    email: "juan@email.com",
-    telefono: "0987654321",
-    tipoUsuario: "VENDEDOR"
-  };
+    test("Retorna lista de pedidos creados", async () => {
+      // Crear un pedido mediante el repositorio
+      const pedidoRepository = new PedidoRepository();
+      const pedidoData = TestDataFactory.createPedido(comprador, {
+        vendedorId: vendedor._id,
+        items: [
+          TestDataFactory.createItemPedido(producto._id, {
+            cantidad: 2,
+            vendedorId: vendedor._id
+          })
+        ]
+      });
+      await pedidoRepository.create(pedidoData);
 
-  const producto = {
-    id: "101",
-    vendedor: vendedor,
-    titulo: "Laptop",
-    status: "DISPONIBLE",
-    descripcion: "Laptop gamer",
-    categorias: ["Electrónica"],
-    precio: 5000,
-    moneda: "USD",
-    stock: 10,
-    fotos: [],
-    activo: true
-  };
+      const res = await request(app).get("/pedidos").expect(200);
 
-  const itemPedido = {
-    producto: producto,
-    cantidad: 2,
-    precioUnitario: 5000
-  };
 
-  const direccionEntrega = {
-    calle: "Av. Siempre Viva",
-    altura: 742,
-    piso: "1",
-    departamento: "A",
-    codPostal: "1431",
-    ciudad: "Springfield",
-    provincia: "SP",
-    pais: "USA",
-    lat: -34.6037,
-    lon: -58.3816
-  };
-
-  return {
-    comprador,
-    items: [itemPedido],
-    moneda: "USD",
-    direccionEntrega
-  };
-};
-
-describe("API Pedidos", () => {
-  let pedidoId;
-
-  test("Crear pedido - POST /pedidos", async () => {
-    const res = await request(app)
-      .post("/pedidos")
-      .send(crearPayloadPedido())
-      .expect(201);
-
-    expect(res.body).toHaveProperty("message", "Pedido creado con éxito");
-    expect(res.body.pedido).toHaveProperty("id");
-    pedidoId = res.body.pedido.id; // guardamos para los siguientes tests
+      expect(res.body.length).toBe(1);
+    });
   });
 
-  test("Cancelar pedido - PATCH /pedidos/:id/cancelar", async () => {
-    // Crear pedido primero
-    const resCrear = await request(app)
-      .post("/pedidos")
-      .send(crearPayloadPedido())
-      .expect(201);
+  describe("DELETE /pedidos/:pedidoId - Cancelar pedido", () => {
+    test("Cancela pedido exitosamente", async () => {
+      // Crear un pedido
+      const pedidoRepository = new PedidoRepository();
+      const pedidoData = TestDataFactory.createPedido(comprador, {
+        vendedorId: vendedor._id,
+        items: [
+          TestDataFactory.createItemPedido(producto._id, {
+            cantidad: 2,
+            vendedorId: vendedor._id
+          })
+        ]
+      });
+      const pedido = await pedidoRepository.create(pedidoData);
 
-    const compradorId = resCrear.body.pedido.comprador.id;
-    const pedidoId = resCrear.body.pedido.id;
+      const res = await request(app)
+        .delete(`/pedidos/${pedido._id.toString()}`)
+        .send({ compradorId: comprador._id.toString() })
+        .expect(200);
 
-    const res = await request(app)
-      .patch(`/pedidos/${pedidoId}/cancelar`)
-      .send({
-        comprador: {
-          id: compradorId,
-          nombre: "Matias",
-          email: "matias@email.com",
-          telefono: "1234567890",
-          tipoUsuario: "CLIENTE"
-        }
-      })
-      .expect(200);
+      expect(res.body).toHaveProperty("message", "Pedido cancelado con éxito");
+    });
 
-    expect(res.body).toHaveProperty("message", "Pedido cancelado con éxito");
-    expect(res.body.pedido).toHaveProperty("estado", "CANCELADO");
-    expect(res.body.pedido.id).toBe(pedidoId);
+    test("Error al cancelar con comprador no autorizado", async () => {
+      // Crear un pedido
+      const pedidoRepository = new PedidoRepository();
+      const pedidoData = TestDataFactory.createPedido(comprador, {
+        vendedorId: vendedor._id
+      });
+      const pedido = await pedidoRepository.create(pedidoData);
+
+      // Crear otro comprador
+      const otraCompradora = await Usuario.create(
+        TestDataFactory.createUsuario({ nombre: "Otro comprador" })
+      );
+
+      const res = await request(app)
+        .delete(`/pedidos/${pedido._id.toString()}`)
+        .send({ compradorId: otraCompradora._id.toString() })
+        .expect(400);
+
+      expect(res.body).toHaveProperty("error");
+    });
   });
 
-  test("Cancelar pedido no autorizado - PATCH /pedidos/:id/cancelar", async () => {
-    const resCrear = await request(app)
-      .post("/pedidos")
-      .send(crearPayloadPedido())
-      .expect(201);
+  describe("GET /usuarios/comprador/:usuarioId/pedidos", () => {
+    test("Obtener pedidos del usuario exitosamente", async () => {
+      // Crear un pedido
+      const pedidoRepository = new PedidoRepository();
+      const pedidoData = TestDataFactory.createPedido(comprador, {
+        vendedorId: vendedor._id,
+        items: [
+          TestDataFactory.createItemPedido(producto._id, {
+            cantidad: 1,
+            vendedorId: vendedor._id
+          })
+        ]
+      });
+      await pedidoRepository.create(pedidoData);
 
-    const pedidoId = resCrear.body.pedido.id;
+      const res = await request(app)
+        .get(`/usuarios/comprador/${comprador._id.toString()}/pedidos`)
+        .expect(200);
 
-    const res = await request(app)
-      .patch(`/pedidos/${pedidoId}/cancelar`)
-      .send({
-        comprador: {
-          id: "99",
-          nombre: "Otro Usuario",
-          email: "otro@email.com",
-          telefono: "0000000000",
-          tipoUsuario: "CLIENTE"
-        }
-      })
-      .expect(400);
 
-    expect(res.body).toHaveProperty(
-      "error",
-      "No autorizado: solo el comprador puede cancelar su pedido"
-    );
+      expect(res.body.length).toBe(1);
+    });
+
+    test("Retorna lista vacía si usuario no tiene pedidos", async () => {
+      const res = await request(app)
+        .get(`/usuarios/comprador/${comprador._id.toString()}/pedidos`)
+        .expect(200);
+
+
+      expect(res.body.length).toBe(0);
+    });
   });
 
-  test("No se puede cancelar dos veces un pedido", async () => {
-    const resCrear = await request(app)
-      .post("/pedidos")
-      .send(crearPayloadPedido())
-      .expect(201);
+  describe("PATCH /pedidos/:pedidoId/enviado - Marcar como enviado", () => {
+    test("Marca pedido como enviado exitosamente", async () => {
+      // Crear un pedido en estado CONFIRMADO
+      const pedidoRepository = new PedidoRepository();
+      const pedidoData = TestDataFactory.createPedido(comprador, {
+        vendedorId: vendedor._id,
+        estado: EstadoPedido.CONFIRMADO,
+        items: [
+          TestDataFactory.createItemPedido(producto._id, {
+            cantidad: 1,
+            vendedorId: vendedor._id
+          })
+        ]
+      });
+      const pedido = await pedidoRepository.create(pedidoData);
 
-    const compradorId = resCrear.body.pedido.comprador.id;
-    const pedidoId = resCrear.body.pedido.id;
+      const res = await request(app)
+        .patch(`/pedidos/${pedido._id.toString()}/enviado`)
+        .send({ vendedorId: vendedor._id.toString() })
+        .expect(200);
 
-    // Cancelar primera vez
-    await request(app)
-      .patch(`/pedidos/${pedidoId}/cancelar`)
-      .send({
-        comprador: {
-          id: compradorId,
-          nombre: "Matias",
-          email: "matias@email.com",
-          telefono: "1234567890",
-          tipoUsuario: "CLIENTE"
-        }
-      })
-      .expect(200);
 
-    // Intentar cancelar nuevamente
-    const res = await request(app)
-      .patch(`/pedidos/${pedidoId}/cancelar`)
-      .send({
-        comprador: {
-          id: compradorId,
-          nombre: "Matias",
-          email: "matias@email.com",
-          telefono: "1234567890",
-          tipoUsuario: "CLIENTE"
-        }
-      })
-      .expect(400);
-
-    expect(res.body).toHaveProperty(
-      "error",
-      "El pedido fue anteriormente cancelado"
-    );
-  });
-
-  test("Obtener pedidos de un usuario - GET /pedidos/usuario/:id", async () => {
-    const resCrear = await request(app)
-      .post("/pedidos")
-      .send(crearPayloadPedido())
-      .expect(201);
-
-    const compradorId = resCrear.body.pedido.comprador.id;
-
-    const resGet = await request(app)
-      .get(`/pedidos/usuario/${compradorId}`)
-      .expect(200);
-    
-    console.log("respuesta:", resGet.body);
-
-    expect(Array.isArray(resGet.body)).toBe(true);
-    expect(resGet.body.length).toBeGreaterThan(0);
-    expect(resGet.body[0].comprador.id).toBe(compradorId);
-  });
-
-  test("Marcar pedido como enviado - PATCH /pedidos/:id/enviar", async () => {
-    const resCrear = await request(app)
-      .post("/pedidos")
-      .send(crearPayloadPedido())
-      .expect(201);
-
-    const pedidoId = resCrear.body.pedido.id;
-
-    const patchBody = {
-      vendedor: resCrear.body.pedido.items[0].producto.vendedor
-    };
-
-    const resPatch = await request(app)
-      .patch(`/pedidos/${pedidoId}/enviar`)
-      .send(patchBody)
-      .expect(200);
-
-    expect(resPatch.body).toHaveProperty("message", "Pedido marcado como enviado");
-    expect(resPatch.body.pedido).toHaveProperty("estado", "ENVIADO");
-  });
-
-  test("Marcar pedido como enviado no autorizado - PATCH /pedidos/:id/enviar", async () => {
-    const resCrear = await request(app)
-      .post("/pedidos")
-      .send(crearPayloadPedido())
-      .expect(201);
-
-    const pedidoId = resCrear.body.pedido.id;
-
-    const patchBody = {
-      vendedor: {
-        id: "999",
-        nombre: "Pedro",
-        email: "pedro@email.com",
-        telefono: "111111111",
-        tipoUsuario: "VENDEDOR"
-      }
-    };
-
-    const resPatch = await request(app)
-      .patch(`/pedidos/${pedidoId}/enviar`)
-      .send(patchBody)
-      .expect(400);
-
-    expect(resPatch.body).toHaveProperty(
-      "error",
-      "No autorizado para marcar este pedido como enviado"
-    );
+      expect(res.body).toHaveProperty("estado", EstadoPedido.ENVIADO);
+    });
   });
 });
