@@ -30,8 +30,8 @@ jobs:
       - name: Deploy to Netlify (Production)
         if: github.ref == 'refs/heads/main'
         run: |
+          cd packages/frontend
           netlify deploy \
-            --dir=packages/frontend \
             --prod \
             --message="Deploy from GitHub Actions - ${{ github.event.head_commit.message }}"
         env:
@@ -48,8 +48,8 @@ jobs:
       - name: Deploy to Netlify (Preview)
         if: github.ref != 'refs/heads/main'
         run: |
+          cd packages/frontend
           netlify deploy \
-            --dir=packages/frontend \
             --message="Deploy from GitHub Actions - ${{ github.event.head_commit.message }}"
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
