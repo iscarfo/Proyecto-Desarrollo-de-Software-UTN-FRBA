@@ -45,6 +45,12 @@ export default function AdministrarPedidosView() {
     };
 
     fetchOrders();
+
+    const intervalId = setInterval(() => {
+      fetchOrders();
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, [getToken]);
 
   const totalPages = Math.ceil(orders.length / pageSize);

@@ -12,20 +12,25 @@ import { useCart } from '@/src/store/CartContext';
 
 function MisPedidosPage() {
   const { getToken } = useAuth();
-  const { addToCart } = useCart(); 
+  const { addToCart } = useCart();
   const [currentPage, setCurrentPage] = useState(1);
   const [pedidos, setPedidos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const pageSize = 3; 
+  const pageSize = 3;
 
   useEffect(() => {
-    fetchPedidos();
+    fetchPedidos(true);
+    const intervalId = setInterval(() => {
+      fetchPedidos(false);
+    }, 5000);
+
+    return () => clearInterval(intervalId);
   }, []);
 
-  const fetchPedidos = async () => {
+  const fetchPedidos = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) setLoading(true);
       setError('');
       const token = await getToken();
 
@@ -41,9 +46,9 @@ function MisPedidosPage() {
       setPedidos(response.data);
     } catch (err: any) {
       console.error('Error fetching pedidos:', err);
-      setError(err.response?.data?.error || 'Error al cargar los pedidos');
+      if (showLoading) setError(err.response?.data?.error || 'Error al cargar los pedidos');
     } finally {
-      setLoading(false);
+      if (showLoading) setLoading(false);
     }
   };
 
@@ -62,32 +67,29 @@ function MisPedidosPage() {
           }
         }
       );
-      fetchPedidos();
+      fetchPedidos(true);
     } catch (err: any) {
       console.error('Error cancelling order:', err);
       setError(err.response?.data?.error || 'Error al cancelar el pedido');
     }
   };
 
-const handleRepurchase = (orderId: string) => {
+  const handleRepurchase = (orderId: string) => {
     const orderToRepurchase = pedidos.find((p) => p._id === orderId);
 
     if (!orderToRepurchase || !orderToRepurchase.items) return;
 
     orderToRepurchase.items.forEach((item: any) => {
       if (item.productoId) {
-        
         const productToCart = {
-          ...item.productoId, 
-          
-          precio: item.precioUnitario, 
-          moneda: orderToRepurchase.moneda 
+          ...item.productoId,
+          precio: item.precioUnitario,
+          moneda: orderToRepurchase.moneda
         };
 
         addToCart(productToCart, item.cantidad);
       }
     });
-
   };
 
   const totalPages = Math.ceil(pedidos.length / pageSize);
@@ -119,7 +121,7 @@ const handleRepurchase = (orderId: string) => {
             </Alert>
           )}
 
-          {loading ? (
+          {loading && pedidos.length === 0 ? (
             <Box display="flex" justifyContent="center" py={8}>
               <CircularProgress />
             </Box>
