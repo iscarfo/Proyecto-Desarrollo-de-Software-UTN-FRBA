@@ -33,12 +33,32 @@ jobs:
       - name: Install Vercel CLI
         run: npm install -g vercel
 
-      - name: Pull Vercel Environment Information
+      - name: Pull Vercel Environment Information (Production)
+        if: github.ref == 'refs/heads/main'
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: packages/frontend
 
-      - name: Build Project Artifacts
+      - name: Pull Vercel Environment Information (Preview)
+        if: github.ref != 'refs/heads/main'
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: packages/frontend
+
+      - name: Build Project Artifacts (Production)
+        if: github.ref == 'refs/heads/main'
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+        working-directory: packages/frontend
+        env:
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
+          NEXT_PUBLIC_CLERK_SIGN_IN_URL: /inicio-sesion
+          NEXT_PUBLIC_CLERK_SIGN_UP_URL: /registro
+          NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /home
+          NEXT_PUBLIC_CLERK_SIGN_UP_FALLBACK_REDIRECT_URL: /home
+
+      - name: Build Project Artifacts (Preview)
+        if: github.ref != 'refs/heads/main'
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
         working-directory: packages/frontend
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
