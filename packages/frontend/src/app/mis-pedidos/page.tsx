@@ -8,14 +8,16 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import axios from 'axios';
 import { withAuth } from '@/src/hocs/withAuth';
+import { useCart } from '@/src/store/CartContext';
 
 function MisPedidosPage() {
   const { getToken } = useAuth();
+  const { addToCart } = useCart(); 
   const [currentPage, setCurrentPage] = useState(1);
   const [pedidos, setPedidos] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const pageSize = 3; // pedidos por página
+  const pageSize = 3; 
 
   useEffect(() => {
     fetchPedidos();
@@ -60,12 +62,32 @@ function MisPedidosPage() {
           }
         }
       );
-      // Refrescar los pedidos después de cancelar
       fetchPedidos();
     } catch (err: any) {
       console.error('Error cancelling order:', err);
       setError(err.response?.data?.error || 'Error al cancelar el pedido');
     }
+  };
+
+const handleRepurchase = (orderId: string) => {
+    const orderToRepurchase = pedidos.find((p) => p._id === orderId);
+
+    if (!orderToRepurchase || !orderToRepurchase.items) return;
+
+    orderToRepurchase.items.forEach((item: any) => {
+      if (item.productoId) {
+        
+        const productToCart = {
+          ...item.productoId, 
+          
+          precio: item.precioUnitario, 
+          moneda: orderToRepurchase.moneda 
+        };
+
+        addToCart(productToCart, item.cantidad);
+      }
+    });
+
   };
 
   const totalPages = Math.ceil(pedidos.length / pageSize);
@@ -123,7 +145,7 @@ function MisPedidosPage() {
                     }))}
                     userType="buyer"
                     onCancel={handleCancelOrder}
-                    onRepurchase={(id) => console.log("Volver a comprar", id)}
+                    onRepurchase={handleRepurchase}
                   />
                 ))}
               </Box>
