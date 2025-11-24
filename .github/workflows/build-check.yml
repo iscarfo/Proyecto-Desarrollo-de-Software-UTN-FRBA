@@ -63,10 +63,9 @@ jobs:
         run: npm run build --workspace=frontend
         env:
           NODE_ENV: production
-          # Variables de entorno necesarias para el build
-          NEXT_PUBLIC_API_URL: http://localhost:3000
-          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: pk_test_dummy
-          CLERK_SECRET_KEY: sk_test_dummy
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY }}
+          CLERK_SECRET_KEY: ${{ secrets.CLERK_SECRET_KEY }}
           NEXT_PUBLIC_CLERK_SIGN_IN_URL: /inicio-sesion
           NEXT_PUBLIC_CLERK_SIGN_UP_URL: /registro
           NEXT_PUBLIC_CLERK_SIGN_IN_FALLBACK_REDIRECT_URL: /home
