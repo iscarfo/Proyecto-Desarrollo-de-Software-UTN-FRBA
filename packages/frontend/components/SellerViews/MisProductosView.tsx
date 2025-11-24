@@ -11,14 +11,23 @@ import {
   DialogContent,
   DialogActions,
   Button,
-  Fab,
   MenuItem,
   Snackbar,
   Alert
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
+
+const Moneda = Object.freeze({
+  PESO_ARG: "PESO_ARG",
+  DOLAR_USA: "DOLAR_USA",
+  REAL: "REAL",
+});
+
+interface Categoria {
+  _id: string;
+  nombre: string;
+}
 
 export default function MisProductosView() {
   const { getToken } = useAuth();
@@ -30,6 +39,7 @@ export default function MisProductosView() {
   const [totalPages, setTotalPages] = useState(1);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [categorias, setCategorias] = useState<Categoria[]>([]);
   
   const [nuevoProducto, setNuevoProducto] = useState({
     titulo: "",
@@ -42,11 +52,22 @@ export default function MisProductosView() {
     activo: true,
   });
 
-  const categoriasDisponibles = [
-    { value: "68e2d9437062c45d2163793a", label: "Running" },
-    { value: "68e2d9437062c45d2163793b", label: "Calzado" },
-    { value: "68e2d9437062c45d2163793d", label: "Indumentaria" },
-  ];
+  // Cargar categorías desde el backend
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/productos/categorias`);
+        if (res.ok) {
+          const data = await res.json();
+          setCategorias(data);
+        }
+      } catch (error) {
+        console.error("Error al cargar categorías:", error);
+      }
+    };
+
+    fetchCategorias();
+  }, []);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -102,17 +123,82 @@ export default function MisProductosView() {
     }
   };
 
-  const handleDelete = (productId: string) => {
-    console.log("Eliminar producto:", productId);
+  const handleDelete = async (productId: string) => {
+    if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
+      return;
+    }
+
+    try {
+      const token = await getToken();
+      const res = await axios.delete(
+        `${process.env.NEXT_PUBLIC_API_URL}/productos/${productId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.status === 200 || res.status === 204) {
+        setProducts((prev) => prev.filter((p) => p._id !== productId));
+        setAlerta({
+          open: true,
+          tipo: "success",
+          mensaje: "Producto eliminado con éxito.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error al eliminar producto:", error);
+      setAlerta({
+        open: true,
+        tipo: "error",
+        mensaje: error.response?.data?.message || "Error al eliminar el producto",
+      });
+    }
   };
 
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => {
     if (!editingProduct) return;
-    setProducts((prev) =>
-      prev.map((p) => (p._id === editingProduct._id ? editingProduct : p))
-    );
-    console.log("Producto actualizado:", editingProduct);
-    setEditingProduct(null);
+
+    try {
+      const token = await getToken();
+      const payload = {
+        titulo: editingProduct.titulo,
+        descripcion: editingProduct.descripcion,
+        precio: Number(editingProduct.precio),
+        stock: Number(editingProduct.stock),
+      };
+
+      const res = await axios.put(
+        `${process.env.NEXT_PUBLIC_API_URL}/productos/${editingProduct._id}`,
+        payload,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (res.status === 200 || res.status === 204) {
+        setProducts((prev) =>
+          prev.map((p) => (p._id === editingProduct._id ? editingProduct : p))
+        );
+        setEditingProduct(null);
+        setAlerta({
+          open: true,
+          tipo: "success",
+          mensaje: "Producto actualizado con éxito.",
+        });
+      }
+    } catch (error: any) {
+      console.error("Error al actualizar producto:", error);
+      setAlerta({
+        open: true,
+        tipo: "error",
+        mensaje: error.response?.data?.message || "Error al actualizar el producto",
+      });
+    }
   };
 
   const handleGuardarProducto = async () => {
@@ -160,6 +246,16 @@ export default function MisProductosView() {
         }
 
         setOpenDialog(false);
+        setNuevoProducto({
+          titulo: "",
+          descripcion: "",
+          precio: 0,
+          moneda: "PESO_ARG",
+          stock: 0,
+          categorias: [],
+          fotos: [],
+          activo: true,
+        });
         setAlerta({
           open: true,
           tipo: "success",
@@ -177,7 +273,6 @@ export default function MisProductosView() {
   };
 
   return (
-
     <Box>
       <Typography variant="h5" sx={{ mb: 3, fontWeight: 'bold', color: 'primary.main' }}>
         Catálogo de Productos
@@ -188,7 +283,7 @@ export default function MisProductosView() {
         color="primary"
         onClick={() => setOpenDialog(true)}
         sx={{ mb: 3 }}
-        >
+      >
         Agregar producto
       </Button>
 
@@ -215,7 +310,6 @@ export default function MisProductosView() {
           onPageChange={handlePageChange}
         />
       </Box>
-
 
       {/* Dialog para crear producto */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="sm">
@@ -247,6 +341,19 @@ export default function MisProductosView() {
             }
           />
           <TextField
+            select
+            label="Moneda"
+            fullWidth
+            value={nuevoProducto.moneda}
+            onChange={(e) =>
+              setNuevoProducto((prev) => ({ ...prev, moneda: e.target.value }))
+            }
+          >
+            <MenuItem value={Moneda.PESO_ARG}>Peso Argentino</MenuItem>
+            <MenuItem value={Moneda.DOLAR_USA}>Dólar Estadounidense</MenuItem>
+            <MenuItem value={Moneda.REAL}>Real Brasileño</MenuItem>
+          </TextField>
+          <TextField
             label="Stock"
             type="number"
             fullWidth
@@ -264,9 +371,9 @@ export default function MisProductosView() {
               setNuevoProducto((prev) => ({ ...prev, categorias: [e.target.value] }))
             }
           >
-            {categoriasDisponibles.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
+            {categorias.map((cat) => (
+              <MenuItem key={cat._id} value={cat._id}>
+                {cat.nombre.charAt(0).toUpperCase() + cat.nombre.slice(1)}
               </MenuItem>
             ))}
           </TextField>

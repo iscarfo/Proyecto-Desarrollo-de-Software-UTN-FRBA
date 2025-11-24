@@ -2,102 +2,73 @@
 import Navbar from '@/components/Navbar/Navbar';
 import Footer from '@/components/Footer/Footer';
 import Pagination from '@/components/Pagination/Pagination';
-import { Typography, Box, Container } from '@mui/material';
-import { useState } from 'react';
+import { Typography, Box, Container, CircularProgress } from '@mui/material';
+import { useState, useEffect } from 'react';
 import NotificationCard from '@/components/NotificationCard/NotificationCard';
+import { useAuth } from '@clerk/nextjs';
+import axios from 'axios';
+import { withAuth } from '@/src/hocs/withAuth';
 
-export default function NotificationsPage() {
+function NotificationsPage() {
+    const { getToken } = useAuth();
     const [currentPage, setCurrentPage] = useState(1);
-    const pageSize = 5; // notifs por página
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
+    const pageSize = 5;
 
-    const sampleNotif = [
-        {
-            "_id": "68ec4090c7e27dfd142b099f",
-            "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-            "mensaje": "Tu pedido ha sido enviado.",
-            "leida": false,
-            "fechaCreacion": "2025-10-12T23:58:08.157Z",
-            "fechaLectura": null,
-            "createdAt": "2025-10-12T23:58:08.158Z",
-            "updatedAt": "2025-10-12T23:58:08.158Z"
-        },
-        {
-            "_id": "68ec4090c7e27dfd142b097f",
-            "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-            "mensaje": "Tu pedido ha sido enviado.",
-            "leida": false,
-            "fechaCreacion": "2025-10-12T23:58:08.157Z",
-            "fechaLectura": null,
-            "createdAt": "2025-10-12T23:58:08.158Z",
-            "updatedAt": "2025-10-12T23:58:08.158Z"
-        },
-        {
-            "_id": "68ec408ac7e27dfd142b098f",
-            "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-            "mensaje": "Felicidades, tu pedido ha sido confirmado! Te avisaremos cuando esté en camino.",
-            "leida": false,
-            "fechaCreacion": "2025-10-12T23:58:02.757Z",
-            "fechaLectura": null,
-            "createdAt": "2025-10-12T23:58:02.757Z",
-            "updatedAt": "2025-10-12T23:58:02.757Z"
-        },
-        {
-            "_id": "68ec4090c7e27dfd142b098a",
-            "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-            "mensaje": "Tu pedido ha sido enviado.",
-            "leida": false,
-            "fechaCreacion": "2025-10-12T23:58:08.157Z",
-            "fechaLectura": null,
-            "createdAt": "2025-10-12T23:58:08.158Z",
-            "updatedAt": "2025-10-12T23:58:08.158Z"
-        },
-        {
-            "_id": "68ec4090c7e27dfd142b098b",
-            "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-            "mensaje": "Tu pedido ha sido enviado.",
-            "leida": false,
-            "fechaCreacion": "2025-10-12T23:58:08.157Z",
-            "fechaLectura": null,
-            "createdAt": "2025-10-12T23:58:08.158Z",
-            "updatedAt": "2025-10-12T23:58:08.158Z"
-        },
-        {
-            "_id": "68ec407ac7e27dfd142b0970",
-            "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-            "mensaje": "Tu pedido ha sido cancelado.",
-            "leida": false,
-            "fechaCreacion": "2025-10-12T23:57:46.967Z",
-            "fechaLectura": null,
-            "createdAt": "2025-10-12T23:57:46.969Z",
-            "updatedAt": "2025-10-12T23:57:46.969Z"
-        },
-        {
-            "_id": "68ec4052c7e27dfd142b0960",
-            "usuarioDestinoId": "68e918b93408f1c9e2599d72",
-            "mensaje": "Felicidades, tu pedido ha sido confirmado! Te avisaremos cuando esté en camino.",
-            "leida": false,
-            "fechaCreacion": "2025-10-12T23:57:06.880Z",
-            "fechaLectura": null,
-            "createdAt": "2025-10-12T23:57:06.880Z",
-            "updatedAt": "2025-10-12T23:57:06.880Z"
-        },
-    ];
+    useEffect(() => {
+        fetchNotifications(true);
+        const intervalId = setInterval(() => {
+            fetchNotifications(false);
+        }, 5000);
 
-    const [notifications, setNotifications] = useState(sampleNotif);
-    const totalPages = Math.ceil(notifications.length / pageSize);
+        return () => clearInterval(intervalId);
+    }, []);
+
+    const fetchNotifications = async (showLoading = true) => {
+        try {
+            if (showLoading) setLoading(true);
+            const token = await getToken();
+            
+            const response = await axios.get(
+                `${process.env.NEXT_PUBLIC_API_URL}/usuarios/notificaciones`,
+                {
+                    headers: { Authorization: `Bearer ${token}` }
+                }
+            );
+            
+            setNotifications(response.data);
+        } catch (error) {
+            console.error("Error cargando notificaciones", error);
+        } finally {
+            if (showLoading) setLoading(false);
+        }
+    };
 
     const handlePageChange = (page: number) => {
         setCurrentPage(page);
     };
 
-    const handleToggleRead = (id: string) => {
+    const handleToggleRead = async (id: string) => {
         setNotifications(prev =>
             prev.map(n =>
                 n._id === id ? { ...n, leida: !n.leida } : n
             )
         );
+
+        try {
+            const token = await getToken();
+            await axios.put(
+                `${process.env.NEXT_PUBLIC_API_URL}/notificaciones/${id}/leidas`,
+                {},
+                { headers: { Authorization: `Bearer ${token}` } }
+            );
+        } catch (error) {
+            console.error("Error actualizando lectura", error);
+        }
     };
 
+    const totalPages = Math.ceil(notifications.length / pageSize);
     const startIndex = (currentPage - 1) * pageSize;
     const paginatedNotifs = notifications.slice(startIndex, startIndex + pageSize);
 
@@ -131,28 +102,39 @@ export default function NotificationsPage() {
             </Box>
             </Typography>
 
-            <Box role="region" aria-label="Listado de notificaciones">
-            {paginatedNotifs.map((notif) => (
-                <NotificationCard
-                key={notif._id}
-                notification={notif}
-                onReadToggle={handleToggleRead}
-                />
-            ))}
-            </Box>
+            {loading && notifications.length === 0 ? (
+                <Box display="flex" justifyContent="center" py={8}>
+                    <CircularProgress />
+                </Box>
+            ) : (
+                <>
+                    <Box role="region" aria-label="Listado de notificaciones">
+                    {paginatedNotifs.map((notif) => (
+                        <NotificationCard
+                        key={notif._id}
+                        notification={notif}
+                        onReadToggle={handleToggleRead}
+                        />
+                    ))}
+                    </Box>
 
-            <Box sx={{ marginTop: 4 }} aria-label="Paginación de notificaciones">
-            <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={handlePageChange}
-            />
-            </Box>
+                    {notifications.length > 0 && (
+                        <Box sx={{ marginTop: 4 }} aria-label="Paginación de notificaciones">
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            onPageChange={handlePageChange}
+                        />
+                        </Box>
+                    )}
+                </>
+            )}
         </Container>
         </main>
 
         <Footer />
     </div>
     );
-
 }
+
+export default withAuth(NotificationsPage);

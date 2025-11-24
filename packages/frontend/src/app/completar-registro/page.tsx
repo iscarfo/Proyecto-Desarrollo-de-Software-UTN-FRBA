@@ -69,8 +69,6 @@ export default function CompletarRegistroPage() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          nombre: formData.nombre,
-          email: formData.email,
           telefono: formData.telefono,
           direccion: {
             calle: formData.calle,

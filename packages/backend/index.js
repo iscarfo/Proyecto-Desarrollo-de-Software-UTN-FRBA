@@ -17,7 +17,7 @@ import { NotificacionesController } from "./controllers/notificacionesController
 import { UsuarioService } from "./services/usuarioService.js";
 import { UsuarioController } from "./controllers/usuarioController.js";
 import { connectDB } from "./config/database.js";
-import { initTestData } from "./config/testData.js";
+import { runMigrations } from "./config/migrations.js";
 import swaggerUi from "swagger-ui-express";
 import YAML from "yamljs";
 import path from "path";
@@ -49,6 +49,9 @@ app.use(clerkMiddleware({
 // Conectar a MongoDB
 await connectDB();
 
+// Ejecutar migraciones
+await runMigrations();
+
 
 // Health endpoint
 app.get("/health", (req, res) => {
@@ -68,7 +71,7 @@ const usuarioRepository = new UsuarioRepository();
 const notificacionesRepository = new NotificacionesRepository();
 
 //service
-const productoService = new ProductoService(productoRepository);
+const productoService = new ProductoService(productoRepository, usuarioRepository);
 const notificacionesService = new NotificacionesService(notificacionesRepository, usuarioRepository);
 const pedidoService = new PedidoService(pedidoRepository, productoService, usuarioRepository, notificacionesService);
 const usuarioService = new UsuarioService(usuarioRepository);

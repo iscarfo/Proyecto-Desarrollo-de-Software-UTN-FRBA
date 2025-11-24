@@ -1,18 +1,50 @@
-import { Usuario } from '../models/Usuario.js';
+import { clerk } from '../middleware/auth.js';
 
 export class UsuarioRepository {
 
+  /**
+   * Convierte un usuario de Clerk a formato compatible con nuestra app
+   */
+  _mapClerkUserToAppUser(clerkUser) {
+    const metadata = clerkUser.publicMetadata || {};
+
+    return {
+      _id: clerkUser.id,
+      id: clerkUser.id,
+      email: clerkUser.emailAddresses[0]?.emailAddress || '',
+      nombre: clerkUser.fullName || clerkUser.firstName || '',
+      telefono: metadata.telefono || '',
+      direccion: metadata.direccion || {},
+      tipoUsuario: metadata.tipoUsuario || '',
+      activo: metadata.activo !== false,
+      fechaRegistro: metadata.fechaRegistro || clerkUser.createdAt,
+      imageUrl: clerkUser.imageUrl
+    };
+  }
+
   async findById(id) {
     try {
-      return await Usuario.findById(id).lean();
+      const clerkUser = await clerk.users.getUser(id);
+      return this._mapClerkUserToAppUser(clerkUser);
     } catch (error) {
+      if (error.status === 404) {
+        return null;
+      }
       throw new Error(`Error al buscar usuario: ${error.message}`);
     }
   }
 
   async findByEmail(email) {
     try {
-      return await Usuario.findOne({ email }).lean();
+      const users = await clerk.users.getUserList({
+        emailAddress: [email]
+      });
+
+      if (users.length === 0) {
+        return null;
+      }
+
+      return this._mapClerkUserToAppUser(users[0]);
     } catch (error) {
       throw new Error(`Error al buscar usuario por email: ${error.message}`);
     }
@@ -20,18 +52,20 @@ export class UsuarioRepository {
 
   async save(usuario) {
     try {
-      if (usuario._id) {
-        // Actualizar usuario existente
-        return await Usuario.findByIdAndUpdate(
-          usuario._id,
-          usuario,
-          { new: true, lean: true }
-        );
-      } else {
-        // Crear nuevo usuario
-        const nuevoUsuario = new Usuario(usuario);
-        return await nuevoUsuario.save();
-      }
+      const userId = usuario._id || usuario.id;
+
+      // Actualizar metadata del usuario
+      const updatedUser = await clerk.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          telefono: usuario.telefono,
+          direccion: usuario.direccion,
+          tipoUsuario: usuario.tipoUsuario,
+          activo: usuario.activo !== false,
+          fechaRegistro: usuario.fechaRegistro
+        }
+      });
+
+      return this._mapClerkUserToAppUser(updatedUser);
     } catch (error) {
       throw new Error(`Error al guardar usuario: ${error.message}`);
     }
@@ -39,8 +73,21 @@ export class UsuarioRepository {
 
   async create(usuarioData) {
     try {
-      const usuario = new Usuario(usuarioData);
-      return await usuario.save();
+      // En Clerk, los usuarios se crean automáticamente al registrarse
+      // Este método actualiza el metadata después del registro
+      const userId = usuarioData._id || usuarioData.id;
+
+      const updatedUser = await clerk.users.updateUserMetadata(userId, {
+        publicMetadata: {
+          telefono: usuarioData.telefono,
+          direccion: usuarioData.direccion,
+          tipoUsuario: usuarioData.tipoUsuario,
+          activo: true,
+          fechaRegistro: new Date().toISOString()
+        }
+      });
+
+      return this._mapClerkUserToAppUser(updatedUser);
     } catch (error) {
       throw new Error(`Error al crear usuario: ${error.message}`);
     }
@@ -48,22 +95,25 @@ export class UsuarioRepository {
 
   async findAll(page = 1, limit = 10) {
     try {
-      const skip = (page - 1) * limit;
+      const offset = (page - 1) * limit;
 
-      const [usuarios, total] = await Promise.all([
-        Usuario.find({ activo: true })
-          .skip(skip)
-          .limit(limit)
-          .lean(),
-        Usuario.countDocuments({ activo: true })
-      ]);
+      const clerkUsers = await clerk.users.getUserList({
+        limit,
+        offset
+      });
 
-      const totalPages = Math.ceil(total / limit);
+      // Filtrar solo usuarios activos
+      const usuarios = clerkUsers
+        .map(user => this._mapClerkUserToAppUser(user))
+        .filter(user => user.activo);
+
+      // Nota: Clerk no devuelve el total, así que esto es una aproximación
+      const totalPages = Math.ceil(usuarios.length / limit);
 
       return {
         pagina: page,
         perPage: limit,
-        totalColecciones: total,
+        totalColecciones: usuarios.length,
         totalPaginas: totalPages,
         data: usuarios
       };
@@ -74,12 +124,14 @@ export class UsuarioRepository {
 
   async delete(id) {
     try {
-      // Soft delete - marcar como inactivo
-      return await Usuario.findByIdAndUpdate(
-        id,
-        { activo: false },
-        { new: true, lean: true }
-      );
+      // Soft delete - marcar como inactivo en metadata
+      const updatedUser = await clerk.users.updateUserMetadata(id, {
+        publicMetadata: {
+          activo: false
+        }
+      });
+
+      return this._mapClerkUserToAppUser(updatedUser);
     } catch (error) {
       throw new Error(`Error al eliminar usuario: ${error.message}`);
     }

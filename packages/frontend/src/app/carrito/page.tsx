@@ -37,8 +37,7 @@ export default function CarritoPage() {
 
   const totalProductos = cart.reduce((acc, p) => acc + p.cantidad, 0);
   const subtotal = cart.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
-  const envio = cart.length > 0 ? 15000 : 0;
-  const total = subtotal + envio;
+  const total = subtotal;
 
   const formatCurrency = (moneda: string) => {
     switch (moneda) {
@@ -172,10 +171,6 @@ export default function CarritoPage() {
                   <Typography sx={{ mb: 1 }}>
                     Subtotal ({totalProductos} productos): $
                     {subtotal.toLocaleString("es-AR")}
-                  </Typography>
-
-                  <Typography sx={{ mb: 1 }}>
-                    Envío: ${envio.toLocaleString("es-AR")}
                   </Typography>
 
                   <Typography sx={{ fontWeight: 700, fontSize: 18, mt: 1 }}>
