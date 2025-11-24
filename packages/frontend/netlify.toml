@@ -2,8 +2,6 @@
 [build]
   # Build command runs from packages/frontend
   command = "cd ../.. && npm ci && npm run build --workspace=frontend"
-  # Publish directory relative to packages/frontend
-  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
