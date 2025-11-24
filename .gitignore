@@ -3,3 +3,5 @@ node_modules/
 /packages/**/node_modules/
 .env
 /packages/**/coverage/
+# Local Netlify folder
+.netlify

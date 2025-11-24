@@ -1,7 +1,0 @@
-# Netlify configuration for Next.js in monorepo
-[build]
-  # Build command runs from packages/frontend
-  command = "cd ../.. && npm ci && npm run build --workspace=frontend"
-
-[build.environment]
-  NODE_VERSION = "20"
