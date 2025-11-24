@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer/Footer";
@@ -20,7 +20,21 @@ import {
 import axios from "axios";
 import { useCart } from "../../store/CartContext";
 
-export default function ProductosPage() {
+// Componente que usa useSearchParams
+function SearchParamsHandler({ onSearchTermChange }: { onSearchTermChange: (term: string) => void }) {
+  const searchParams = useSearchParams();
+
+  useEffect(() => {
+    const param = searchParams.get("search");
+    if (param) {
+      onSearchTermChange(param);
+    }
+  }, [searchParams, onSearchTermChange]);
+
+  return null;
+}
+
+function ProductosPageContent() {
   const { addToCart } = useCart();
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -38,19 +52,7 @@ export default function ProductosPage() {
 
   const pageSize = 6;
 
-  
   const [searchTerm, setSearchTerm] = useState("");
-
-  
-  const searchParams = useSearchParams();
-
-  
-  useEffect(() => {
-    const param = searchParams.get("search");
-    if (param) {
-      setSearchTerm(param);
-    }
-  }, [searchParams]);
 
   const fetchProducts = async (page = currentPage, search = searchTerm) => {
     setLoading(true);
@@ -119,6 +121,10 @@ export default function ProductosPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-platinum">
+      <Suspense fallback={null}>
+        <SearchParamsHandler onSearchTermChange={setSearchTerm} />
+      </Suspense>
+
       <Navbar
         showSearch={true}
         searchPlaceholder="Buscar productos..."
@@ -232,5 +238,13 @@ export default function ProductosPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function ProductosPage() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <ProductosPageContent />
+    </Suspense>
   );
 }
