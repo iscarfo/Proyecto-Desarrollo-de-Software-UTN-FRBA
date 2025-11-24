@@ -40,8 +40,7 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
 
   const subtotal = cart.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
-  const envio = cart.length > 0 ? 15000 : 0;
-  const total = subtotal + envio;
+  const total = subtotal;
 
   const {
     values,
