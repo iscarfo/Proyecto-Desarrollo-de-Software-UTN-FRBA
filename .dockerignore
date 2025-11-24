@@ -1,7 +1,10 @@
-# Node
+# Node modules (excepto los que se instalan en el build)
 node_modules
 npm-debug.log
 yarn-error.log
+
+# Frontend (no necesario para el backend)
+packages/frontend
 
 # Testing
 coverage
@@ -44,3 +47,7 @@ logs
 # Temporary files
 tmp
 temp
+
+# Build artifacts
+dist
+build
