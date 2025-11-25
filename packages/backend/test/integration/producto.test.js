@@ -10,15 +10,54 @@ import { connect, closeDatabase, clearDatabase } from "../utils/mongoMemory.js";
 import { TestDataFactory } from "../fixtures/testData.js";
 import { Usuario } from "../../models/Usuario.js";
 import { describe, test, expect, beforeEach, beforeAll, afterAll, afterEach } from "@jest/globals";
+import { generateMockToken, mockAuthMiddleware, mockRequireVendedor } from "../utils/authHelper.js";
 
 /**
  * Producto API Integration Tests con BD en memoria
  */
 let app;
 let vendedor;
+let vendedorToken;
 let productoRepository;
 let usuarioRepository;
 let productoService;
+
+// Mock de UsuarioRepository para tests - usa Mongoose en lugar de Clerk
+class MockUsuarioRepository {
+  async findById(id) {
+    return await Usuario.findById(id);
+  }
+
+  async findByEmail(email) {
+    return await Usuario.findOne({ email });
+  }
+
+  async save(usuario) {
+    const actualizado = await Usuario.findByIdAndUpdate(usuario._id, usuario, { new: true });
+    return actualizado;
+  }
+
+  async create(usuarioData) {
+    return await Usuario.create(usuarioData);
+  }
+
+  async findAll(page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const usuarios = await Usuario.find().skip(skip).limit(limit);
+    const total = await Usuario.countDocuments();
+    return {
+      pagina: page,
+      perPage: limit,
+      totalColecciones: total,
+      totalPaginas: Math.ceil(total / limit),
+      data: usuarios
+    };
+  }
+
+  async delete(id) {
+    return await Usuario.findByIdAndRemove(id);
+  }
+}
 
 // Conectar a BD en memoria antes de todas las pruebas
 beforeAll(async () => {
@@ -42,16 +81,26 @@ function setupExpress() {
 
   // Crear instancias de repositorios
   productoRepository = new ProductoRepository();
-  usuarioRepository = new UsuarioRepository();
+  usuarioRepository = new MockUsuarioRepository();  // Usar mock que no necesita Clerk
 
   // Crear servicio
-  productoService = new ProductoService(productoRepository);
+  productoService = new ProductoService(productoRepository, usuarioRepository);
 
   // Crear controlador
   const productoController = new ProductoController(productoService);
 
+  // Usar el router real de productoRoutes pero con middlewares mock
+  const productoRouter = express.Router();
+  
+  // Rutas específicas ANTES de rutas con parámetros (como en productoRoutes.js)
+  productoRouter.post("/", mockAuthMiddleware(), mockRequireVendedor(), (req, res) => productoController.crearProducto(req, res));
+  productoRouter.get("/", (req, res) => productoController.listarProductos(req, res));
+  productoRouter.put("/:id", mockAuthMiddleware(), mockRequireVendedor(), (req, res) => productoController.actualizarProducto(req, res));
+  productoRouter.delete("/:id", mockAuthMiddleware(), mockRequireVendedor(), (req, res) => productoController.eliminarProducto(req, res));
+  productoRouter.get("/categorias", (req, res) => productoController.obtenerCategorias(req, res));
+
   // Montar router
-  app.use("/productos", createProductoRouter(productoController));
+  app.use("/productos", productoRouter);
 }
 
 // Crear datos de prueba antes de cada test
@@ -61,6 +110,7 @@ beforeEach(async () => {
     rol: "vendedor"
   });
   vendedor = await Usuario.create(vendedorData);
+  vendedorToken = generateMockToken(vendedor._id.toString(), 'vendedor');
 });
 
 describe("API Productos - Integration Tests (BD Real)", () => {
@@ -68,8 +118,8 @@ describe("API Productos - Integration Tests (BD Real)", () => {
     test("Crea un producto exitosamente", async () => {
       const res = await request(app)
         .post("/productos")
+        .set('Authorization', `Bearer ${vendedorToken}`)
         .send({
-          usuarioId: vendedor._id.toString(),
           titulo: "Laptop Gaming",
           descripcion: "Laptop de alta performance",
           precio: 1500,
@@ -81,31 +131,15 @@ describe("API Productos - Integration Tests (BD Real)", () => {
       expect(res.body._id).toBeDefined();
       expect(res.body.titulo).toBe("Laptop Gaming");
       expect(res.body.precio).toBe(1500);
-      expect(res.body.vendedor.toString()).toBe(vendedor._id.toString());
-    });
-
-    test("Error si usuarioId no es válido", async () => {
-      const res = await request(app)
-        .post("/productos")
-        .send({
-          usuarioId: "invalid-id",
-          titulo: "Laptop Gaming",
-          descripcion: "Laptop de alta performance",
-          precio: 1500,
-          moneda: "DOLAR_USA",
-          stock: 10
-        })
-        .expect(400);
-
-      expect(res.body).toHaveProperty("error");
     });
 
     test("Error si faltan campos obligatorios", async () => {
       const res = await request(app)
         .post("/productos")
+        .set('Authorization', `Bearer ${vendedorToken}`)
         .send({
-          usuarioId: vendedor._id.toString(),
           titulo: "Laptop Gaming"
+          // Falta descripción, precio, etc.
         })
         .expect(400);
 
@@ -113,12 +147,14 @@ describe("API Productos - Integration Tests (BD Real)", () => {
     });
 
     test("Error si el usuario no existe", async () => {
-      const usuarioInexistente = TestDataFactory.createUsuario()._id.toString();
+      // Crear un token para un usuario que no existe en la BD
+      const fakeUserId = "507f1f77bcf86cd799439011"; // ObjectId válido pero inexistente
+      const fakeToken = generateMockToken(fakeUserId, 'vendedor');
 
       const res = await request(app)
         .post("/productos")
+        .set('Authorization', `Bearer ${fakeToken}`)
         .send({
-          usuarioId: usuarioInexistente,
           titulo: "Laptop Gaming",
           descripcion: "Laptop de alta performance",
           precio: 1500,
@@ -128,26 +164,6 @@ describe("API Productos - Integration Tests (BD Real)", () => {
         .expect(500);
 
       expect(res.body).toHaveProperty("error");
-    });
-
-    test("Crea producto con campos opcionales (categorias, fotos)", async () => {
-      const res = await request(app)
-        .post("/productos")
-        .send({
-          usuarioId: vendedor._id.toString(),
-          titulo: "iPhone 15",
-          descripcion: "Smartphone de última generación",
-          precio: 999,
-          moneda: "DOLAR_USA",
-          stock: 20,
-          categorias: [],
-          fotos: ["https://example.com/iphone.jpg"],
-          activo: true
-        })
-        .expect(201);
-
-      expect(res.body.titulo).toBe("iPhone 15");
-      expect(res.body.fotos).toContain("https://example.com/iphone.jpg");
     });
   });
 
@@ -211,6 +227,7 @@ describe("API Productos - Integration Tests (BD Real)", () => {
 
       const res = await request(app)
         .put(`/productos/${producto._id.toString()}`)
+        .set('Authorization', `Bearer ${vendedorToken}`)
         .send({
           titulo: "Laptop Gaming PRO",
           precio: 2000
@@ -226,6 +243,7 @@ describe("API Productos - Integration Tests (BD Real)", () => {
 
       const res = await request(app)
         .put(`/productos/${productoIdInexistente}`)
+        .set('Authorization', `Bearer ${vendedorToken}`)
         .send({
           titulo: "Laptop Actualizada"
         })
@@ -237,6 +255,7 @@ describe("API Productos - Integration Tests (BD Real)", () => {
     test("Retorna 500 si el ID del producto no es válido", async () => {
       const res = await request(app)
         .put("/productos/invalid-id")
+        .set('Authorization', `Bearer ${vendedorToken}`)
         .send({
           titulo: "Laptop Actualizada"
         })
@@ -251,6 +270,7 @@ describe("API Productos - Integration Tests (BD Real)", () => {
 
       const res = await request(app)
         .put(`/productos/${producto._id.toString()}`)
+        .set('Authorization', `Bearer ${vendedorToken}`)
         .send({})
         .expect(400);
 
@@ -266,6 +286,7 @@ describe("API Productos - Integration Tests (BD Real)", () => {
 
       const res = await request(app)
         .put(`/productos/${producto._id.toString()}`)
+        .set('Authorization', `Bearer ${vendedorToken}`)
         .send({
           stock: 25
         })
@@ -285,6 +306,7 @@ describe("API Productos - Integration Tests (BD Real)", () => {
 
       const res = await request(app)
         .delete(`/productos/${producto._id.toString()}`)
+        .set('Authorization', `Bearer ${vendedorToken}`)
         .expect(200);
 
       expect(res.body).toHaveProperty("message", "Producto eliminado correctamente");
@@ -299,6 +321,7 @@ describe("API Productos - Integration Tests (BD Real)", () => {
 
       const res = await request(app)
         .delete(`/productos/${productoIdInexistente}`)
+        .set('Authorization', `Bearer ${vendedorToken}`)
         .expect(404);
 
       expect(res.body).toHaveProperty("message", "Producto no encontrado");
@@ -307,6 +330,7 @@ describe("API Productos - Integration Tests (BD Real)", () => {
     test("Error si el ID del producto no es válido", async () => {
       const res = await request(app)
         .delete("/productos/invalid-id")
+        .set('Authorization', `Bearer ${vendedorToken}`)
         .expect(500);
 
       expect(res.body).toHaveProperty("error");

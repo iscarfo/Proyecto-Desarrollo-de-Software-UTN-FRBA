@@ -4,7 +4,6 @@ import bodyParser from "body-parser";
 import { createNotificacionesRouter } from "../../routes/notificacionesRoutes.js";
 import { NotificacionesController } from "../../controllers/notificacionesController.js";
 import { NotificacionesService } from "../../services/notificacionesService.js";
-import { createUsuarioRouter } from "../../routes/usuarioRoutes.js";
 import { PedidoController } from "../../controllers/pedidoController.js";
 import { PedidoService } from "../../services/pedidoService.js";
 import { ProductoService } from "../../services/productoService.js";
@@ -18,12 +17,16 @@ import { TestDataFactory } from "../fixtures/testData.js";
 import { Usuario } from "../../models/Usuario.js";
 import mongoose from "mongoose";
 import { describe, test, expect, beforeEach, beforeAll, afterAll, afterEach } from "@jest/globals";
+import { generateMockToken, mockAuthMiddleware } from "../utils/authHelper.js";
 
 /**
  * Notificaciones API Integration Tests con BD en memoria
  */
 let app;
 let usuario;
+let usuarioToken;
+let notificacionesRepository;
+let usuarioRepository;
 
 // Conectar a BD en memoria antes de todas las pruebas
 beforeAll(async () => {
@@ -41,13 +44,50 @@ afterAll(async () => {
   await closeDatabase();
 });
 
+// Mock de UsuarioRepository para tests - usa Mongoose en lugar de Clerk
+class MockUsuarioRepository {
+  async findById(id) {
+    return await Usuario.findById(id);
+  }
+
+  async findByEmail(email) {
+    return await Usuario.findOne({ email });
+  }
+
+  async save(usuario) {
+    const actualizado = await Usuario.findByIdAndUpdate(usuario._id, usuario, { new: true });
+    return actualizado;
+  }
+
+  async create(usuarioData) {
+    return await Usuario.create(usuarioData);
+  }
+
+  async findAll(page = 1, limit = 10) {
+    const skip = (page - 1) * limit;
+    const usuarios = await Usuario.find().skip(skip).limit(limit);
+    const total = await Usuario.countDocuments();
+    return {
+      pagina: page,
+      perPage: limit,
+      totalColecciones: total,
+      totalPaginas: Math.ceil(total / limit),
+      data: usuarios
+    };
+  }
+
+  async delete(id) {
+    return await Usuario.findByIdAndRemove(id);
+  }
+}
+
 function setupExpress() {
   app = express();
   app.use(bodyParser.json());
 
-  // Crear instancias de repositorios
-  const notificacionesRepository = new NotificacionesRepository();
-  const usuarioRepository = new UsuarioRepository();
+  // Crear instancias de repositorios GLOBALES para compartirlas con los tests
+  notificacionesRepository = new NotificacionesRepository();
+  usuarioRepository = new MockUsuarioRepository();  // Usar mock que no necesita Clerk
   const pedidoRepository = new PedidoRepository();
   const productoRepository = new ProductoRepository();
 
@@ -56,7 +96,7 @@ function setupExpress() {
     notificacionesRepository,
     usuarioRepository
   );
-  const productoService = new ProductoService(productoRepository);
+  const productoService = new ProductoService(productoRepository, usuarioRepository);
   const pedidoService = new PedidoService(
     pedidoRepository,
     productoService,
@@ -69,9 +109,27 @@ function setupExpress() {
   const productoController = new ProductoController(productoService);
   const pedidoController = new PedidoController(pedidoService);
 
+  // Router para usuarios (rutas autenticadas)
+  const usuarioRouter = express.Router();
+  usuarioRouter.get("/pedidos", mockAuthMiddleware(), (req, res) => 
+    pedidoController.historialPedidosUsuario(req, res)
+  );
+  usuarioRouter.get("/notificaciones/no-leidas", mockAuthMiddleware(), (req, res) => 
+    notificacionesController.obtenerNotificacionesNoLeidas(req, res)
+  );
+  usuarioRouter.get("/notificaciones/leidas", mockAuthMiddleware(), (req, res) => 
+    notificacionesController.obtenerNotificacionesLeidas(req, res)
+  );
+
+  // Router de notificaciones con middleware mock
+  const notificacionesRouter = express.Router();
+  notificacionesRouter.patch("/:id/read", mockAuthMiddleware(), (req, res) => 
+    notificacionesController.marcarComoLeida(req, res)
+  );
+
   // Montar routers
-  app.use("/usuarios", createUsuarioRouter(productoController, pedidoController, notificacionesController));
-  app.use("/notificaciones", createNotificacionesRouter(notificacionesController));
+  app.use("/usuarios", usuarioRouter);
+  app.use("/notificaciones", notificacionesRouter);
 }
 
 // Crear datos de prueba antes de cada test
@@ -80,13 +138,24 @@ beforeEach(async () => {
     nombre: "Juan Usuario"
   });
   usuario = await Usuario.create(usuarioData);
+  usuarioToken = generateMockToken(usuario._id.toString(), 'comprador');
 });
 
 describe("API Notificaciones - Integration Tests (BD Real)", () => {
-  describe("GET /usuarios/:usuarioId/notificaciones/unread", () => {
-    test("Obtener notificaciones no leídas con éxito", async () => {
-      // Crear notificaciones no leídas
-      const notificacionesRepository = new NotificacionesRepository();
+  describe("GET /usuarios/notificaciones/no-leidas", () => {
+    test("Retorna lista vacía cuando no hay notificaciones no leídas", async () => {
+      const res = await request(app)
+        .get("/usuarios/notificaciones/no-leidas")
+        .set('Authorization', `Bearer ${usuarioToken}`)
+        .expect(200);
+
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBe(0);
+    });
+
+    test("Retorna notificaciones no leídas del usuario", async () => {
+      // Crear notificaciones no leídas usando el repositorio global
       const notif1 = TestDataFactory.createNotificacion(usuario, {
         leida: false,
         titulo: "Pedido confirmado"
@@ -100,37 +169,31 @@ describe("API Notificaciones - Integration Tests (BD Real)", () => {
       await notificacionesRepository.create(notif2);
 
       const res = await request(app)
-        .get(`/usuarios/${usuario._id.toString()}/notificaciones/unread`)
+        .get("/usuarios/notificaciones/no-leidas")
+        .set('Authorization', `Bearer ${usuarioToken}`)
         .expect(200);
 
-
+      expect(res.body).toHaveProperty('data');
       expect(Array.isArray(res.body.data)).toBe(true);
       expect(res.body.data.length).toBe(2);
-    });
-
-    test("Error con ID de usuario inválido", async () => {
-      const res = await request(app)
-        .get("/usuarios/invalid-id/notificaciones/unread")
-        .expect(400);
-
-      expect(res.body).toHaveProperty("error");
-    });
-
-    test("Error cuando el usuario no existe", async () => {
-      const usuarioIdInexistente = new mongoose.Types.ObjectId().toString();
-
-      const res = await request(app)
-        .get(`/usuarios/${usuarioIdInexistente}/notificaciones/unread`)
-        .expect(404);
-
-      expect(res.body).toHaveProperty("error");
+      expect(res.body.data[0].leida).toBe(false);
     });
   });
 
-  describe("GET /usuarios/:usuarioId/notificaciones/read", () => {
-    test("Obtener notificaciones leídas con éxito", async () => {
-      // Crear notificaciones leídas
-      const notificacionesRepository = new NotificacionesRepository();
+  describe("GET /usuarios/notificaciones/leidas", () => {
+    test("Retorna lista vacía cuando no hay notificaciones leídas", async () => {
+      const res = await request(app)
+        .get("/usuarios/notificaciones/leidas")
+        .set('Authorization', `Bearer ${usuarioToken}`)
+        .expect(200);
+
+      expect(res.body).toHaveProperty('data');
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBe(0);
+    });
+
+    test("Retorna notificaciones leídas del usuario", async () => {
+      // Crear notificaciones leídas usando el repositorio global
       const notif1 = TestDataFactory.createNotificacion(usuario, {
         leida: true,
         titulo: "Pedido entregado"
@@ -139,29 +202,19 @@ describe("API Notificaciones - Integration Tests (BD Real)", () => {
         leida: true,
         titulo: "Pago confirmado"
       });
-      const notif3 = TestDataFactory.createNotificacion(usuario, {
-        leida: false,
-        titulo: "Pago asegurado"
-      });
 
       await notificacionesRepository.create(notif1);
       await notificacionesRepository.create(notif2);
 
       const res = await request(app)
-        .get(`/usuarios/${usuario._id.toString()}/notificaciones/read`)
+        .get("/usuarios/notificaciones/leidas")
+        .set('Authorization', `Bearer ${usuarioToken}`)
         .expect(200);
 
-
+      expect(res.body).toHaveProperty('data');
       expect(Array.isArray(res.body.data)).toBe(true);
       expect(res.body.data.length).toBe(2);
-    });
-
-    test("Error con ID de usuario inválido", async () => {
-      const res = await request(app)
-        .get("/usuarios/invalid-id/notificaciones/read")
-        .expect(400);
-
-      expect(res.body).toHaveProperty("error");
+      expect(res.body.data[0].leida).toBe(true);
     });
   });
 
@@ -176,6 +229,7 @@ describe("API Notificaciones - Integration Tests (BD Real)", () => {
 
       const res = await request(app)
         .patch(`/notificaciones/${notifCreada._id.toString()}/read`)
+        .set('Authorization', `Bearer ${usuarioToken}`)
         .expect(200);
 
 
@@ -185,6 +239,7 @@ describe("API Notificaciones - Integration Tests (BD Real)", () => {
     test("Error con ID de notificación inválido", async () => {
       const res = await request(app)
         .patch("/notificaciones/invalid-id/read")
+        .set('Authorization', `Bearer ${usuarioToken}`)
         .expect(400);
 
       expect(res.body).toHaveProperty("error");
@@ -195,6 +250,7 @@ describe("API Notificaciones - Integration Tests (BD Real)", () => {
 
       const res = await request(app)
         .patch(`/notificaciones/${notifIdInexistente}/read`)
+        .set('Authorization', `Bearer ${usuarioToken}`)
         .expect(404);
 
       expect(res.body).toHaveProperty("error");
@@ -210,6 +266,7 @@ describe("API Notificaciones - Integration Tests (BD Real)", () => {
 
       const res = await request(app)
         .patch(`/notificaciones/${notifCreada._id.toString()}/read`)
+        .set('Authorization', `Bearer ${usuarioToken}`)
         .expect(409);
 
       expect(res.body).toHaveProperty("error");
