@@ -47,8 +47,9 @@ export class PedidoController {
   historialPedidosUsuario = async (req, res) => {
     try {
       const usuarioId = req.userId;
-      const pedidos = await this.pedidoService.obtenerPedidosDeUsuario(usuarioId);
+      const orden = req.query.orden === "asc" ? "asc" : "desc";
 
+      const pedidos = await this.pedidoService.obtenerPedidosDeUsuario(usuarioId, orden);
       res.json(pedidos);
 
     } catch (err) {
@@ -61,7 +62,9 @@ export class PedidoController {
   historialPedidosVendedor = async (req, res) => {
     try {
       const vendedorId = req.userId;
-      const pedidos = await this.pedidoService.obtenerPedidosDeVendedor(vendedorId);
+      const orden = req.query.orden === "asc" ? "asc" : "desc";
+
+      const pedidos = await this.pedidoService.obtenerPedidosDeVendedor(vendedorId, orden);
 
       res.json(pedidos);
 

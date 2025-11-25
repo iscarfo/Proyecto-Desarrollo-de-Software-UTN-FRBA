@@ -17,6 +17,7 @@ interface OrderRowProps {
   orderId: string;
   status: OrderStatus;
   deliveryAddress: string;
+  fechaCreacion: string; 
   products: Product[];
   userType?: 'buyer' | 'seller';
 
@@ -34,6 +35,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
   orderId,
   status,
   deliveryAddress,
+  fechaCreacion,
   products,
   userType = 'buyer', // Por defecto es 'buyer' si no se especifica
   onCancel,
@@ -201,7 +203,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
               fontWeight: 500,
             }}
           >
-            Pedido nro: {orderId} • {deliveryAddress}
+            Pedido nro: {orderId} • {deliveryAddress} • {new Date(fechaCreacion).toLocaleDateString('es-AR')}
           </Typography>
         </Box>
 

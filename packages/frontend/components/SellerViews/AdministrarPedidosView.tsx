@@ -163,6 +163,7 @@ export default function AdministrarPedidosView() {
             key={order._id}
             orderId={order._id}
             status={order.estado}
+            fechaCreacion={order.fechaCreacion}
             deliveryAddress={`${order.direccionEntrega.calle} ${order.direccionEntrega.altura}, ${order.direccionEntrega.ciudad}`}
             products={(order.items || []).map((item: any) => ({
               name: item.productoId?.titulo || 'Producto',
