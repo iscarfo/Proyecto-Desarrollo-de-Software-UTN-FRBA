@@ -91,7 +91,7 @@ export class PedidoService {
   async listarPedidos() {
     return await PedidoModel.find().populate({
       path: "items.productoId",
-      select: "titulo fotos" 
+      select: "titulo fotos"
     });
   }
 
@@ -146,14 +146,12 @@ export class PedidoService {
   }
 
   // Obtener pedidos de un usuario
-  async obtenerPedidosDeUsuario(usuarioId) {
-    const pedidos = await this.pedidoRepository.findByCompradorId(usuarioId);
-    return pedidos;
+  async obtenerPedidosDeUsuario(usuarioId, orden = "desc") {
+    return await this.pedidoRepository.findByCompradorId(usuarioId, orden);
   }
 
-  async obtenerPedidosDeVendedor(vendedorId) {
-    const pedidos = await this.pedidoRepository.findByVendedor(vendedorId);
-    return pedidos;
+  async obtenerPedidosDeVendedor(vendedorId, orden = "desc") {
+    return await this.pedidoRepository.findByVendedor(vendedorId, orden);
   }
 
   // Marcar pedido como enviado
@@ -202,7 +200,7 @@ export class PedidoService {
     const itemsInstancia = await Promise.all(
       pedidoDb.items.map(async (item) => {
         const producto = await this.productoService.buscarProductoPorId(item.productoId);
-        
+
         // Si encontramos el producto, obtenemos su vendedorId
         const vendedorId = producto ? (producto.vendedor?._id || producto.vendedor) : null;
 

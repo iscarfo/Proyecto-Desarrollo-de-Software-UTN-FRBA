@@ -6,6 +6,9 @@ export class FactoryNotificacion {
   static crearNotificacion(pedido, estado) {
     try {
       switch (estado) {
+        case EstadoPedido.PENDIENTE:
+          return this.crearNotificacionPendiente(pedido);
+          break;
         case EstadoPedido.CONFIRMADO:
           return this.crearNotificacionConfirmado(pedido);
           break;
@@ -21,6 +24,29 @@ export class FactoryNotificacion {
     } catch (error) {
       throw new Error(`Error al crear notificación: ${error.message}`);
     }
+  }
+
+  static crearNotificacionPendiente(pedido) {
+    const notificaciones = [];
+
+    //MENSAJE A COMPRADOR
+    notificaciones.push(
+      new Notificacion(
+        pedido.compradorId, //destinatarioId
+        `Se ha realizado la compra correctamente. Tu pedido está pendiente de confirmación. El vendedor lo revisará.`
+      )
+    );
+
+    //MENSAJE A VENDEDORES
+    for (const vendedorId of pedido.obtenerVendedoresIds()) {
+      notificaciones.push(
+        new Notificacion(
+          vendedorId,
+          `Se ha creado un nuevo pedido. Recuerda confirmarlo.`
+        )
+      );
+    }
+    return notificaciones;
   }
 
   static crearNotificacionConfirmado(pedido) {
@@ -39,7 +65,7 @@ export class FactoryNotificacion {
       notificaciones.push(
         new Notificacion(
           vendedorId,
-          `Se ha confirmado un pedido con los productos: Recuerda preparar el envío.`
+          `El pedido ha sido confirmado. Recuerda preparar el envío.`
         )
       );
     }
@@ -73,7 +99,7 @@ export class FactoryNotificacion {
     notificaciones.push(
       new Notificacion(
         pedido.compradorId,
-        `Tu pedido ha sido enviado.`
+        `¡Gracias por tu compra! Tu pedido está en camino.`
       )
     );
 
@@ -81,7 +107,7 @@ export class FactoryNotificacion {
       notificaciones.push(
         new Notificacion(
           vendedorId,
-          `El pedido ha sido marcado como enviado.`
+           `El pedido ha sido marcado como enviado.`
         )
       );
     }

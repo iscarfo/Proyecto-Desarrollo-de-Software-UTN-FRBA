@@ -106,20 +106,21 @@ export class PedidoRepository {
     }
   }
 
-  async findByCompradorId(usuarioId) {
+  async findByCompradorId(usuarioId, orden = "desc") {
     try {
       return await PedidoModel.find({ compradorId: usuarioId })
         .populate({
           path: "items.productoId",
           select: "titulo fotos"
         })
+        .sort({ fechaCreacion: orden === "asc" ? 1 : -1 })
         .lean();
     } catch (error) {
       throw new Error(`Error al buscar pedidos del usuario: ${error.message}`);
     }
   }
 
-  async findByVendedor(vendedorId) {
+  async findByVendedor(vendedorId, orden = "desc") {
     try {
       const pedidos = await PedidoModel.aggregate([
         {
@@ -171,6 +172,11 @@ export class PedidoRepository {
         {
           $match: {
             "items.0": { $exists: true }
+          }
+        },
+        {
+          $sort: {
+            fechaCreacion: orden === "asc" ? 1 : -1
           }
         },
         {
