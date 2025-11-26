@@ -132,7 +132,7 @@ function ProductosPageContent() {
       />
 
       <main role="main" aria-label="Sección de productos" className="flex-grow py-12">
-        <Container maxWidth="lg" className="flex gap-8">
+        <Container maxWidth="lg" className="flex gap-8 items-stretch">
 
           {/* FILTROS */}
           <aside className="w-60 hidden md:block bg-white p-4 rounded-lg shadow">
@@ -222,18 +222,23 @@ function ProductosPageContent() {
                 ))}
               </div>
 
-                {/* PAGINACIÓN */}
-                <Box sx={{ marginTop: 4 }} aria-label="Paginación de productos">
-                  <Pagination
-                    currentPage={currentPage}
-                    totalPages={totalPages}
-                    onPageChange={handlePageChange}
-                  />
-                </Box>
+                
               </>
             )}
           </Box>
         </Container>
+
+          {!loading && !error && products.length > 0 && (
+            <Container maxWidth="lg">
+              <Box sx={{ marginTop: 4 }} aria-label="Paginación de productos">
+                <Pagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={handlePageChange}
+                />
+              </Box>
+            </Container>
+          )}
       </main>
 
       <Footer />
