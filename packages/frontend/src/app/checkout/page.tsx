@@ -7,6 +7,7 @@ import { useCart } from "../../store/CartContext";
 import { useAuth, useUser } from "@clerk/nextjs";
 import axios from "axios";
 import { useState, useEffect } from "react";
+import { formatNumber, formatPrice } from "../../utils/formatPrice";
 
 const initialValues = {
   calle: "",
@@ -39,8 +40,15 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [error, setError] = useState("");
 
-  const subtotal = cart.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
-  const total = subtotal;
+  // Agrupar subtotales por moneda
+  const subtotalesPorMoneda = cart.reduce((acc, p) => {
+    const moneda = p.moneda;
+    if (!acc[moneda]) {
+      acc[moneda] = 0;
+    }
+    acc[moneda] += p.precio * p.cantidad;
+    return acc;
+  }, {} as Record<string, number>);
 
   const {
     values,
@@ -167,14 +175,20 @@ export default function CheckoutPage() {
                 {item.titulo} × {item.cantidad}
               </span>
               <span className="font-medium">
-                ${(item.precio * item.cantidad).toLocaleString("es-AR")}
+                {formatPrice(item.precio * item.cantidad, item.moneda)}
               </span>
             </div>
           ))}
 
-          <div className="flex justify-between mt-4 text-lg font-semibold text-gray-900">
-            <span>Total:</span>
-            <span>${total.toLocaleString("es-AR")}</span>
+          <Divider sx={{ my: 2 }} />
+
+          <div className="mt-4">
+            {Object.entries(subtotalesPorMoneda).map(([moneda, total]) => (
+              <div key={moneda} className="flex justify-between text-lg font-semibold text-gray-900 mb-2">
+                <span>Total:</span>
+                <span>{formatPrice(total, moneda)}</span>
+              </div>
+            ))}
           </div>
         </Card>
 

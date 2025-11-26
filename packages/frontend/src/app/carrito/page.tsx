@@ -21,6 +21,7 @@ import Footer from "@/components/Footer/Footer";
 import { Add, Remove, Delete } from "@mui/icons-material";
 import { useCart } from "../../store/CartContext";
 import { useRouter } from "next/navigation";
+import { formatPrice, formatNumber } from "../../utils/formatPrice";
 
 export default function CarritoPage() {
   const router = useRouter();
@@ -36,21 +37,16 @@ export default function CarritoPage() {
   };
 
   const totalProductos = cart.reduce((acc, p) => acc + p.cantidad, 0);
-  const subtotal = cart.reduce((acc, p) => acc + p.precio * p.cantidad, 0);
-  const total = subtotal;
 
-  const formatCurrency = (moneda: string) => {
-    switch (moneda) {
-      case "PESO_ARG":
-        return "ARS";
-      case "DOLAR_USA":
-        return "USD";
-      case "REAL":
-        return "BRL";
-      default:
-        return "";
+  // Agrupar subtotales por moneda
+  const subtotalesPorMoneda = cart.reduce((acc, p) => {
+    const moneda = p.moneda;
+    if (!acc[moneda]) {
+      acc[moneda] = 0;
     }
-  };
+    acc[moneda] += p.precio * p.cantidad;
+    return acc;
+  }, {} as Record<string, number>);
 
   
   const handleComprar = () => {
@@ -121,8 +117,7 @@ export default function CarritoPage() {
                     </Typography>
 
                     <Typography sx={{ mt: 1, fontWeight: 500 }}>
-                      ${product.precio.toLocaleString("es-AR")}{" "}
-                      {formatCurrency(product.moneda)}
+                      {formatPrice(product.precio, product.moneda)}
                     </Typography>
                   </Box>
 
@@ -151,8 +146,7 @@ export default function CarritoPage() {
                       fontWeight: 600,
                     }}
                   >
-                    ${(product.precio * product.cantidad).toLocaleString("es-AR")}{" "}
-                    {formatCurrency(product.moneda)}
+                    {formatPrice(product.precio * product.cantidad, product.moneda)}
                   </Typography>
 
                   <IconButton
@@ -168,14 +162,23 @@ export default function CarritoPage() {
 
               <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 4 }}>
                 <Box sx={{ minWidth: 300 }}>
-                  <Typography sx={{ mb: 1 }}>
-                    Subtotal ({totalProductos} productos): $
-                    {subtotal.toLocaleString("es-AR")}
+                  <Typography sx={{ mb: 2, fontWeight: 600 }}>
+                    Resumen ({totalProductos} productos)
                   </Typography>
 
-                  <Typography sx={{ fontWeight: 700, fontSize: 18, mt: 1 }}>
-                    Total: ${total.toLocaleString("es-AR")}
-                  </Typography>
+                  {Object.entries(subtotalesPorMoneda).map(([moneda, subtotal]) => (
+                    <Typography key={moneda} sx={{ mb: 1 }}>
+                      Subtotal: {formatPrice(subtotal, moneda)}
+                    </Typography>
+                  ))}
+
+                  <Divider sx={{ my: 2 }} />
+
+                  {Object.entries(subtotalesPorMoneda).map(([moneda, total]) => (
+                    <Typography key={moneda} sx={{ fontWeight: 700, fontSize: 18, mb: 1 }}>
+                      Total: {formatPrice(total, moneda)}
+                    </Typography>
+                  ))}
 
                   <Button
                     variant="contained"
@@ -242,9 +245,13 @@ export default function CarritoPage() {
 
           <Divider sx={{ my: 2 }} />
 
-          <Typography sx={{ fontSize: 16, fontWeight: 600, textAlign: "right" }}>
-            Total: ${total.toLocaleString("es-AR")}
-          </Typography>
+          <Box sx={{ textAlign: "right" }}>
+            {Object.entries(subtotalesPorMoneda).map(([moneda, total]) => (
+              <Typography key={moneda} sx={{ fontSize: 16, fontWeight: 600, mb: 1 }}>
+                Total: {formatPrice(total, moneda)}
+              </Typography>
+            ))}
+          </Box>
         </DialogContent>
 
         <DialogActions sx={{ justifyContent: "space-between", px: 3 }}>

@@ -7,11 +7,15 @@ import {
   CardMedia,
   Typography,
   Box,
-  IconButton
+  IconButton,
+  Snackbar,
+  Alert
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
+import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useCart } from "../../src/store/CartContext";
+import { formatPrice } from "../../src/utils/formatPrice";
 
 export interface Product {
   _id: string;
@@ -42,6 +46,8 @@ const ProductCard: React.FC<Props> = ({
 
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
   const increase = () => {
     if (quantity < product.stock) setQuantity((q) => q + 1);
@@ -51,37 +57,35 @@ const ProductCard: React.FC<Props> = ({
     if (quantity > 1) setQuantity((q) => q - 1);
   };
 
-  const formatPrice = (precio: number, moneda: string) => {
-    switch (moneda) {
-      case "PESO_ARG":
-        return `$${precio} ARS`;
-      case "DOLAR_USA":
-        return `US$${precio}`;
-      case "REAL":
-        return `R$${precio}`;
-      default:
-        return `$${precio}`;
-    }
+  const handleAddToCart = () => {
+    setIsAdding(true);
+    addToCart(product, quantity);
+    setShowSuccess(true);
+
+    setTimeout(() => {
+      setIsAdding(false);
+    }, 600);
   };
 
   return (
-    <Card
-      sx={{
-        width: 260,
-        borderRadius: 3,
-        p: 2,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
-        backgroundColor: "#fff",
-        transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
-        ":hover": {
-          transform: "scale(1.03)",
-          boxShadow: "0 6px 16px rgba(0,0,0,0.18)",
-        },
-      }}
-    >
+    <>
+      <Card
+        sx={{
+          width: 260,
+          borderRadius: 3,
+          p: 2,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          boxShadow: "0 3px 8px rgba(0,0,0,0.1)",
+          backgroundColor: "#fff",
+          transition: "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+          ":hover": {
+            transform: "scale(1.03)",
+            boxShadow: "0 6px 16px rgba(0,0,0,0.18)",
+          },
+        }}
+      >
       <CardMedia
         component="img"
         image={product.fotos?.[0] || "/placeholder.jpg"}
@@ -143,15 +147,19 @@ const ProductCard: React.FC<Props> = ({
 
           <Button
             variant="contained"
+            startIcon={<ShoppingCartIcon />}
             sx={{
               mt: 2,
-              backgroundColor: "#ff9800",
+              backgroundColor: isAdding ? "#4caf50" : "#ff9800",
               fontWeight: 600,
-              ":hover": { backgroundColor: "#e68900" },
+              transition: "all 0.3s ease-in-out",
+              transform: isAdding ? "scale(0.95)" : "scale(1)",
+              ":hover": { backgroundColor: isAdding ? "#4caf50" : "#e68900" },
             }}
-            onClick={() => addToCart(product, quantity)}
+            onClick={handleAddToCart}
+            disabled={isAdding}
           >
-            Agregar al carrito
+            {isAdding ? "Agregado!" : "Agregar al carrito"}
           </Button>
         </>
       )}
@@ -176,7 +184,24 @@ const ProductCard: React.FC<Props> = ({
           </Button>
         </Box>
       )}
-    </Card>
+      </Card>
+
+      <Snackbar
+        open={showSuccess}
+        autoHideDuration={2000}
+        onClose={() => setShowSuccess(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setShowSuccess(false)}
+          severity="success"
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          Producto agregado al carrito
+        </Alert>
+      </Snackbar>
+    </>
   );
 };
 
