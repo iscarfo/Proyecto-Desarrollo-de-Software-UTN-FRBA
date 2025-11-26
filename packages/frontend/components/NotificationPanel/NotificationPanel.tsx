@@ -21,66 +21,61 @@ export default function NotificationPanel({ anchorEl, onClose, onUnreadCountChan
   const [notifications, setNotifications] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [totalPages, setTotalPages] = useState(1);
+  const [unreadCount, setUnreadCount] = useState(0);
 
-  // Fetch notificaciones no leídas del backend
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      try {
-        setLoading(true);
-        const token = await getToken();
+  // Fetch notificaciones paginadas (cuando se abre el panel)
+  const fetchNotifications = async () => {
+    try {
+      setLoading(true);
+      const token = await getToken();
 
-        if (!token) {
-          console.error('No se pudo obtener el token de autenticación');
-          return;
-        }
-
-        const url = `${process.env.NEXT_PUBLIC_API_URL}/usuarios/notificaciones/no-leidas`;
-        console.log('Fetching notifications from:', url);
-        console.log('With params:', { page: currentPage, limit: pageSize });
-
-        const response = await axios.get(url, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          params: {
-            page: currentPage,
-            limit: pageSize,
-          },
-        });
-
-        console.log('Response:', response.data);
-        setNotifications(response.data.data || []);
-        setTotalPages(response.data.totalPaginas || 1);
-      } catch (error) {
-        console.error('Error al obtener notificaciones:', error);
-        if (axios.isAxiosError(error)) {
-          console.error('Response status:', error.response?.status);
-          console.error('Response data:', error.response?.data);
-          console.error('Request URL:', error.config?.url);
-
-          // Si el usuario no ha completado el registro, redirigir
-          if (error.response?.data?.requiresRegistration) {
-            window.location.href = '/completar-registro';
-          }
-        }
-      } finally {
-        setLoading(false);
+      if (!token) {
+        console.error('No se pudo obtener el token de autenticación');
+        return;
       }
-    };
 
+      const url = `${process.env.NEXT_PUBLIC_API_URL}/usuarios/notificaciones/no-leidas`;
+      console.log('Fetching notifications from:', url);
+      console.log('With params:', { page: currentPage, limit: pageSize });
+
+      const response = await axios.get(url, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        params: {
+          page: currentPage,
+          limit: pageSize,
+        },
+      });
+
+      console.log('Response:', response.data);
+      setNotifications(response.data.data || []);
+      setTotalPages(response.data.totalPaginas || 1);
+      const total = response.data.totalColecciones || response.data.total || 0;
+      setUnreadCount(total);
+    } catch (error) {
+      console.error('Error al obtener notificaciones:', error);
+      if (axios.isAxiosError(error)) {
+        console.error('Response status:', error.response?.status);
+        console.error('Response data:', error.response?.data);
+        console.error('Request URL:', error.config?.url);
+
+        // Si el usuario no ha completado el registro, redirigir
+        if (error.response?.data?.requiresRegistration) {
+          window.location.href = '/completar-registro';
+        }
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch notificaciones cuando se abre el panel
+  useEffect(() => {
     if (open) {
       fetchNotifications();
     }
-  }, [open, currentPage, getToken]);
-
-  const unreadCount = notifications.length;
-
-  // Avisar a la Navbar cuando cambia el conteo
-  useEffect(() => {
-    if (onUnreadCountChange) {
-      onUnreadCountChange(unreadCount);
-    }
-  }, [unreadCount, onUnreadCountChange]);
+  }, [open, currentPage]);
 
   const handlePageChange = (page: number) => setCurrentPage(page);
 
@@ -107,6 +102,13 @@ export default function NotificationPanel({ anchorEl, onClose, onUnreadCountChan
       setNotifications(prev =>
         prev.filter(n => n._id !== id)
       );
+
+      // Actualizar el conteo en el navbar
+      const newCount = Math.max(0, unreadCount - 1);
+      setUnreadCount(newCount);
+      if (onUnreadCountChange) {
+        onUnreadCountChange(newCount);
+      }
     } catch (error) {
       console.error('Error al marcar notificación como leída:', error);
     }

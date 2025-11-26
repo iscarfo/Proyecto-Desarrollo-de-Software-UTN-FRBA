@@ -114,6 +114,16 @@ function ProductosPageContent() {
     fetchProducts(1);
   };
 
+  const handleClearFilters = () => {
+    setPrecioMin("");
+    setPrecioMax("");
+    setCategoria("");
+    setSort("");
+    setSearchTerm("");
+    setCurrentPage(1);
+    fetchProducts(1, "");
+  };
+
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     fetchProducts(page);
@@ -200,6 +210,14 @@ function ProductosPageContent() {
               onClick={handleApplyFilters}
             >
               Aplicar filtros
+            </Button>
+            <Button
+              variant="outlined"
+              fullWidth
+              sx={{ mt: 2 }}
+              onClick={handleClearFilters}
+            >
+              Limpiar filtros
             </Button>
           </aside>
 

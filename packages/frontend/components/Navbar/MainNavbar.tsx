@@ -24,8 +24,9 @@ import {
 import { FiShoppingCart, FiBell, FiSearch, FiMenu, FiUser } from 'react-icons/fi';
 import NextLink from 'next/link';
 import UsuarioMenu from '@/components/UsuarioMenu/usuarioMenu';
-import { useUser } from '@clerk/nextjs';
+import { useUser, useAuth } from '@clerk/nextjs';
 import { Skeleton } from '@mui/material';
+import axios from 'axios';
 
 export interface NavLink {
   name: string;
@@ -55,6 +56,7 @@ const MainNavbar: React.FC<MainNavbarProps> = ({
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [unreadCount, setUnreadCount] = useState(0);
   const { user, isLoaded } = useUser();
+  const { getToken } = useAuth();
   const [links, setLinks] = useState<NavLink[]>([
     { name: 'MIS PEDIDOS', link: '/mis-pedidos' }
   ]);
@@ -81,6 +83,61 @@ const MainNavbar: React.FC<MainNavbarProps> = ({
     }
   }, [linksProp, user, isLoaded]);
 
+  // Polling de notificaciones no leídas
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      try {
+        const token = await getToken();
+        if (!token) {
+          console.log('[Navbar] No hay token disponible');
+          return;
+        }
+
+        console.log('[Navbar] Fetching unread count...');
+        const response = await axios.get(
+          `${process.env.NEXT_PUBLIC_API_URL}/usuarios/notificaciones/no-leidas`,
+          {
+            headers: { Authorization: `Bearer ${token}` },
+            params: { page: 1, limit: 1 },
+          }
+        );
+
+        console.log('[Navbar] Response data:', response.data);
+        const total = response.data.totalColecciones || response.data.total || 0;
+        console.log('[Navbar] Setting unread count to:', total);
+        setUnreadCount(total);
+      } catch (error) {
+        console.error('[Navbar] Error al obtener conteo de notificaciones:', error);
+        if (axios.isAxiosError(error)) {
+          console.error('[Navbar] Error details:', {
+            status: error.response?.status,
+            data: error.response?.data,
+            url: error.config?.url
+          });
+        }
+      }
+    };
+
+    // Fetch inicial
+    if (isLoaded && user) {
+      console.log('[Navbar] User is loaded, starting notification polling');
+      fetchUnreadCount();
+
+      // Polling cada 30 segundos
+      const interval = setInterval(() => {
+        console.log('[Navbar] Polling notificaciones...');
+        fetchUnreadCount();
+      }, 30000);
+
+      return () => {
+        console.log('[Navbar] Cleaning up notification polling');
+        clearInterval(interval);
+      };
+    } else {
+      console.log('[Navbar] User not loaded yet:', { isLoaded, hasUser: !!user });
+    }
+  }, [isLoaded, user, getToken]);
+
   const handleNotifClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -94,6 +151,11 @@ const MainNavbar: React.FC<MainNavbarProps> = ({
   };
 
   const { totalItems } = useCart();
+
+  // Debug: ver el valor de unreadCount
+  useEffect(() => {
+    console.log('[Navbar] unreadCount changed to:', unreadCount);
+  }, [unreadCount]);
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
