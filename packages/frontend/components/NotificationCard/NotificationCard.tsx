@@ -53,8 +53,8 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
                     sx={{
                         width: 12,
                         height: 12,
-                        backgroundColor: '#1E1E1E',
-                        borderRadius: '50%',
+                        backgroundColor: '#fca311',
+                        borderRadius: '40%',
                         flexShrink: 0
                     }}
                 />
@@ -69,7 +69,7 @@ const NotificationCard: React.FC<NotificationCardProps> = ({
                         color: leida ? '#8B8B8B' : '#1E1E1E'
                     }}
                 >
-                    Notificación del vendedor
+                    Nueva notificación
                 </Typography>
                 <Typography
                     sx={{
