@@ -3,6 +3,7 @@ import React from 'react';
 import { Box, Divider, IconButton, Typography } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
+import { formatPrice, formatNumber } from '../../src/utils/formatPrice';
 
 export type ProductStatus = 'Disponible' | 'Agotado';
 
@@ -117,10 +118,7 @@ const CartItem: React.FC<CartItemProps> = ({
               x{quantity} un.
             </Typography>
             <Typography sx={{ fontWeight: 500, fontSize: '1.2rem' }}>
-              {product.moneda}{' '}
-              <span style={{ fontWeight: 500, fontSize: '1.2rem' }}>
-                {product.precio.toLocaleString()}
-              </span>
+              {formatPrice(product.precio, product.moneda)}
             </Typography>
           </Box>
         </Box>
@@ -131,7 +129,7 @@ const CartItem: React.FC<CartItemProps> = ({
       {/* Subtotal */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <Typography sx={{ fontWeight: 600, fontSize: '1.4rem' }}>
-          Subtotal: ARS {subtotal.toLocaleString()}
+          Subtotal: ${formatNumber(subtotal)}
         </Typography>
       </Box>
     </Box>

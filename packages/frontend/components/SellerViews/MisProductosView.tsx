@@ -201,6 +201,16 @@ export default function MisProductosView() {
     }
   };
 
+  const isFormularioValido = () => {
+    return (
+      nuevoProducto.titulo.trim() !== "" &&
+      nuevoProducto.descripcion.trim() !== "" &&
+      nuevoProducto.precio > 0 &&
+      nuevoProducto.stock >= 0 &&
+      nuevoProducto.categorias.length > 0
+    );
+  };
+
   const handleGuardarProducto = async () => {
     try {
       const token = await getToken();
@@ -388,7 +398,11 @@ export default function MisProductosView() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDialog(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={handleGuardarProducto}>
+          <Button
+            variant="contained"
+            onClick={handleGuardarProducto}
+            disabled={!isFormularioValido()}
+          >
             Guardar
           </Button>
         </DialogActions>
