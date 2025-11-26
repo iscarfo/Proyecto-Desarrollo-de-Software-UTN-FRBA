@@ -20,22 +20,57 @@ const Footer: React.FC = () => {
       }}
     >
       <Container maxWidth="lg">
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'flex-start', 
-          marginBottom: 6, 
-          flexWrap: 'wrap', 
-          gap: 4 
-        }}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'flex-start',
+            marginBottom: 6,
+            flexWrap: 'wrap',
+            gap: 4,
+            
+            /* MOBILE */
+            '@media (max-width:600px)': {
+              flexDirection: 'column',
+              justifyContent: 'center',
+              alignItems: 'center',
+              textAlign: 'center',
+            }
+          }}
+        >
+          {/* ---- LOGO + REDES ---- */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+
+              /* MOBILE */
+              '@media (max-width:600px)': {
+                alignItems: 'center',
+              }
+            }}
+          >
             <Typography variant="h4" sx={{ fontWeight: 'bold', marginBottom: 2 }}>
               Tienda Sol
             </Typography>
+
             <Typography variant="body1" sx={{ marginBottom: 2 }}>
               Redes sociales
             </Typography>
-            <Box sx={{ display: 'flex', gap: 1 }}>
+
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 1,
+
+                /* MOBILE */
+                '@media (max-width:600px)': {
+                  justifyContent: 'center',
+                }
+              }}
+            >
+              {/* Todas las redes quedan iguales — no se toca nada */}
               <a
                 href="https://facebook.com"
                 target="_blank"
@@ -53,11 +88,12 @@ const Footer: React.FC = () => {
                   transition: 'background-color 0.2s',
                   textDecoration: 'none',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14213d'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'black'}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#14213d')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'black')}
               >
                 <FiFacebook size={20} style={{ color: 'white' }} />
               </a>
+
               <a
                 href="https://tiktok.com"
                 target="_blank"
@@ -75,11 +111,12 @@ const Footer: React.FC = () => {
                   transition: 'background-color 0.2s',
                   textDecoration: 'none',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14213d'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'black'}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#14213d')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'black')}
               >
                 <FaTiktok size={20} style={{ color: 'white' }} />
               </a>
+
               <a
                 href="https://twitter.com"
                 target="_blank"
@@ -97,11 +134,12 @@ const Footer: React.FC = () => {
                   transition: 'background-color 0.2s',
                   textDecoration: 'none',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14213d'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'black'}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#14213d')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'black')}
               >
                 <FiTwitter size={20} style={{ color: 'white' }} />
               </a>
+
               <a
                 href="https://instagram.com"
                 target="_blank"
@@ -119,15 +157,28 @@ const Footer: React.FC = () => {
                   transition: 'background-color 0.2s',
                   textDecoration: 'none',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#14213d'}
-                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'black'}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#14213d')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = 'black')}
               >
                 <FiInstagram size={20} style={{ color: 'white' }} />
               </a>
             </Box>
           </Box>
 
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start' }}>
+          {/* ---- SUBSCRIBITE ---- */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-start',
+
+              /* MOBILE */
+              '@media (max-width:600px)': {
+                alignItems: 'center',
+                width: '100%',
+              }
+            }}
+          >
             <Typography
               variant="body1"
               sx={{
@@ -139,7 +190,16 @@ const Footer: React.FC = () => {
             >
               SUBSCRIBITE
             </Typography>
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', width: '280px', gap: '12px' }}>
+
+            <form
+              onSubmit={handleSubmit}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                width: '280px',
+                gap: '12px',
+              }}
+            >
               <TextField
                 type="email"
                 placeholder="Ingresa tu mail"
