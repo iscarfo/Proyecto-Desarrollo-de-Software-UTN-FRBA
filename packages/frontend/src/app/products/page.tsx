@@ -1,6 +1,7 @@
 'use client';
+
 import React, { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar/Navbar";
 import Footer from "@/components/Footer/Footer";
 import ProductCard, { Product } from "@/components/ProductCard/ProductCard";
@@ -30,44 +31,66 @@ import axios from "axios";
 import { useCart } from "../../store/CartContext";
 import { formatNumber } from "../../utils/formatPrice";
 
-// --- Componente para sincronizar "search" en query params ---
-function SearchParamsHandler({ onSearchTermChange }: { onSearchTermChange: (term: string) => void }) {
-  const searchParams = useSearchParams();
-
-  useEffect(() => {
-    const param = searchParams.get("search");
-    if (param) onSearchTermChange(param);
-  }, [searchParams, onSearchTermChange]);
-
-  return null;
-}
-
 function ProductosPageContent() {
   const { addToCart } = useCart();
+  const searchParams = useSearchParams();
+  const router = useRouter();
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
+  
+  // -----------------------------------------------------------------------
+  // 1. INICIALIZACIÓN DE ESTADO BASADA EN URL (Persistencia al recargar)
+  // -----------------------------------------------------------------------
+  const [currentPage, setCurrentPage] = useState(Number(searchParams.get("page")) || 1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // filtros
   const [categorias, setCategorias] = useState<{ _id: string; nombre: string }[]>([]);
-  const [precioMin, setPrecioMin] = useState("");
-  const [precioMax, setPrecioMax] = useState("");
-  const [categoria, setCategoria] = useState("");
-  const [sort, setSort] = useState("");
+  
+  // Filtros: Si hay algo en la URL, arrancamos con eso. Si no, string vacío.
+  const [precioMin, setPrecioMin] = useState(searchParams.get("precioMin") || "");
+  const [precioMax, setPrecioMax] = useState(searchParams.get("precioMax") || "");
+  const [categoria, setCategoria] = useState(searchParams.get("categoria") || "");
+  const [sort, setSort] = useState(searchParams.get("sort") || "");
+  const [searchTerm, setSearchTerm] = useState(searchParams.get("search") || "");
 
-  // rango de precios dinámico del backend
-  const [precioRangoMin, setPrecioRangoMin] = useState<number | null>(null);
-  const [precioRangoMax, setPrecioRangoMax] = useState<number | null>(null);
-  const [precioSliderValue, setPrecioSliderValue] = useState<number[]>([0, 0]);
+  // Rangos dinámicos y Slider
+  const [precioRangoMin, setPrecioRangoMin] = useState<number>(0);
+  const [precioRangoMax, setPrecioRangoMax] = useState<number>(10000); 
+  const [precioSliderValue, setPrecioSliderValue] = useState<number[]>([0, 10000]);
 
   const pageSize = 6;
-  const [searchTerm, setSearchTerm] = useState("");
 
-  // --- FETCH productos ---
-  const fetchProducts = async (page = currentPage, search = searchTerm) => {
+  // Función auxiliar para actualizar la URL sin recargar la página entera
+  const updateURL = (newParams: Record<string, string | number | null>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    
+    Object.entries(newParams).forEach(([key, value]) => {
+      if (value) {
+        params.set(key, String(value));
+      } else {
+        params.delete(key);
+      }
+    });
+
+    router.push(`?${params.toString()}`, { scroll: false });
+  };
+
+  // -----------------------------------------------------------------------
+  // 2. FETCH PRODUCTOS CON SOPORTE DE "OVERRIDE" (Para limpieza instantánea)
+  // -----------------------------------------------------------------------
+  const fetchProducts = async (
+    page = currentPage, 
+    search = searchTerm,
+    // filtersOverride permite forzar valores vacíos ignorando el estado actual visual
+    filtersOverride?: {
+      precioMin?: string;
+      precioMax?: string;
+      categoria?: string;
+      sort?: string;
+    }
+  ) => {
     setLoading(true);
     setError(null);
 
@@ -77,11 +100,17 @@ function ProductosPageContent() {
         limit: pageSize.toString(),
       };
 
+      // Lógica de Prioridad: Override > Estado Actual
+      const pMin = filtersOverride ? (filtersOverride.precioMin || "") : precioMin;
+      const pMax = filtersOverride ? (filtersOverride.precioMax || "") : precioMax;
+      const cat = filtersOverride ? (filtersOverride.categoria || "") : categoria;
+      const srt = filtersOverride ? (filtersOverride.sort || "") : sort;
+
       if (search) params.nombre = search;
-      if (precioMin) params.precioMin = precioMin;
-      if (precioMax) params.precioMax = precioMax;
-      if (categoria) params.categoria = categoria;
-      if (sort) params.sort = sort;
+      if (pMin) params.precioMin = pMin;
+      if (pMax) params.precioMax = pMax;
+      if (cat) params.categoria = cat;
+      if (srt) params.sort = srt;
 
       const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/productos`, { params });
 
@@ -95,11 +124,13 @@ function ProductosPageContent() {
     }
   };
 
+  // Efecto principal: Cargar cuando cambia página o sort
   useEffect(() => {
     fetchProducts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, sort]);
 
-  // --- cargar categorías ---
+  // Cargar Categorías
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
@@ -112,102 +143,157 @@ function ProductosPageContent() {
     fetchCategorias();
   }, []);
 
-  // --- obtener rango de precios dinámico del backend ---
+  // -----------------------------------------------------------------------
+  // 3. OBTENER RANGO DE PRECIOS Y SINCRONIZAR SLIDER
+  // -----------------------------------------------------------------------
   useEffect(() => {
     const fetchPriceRange = async () => {
       try {
-        // Query para obtener el precio mínimo (ordenar ascendente)
         const resMin = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/productos`, {
           params: { sort: 'precio_asc', limit: 1 }
         });
-
-        // Query para obtener el precio máximo (ordenar descendente)
         const resMax = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/productos`, {
           params: { sort: 'precio_desc', limit: 1 }
         });
 
         const minPrice = resMin.data.data?.[0]?.precio ?? 0;
-        const maxPrice = resMax.data.data?.[0]?.precio ?? 0;
+        const maxPrice = resMax.data.data?.[0]?.precio ?? 10000;
 
         setPrecioRangoMin(minPrice);
         setPrecioRangoMax(maxPrice);
-        setPrecioSliderValue([minPrice, maxPrice]);
+
+        // Si NO hay filtros en la URL, seteamos el slider al rango completo
+        if (!searchParams.get("precioMin") && !searchParams.get("precioMax")) {
+          setPrecioSliderValue([minPrice, maxPrice]);
+        } else {
+          // Si HAY filtros en la URL, seteamos el slider acorde a ellos
+          setPrecioSliderValue([
+            Number(searchParams.get("precioMin")) || minPrice,
+            Number(searchParams.get("precioMax")) || maxPrice
+          ]);
+        }
+
       } catch (err) {
         console.error("Error al cargar rango de precios", err);
       }
     };
     fetchPriceRange();
-  }, []);
+  }, []); // Solo al montar
 
-  // --- busqueda ---
+  // Búsqueda con Debounce
   useEffect(() => {
     const delay = setTimeout(() => {
-      setCurrentPage(1);
-      fetchProducts(1, searchTerm);
+      if (searchTerm !== (searchParams.get("search") || "")) {
+        setCurrentPage(1);
+        fetchProducts(1, searchTerm);
+        updateURL({ search: searchTerm, page: 1 });
+      }
     }, 500);
     return () => clearTimeout(delay);
   }, [searchTerm]);
 
+  // -----------------------------------------------------------------------
+  // MANEJADORES DE EVENTOS
+  // -----------------------------------------------------------------------
+
+  const handleSliderChange = (event: Event, newValue: number | number[]) => {
+    const vals = newValue as number[];
+    setPrecioSliderValue(vals);
+    // Solo actualizamos visualmente los inputs, no disparamos el fetch aún
+    setPrecioMin(vals[0].toString());
+    setPrecioMax(vals[1].toString());
+  };
+
   const handleApplyFilters = () => {
-    // Actualizar los valores de filtro desde el slider
-    setPrecioMin(precioSliderValue[0].toString());
-    setPrecioMax(precioSliderValue[1].toString());
     setCurrentPage(1);
     fetchProducts(1);
+    updateURL({
+      precioMin,
+      precioMax,
+      categoria,
+      sort,
+      page: 1
+    });
   };
 
   const handleClearFilters = () => {
+    // 1. Resetear estados visuales
     setPrecioMin("");
     setPrecioMax("");
     setCategoria("");
     setSort("");
     setSearchTerm("");
-    // Resetear slider a valores originales
-    if (precioRangoMin !== null && precioRangoMax !== null) {
-      setPrecioSliderValue([precioRangoMin, precioRangoMax]);
-    }
     setCurrentPage(1);
-    fetchProducts(1, "");
-  };
+    
+    // Resetear slider al rango original del backend
+    setPrecioSliderValue([precioRangoMin, precioRangoMax]);
 
-  const handleSliderChange = (event: Event, newValue: number | number[]) => {
-    setPrecioSliderValue(newValue as number[]);
+    // 2. FORZAR fetch con valores vacíos (Override) para respuesta instantánea
+    fetchProducts(1, "", {
+      precioMin: "",
+      precioMax: "",
+      categoria: "",
+      sort: ""
+    });
+
+    // 3. Limpiar la URL completamente
+    router.push("?"); 
   };
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     fetchProducts(page);
+    updateURL({ page });
   };
 
-  // --------------------------------------
-  // *** COMPONENTE REUTILIZADO DE FILTROS ***
-  // --------------------------------------
   const FiltersContent = () => (
     <>
       <Typography variant="h6" fontWeight={700} mb={2}>Precio</Typography>
 
-      {precioRangoMin !== null && precioRangoMax !== null ? (
-        <Box sx={{ px: 1 }}>
-          <Slider
-            value={precioSliderValue}
-            onChange={handleSliderChange}
-            valueLabelDisplay="auto"
-            min={precioRangoMin}
-            max={precioRangoMax}
-            sx={{ color: "#ff9800" }}
-          />
-          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
-            <Typography variant="body2" color="text.secondary">
-              ${formatNumber(precioSliderValue[0])}
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              ${formatNumber(precioSliderValue[1])}
-            </Typography>
-          </Box>
+      {/* Slider Visual */}
+      <Box sx={{ px: 1, mb: 2 }}>
+        <Slider
+          getAriaLabel={() => 'Rango de Precio'}
+          value={precioSliderValue}
+          onChange={handleSliderChange}
+          valueLabelDisplay="auto"
+          min={precioRangoMin}
+          max={precioRangoMax}
+          sx={{ color: 'primary.main' }}
+          disableSwap
+        />
+        <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+          <Typography variant="body2" color="text.secondary">
+            Min: ${formatNumber(precioSliderValue[0])}
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Max: ${formatNumber(precioSliderValue[1])}
+          </Typography>
         </Box>
-      ) : (
-        <Typography variant="body2" color="text.secondary">Cargando precios...</Typography>
-      )}
+      </Box>
+
+      {/* Inputs Manuales (Sincronizados con el slider) */}
+      <Box display="flex" gap={2} mb={1}>
+        <TextField
+          fullWidth size="small" label="Min" type="number"
+          value={precioMin} 
+          onChange={(e) => {
+             const val = Number(e.target.value);
+             setPrecioMin(e.target.value);
+             setPrecioSliderValue([val, precioSliderValue[1]]);
+          }}
+        />
+
+        <TextField
+          fullWidth size="small" label="Max" type="number"
+          value={precioMax} 
+          onChange={(e) => {
+            const val = Number(e.target.value);
+            setPrecioMax(e.target.value);
+            setPrecioSliderValue([precioSliderValue[0], val]);
+          }}
+        />
+      </Box>
 
       <Divider sx={{ my: 3 }} />
 
@@ -231,8 +317,11 @@ function ProductosPageContent() {
           value={sort}
           label="Orden"
           onChange={(e) => {
-            setSort(e.target.value);
+            const newSort = e.target.value;
+            setSort(newSort);
             setCurrentPage(1);
+            // Al ordenar, actualizamos URL y Fetch via useEffect
+            updateURL({ sort: newSort, page: 1 });
           }}
         >
           <MenuItem value="">Predeterminado</MenuItem>
@@ -251,26 +340,14 @@ function ProductosPageContent() {
     </>
   );
 
-  // -------------------------------------------------------------------
-
   return (
     <div className="min-h-screen flex flex-col bg-platinum">
-
-      <Suspense fallback={null}>
-        <SearchParamsHandler onSearchTermChange={setSearchTerm} />
-      </Suspense>
-
       <Navbar showSearch={true} searchPlaceholder="Buscar productos..." onSearch={setSearchTerm} />
 
       <main className="flex-grow py-12">
-
-        {/* CAMBIO: flex-col en mobile, flex-row en desktop */}
-        <Container
-          maxWidth="lg"
-          className="flex flex-col md:flex-row gap-8 items-stretch"
-        >
-
-          {/* -------- FILTROS MOBILE (ACCORDION) -------- */}
+        <Container maxWidth="lg" className="flex flex-col md:flex-row gap-8 items-stretch">
+          
+          {/* FILTROS MOBILE (Accordion) */}
           <Box className="md:hidden w-full mb-8 mt-2">
             <Accordion sx={{ borderRadius: "8px", overflow: "hidden" }}>
               <AccordionSummary
@@ -282,23 +359,20 @@ function ProductosPageContent() {
                   <Typography fontWeight={600}>Filtros y Ordenamiento</Typography>
                 </Box>
               </AccordionSummary>
-
-              {/* Más espacio al abrir */}
               <AccordionDetails sx={{ backgroundColor: "white", mt: 1 }}>
                 {FiltersContent()}
               </AccordionDetails>
             </Accordion>
           </Box>
 
-          {/* -------- FILTROS DESKTOP -------- */}
-          <aside className="w-60 hidden md:block bg-white p-4 rounded-lg shadow">
+          {/* FILTROS DESKTOP (Sidebar) */}
+          <aside className="w-60 hidden md:block bg-white p-4 rounded-lg shadow h-fit">
             {FiltersContent()}
           </aside>
 
-          {/* -------- PRODUCTOS -------- */}
+          {/* LISTA DE PRODUCTOS */}
           <Box className="flex-1">
             {loading && <Typography align="center" mt={4}>Cargando productos...</Typography>}
-
             {error && <Typography color="error" align="center" mt={4}>{error}</Typography>}
 
             {!loading && !error && products.length === 0 && (
