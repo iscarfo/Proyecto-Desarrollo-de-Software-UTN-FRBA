@@ -1,13 +1,36 @@
 "use client";
 
-import { Card, TextField, Button, Typography, Divider, Box } from "@mui/material";
+import { 
+  Card, 
+  TextField, 
+  Button, 
+  Typography, 
+  Divider, 
+  Box, 
+  Dialog, 
+  DialogContent, 
+  DialogActions, 
+  Slide,
+  CircularProgress
+} from "@mui/material";
+import { TransitionProps } from '@mui/material/transitions';
 import { useRouter } from "next/navigation";
 import { useForm } from "../hooks/useForm";
 import { useCart } from "../../store/CartContext";
 import { useAuth, useUser } from "@clerk/nextjs";
 import axios from "axios";
-import { useState, useEffect } from "react";
-import { formatNumber, formatPrice } from "../../utils/formatPrice";
+import { useState, useEffect, forwardRef } from "react";
+import { formatPrice } from "../../utils/formatPrice";
+
+// Transición para que el modal aparezca suavemente desde abajo
+const Transition = forwardRef(function Transition(
+  props: TransitionProps & {
+    children: React.ReactElement<any, any>;
+  },
+  ref: React.Ref<unknown>,
+) {
+  return <Slide direction="up" ref={ref} {...props} />;
+});
 
 const initialValues = {
   calle: "",
@@ -39,9 +62,12 @@ export default function CheckoutPage() {
   const { user } = useUser();
   const router = useRouter();
   const [error, setError] = useState("");
+  const [openModal, setOpenModal] = useState(false);
+  // Estado para controlar la redirección y evitar el parpadeo de "carrito vacío"
+  const [isRedirecting, setIsRedirecting] = useState(false);
 
   // Agrupar subtotales por moneda
-  const subtotalesPorMoneda = cart.reduce((acc, p) => {
+  const subtotalesPorMoneda = cart.reduce((acc: any, p: any) => {
     const moneda = p.moneda;
     if (!acc[moneda]) {
       acc[moneda] = 0;
@@ -68,12 +94,12 @@ export default function CheckoutPage() {
         const token = await getToken();
 
         // Preparar items del pedido
-        const items = cart.map((item) => ({
+        const items = cart.map((item: any) => ({
           productoId: item._id,
           cantidad: item.cantidad,
         }));
 
-        // Determinar la moneda (asumiendo que todos los productos tienen la misma moneda)
+        // Determinar la moneda
         const moneda = cart[0]?.moneda || "PESO_ARG";
 
         // Preparar dirección de entrega
@@ -86,7 +112,7 @@ export default function CheckoutPage() {
           ciudad: values.ciudad,
           provincia: values.provincia,
           pais: values.pais,
-          lat: 0, // Valores por defecto, podrías implementar geolocalización
+          lat: 0,
           lon: 0,
         };
 
@@ -109,10 +135,8 @@ export default function CheckoutPage() {
         );
 
         if (res.status === 201 || res.status === 200) {
-          clearCart();
-          alert("¡Pedido realizado con éxito!");
-          resetForm();
-          router.push("/home");
+          // AQUÍ: Abrimos el modal en lugar del alert
+          setOpenModal(true);
         }
       } catch (err: any) {
         console.error("Error al crear el pedido:", err);
@@ -123,6 +147,21 @@ export default function CheckoutPage() {
     },
     validate
   );
+
+  const handleCloseModal = () => {
+    // 1. Activamos el estado de redirección para mostrar el spinner
+    setIsRedirecting(true);
+    
+    // 2. Cerramos el modal
+    setOpenModal(false);
+    
+    // 3. Limpiamos el carrito (ya no se verá la pantalla de vacío gracias al isRedirecting)
+    clearCart();
+    resetForm();
+    
+    // 4. Redirigimos
+    router.push("/home");
+  };
 
   // Pre-rellenar el formulario con los datos del usuario
   useEffect(() => {
@@ -137,7 +176,17 @@ export default function CheckoutPage() {
     }
   }, [user]);
 
-  if (cart.length === 0) {
+  // Si estamos redirigiendo, mostramos el spinner en lugar de "Carrito vacío"
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex justify-center items-center px-4">
+        <CircularProgress size={60} thickness={4} />
+      </div>
+    );
+  }
+
+  // Si el carrito está vacío y NO se acaba de completar una compra (modal abierto), mostrar mensaje de vacío
+  if (cart.length === 0 && !openModal) {
     return (
       <div className="min-h-screen bg-gray-100 flex justify-center items-center px-4">
         <Card className="p-8 shadow-lg rounded-2xl text-center">
@@ -159,14 +208,14 @@ export default function CheckoutPage() {
       <div className="w-full max-w-6xl grid grid-cols-1 lg:grid-cols-2 gap-10">
 
         {/* RESUMEN DEL PEDIDO */}
-        <Card className="p-6 shadow-lg rounded-2xl">
+        <Card className="p-6 shadow-lg rounded-2xl h-fit">
           <Typography variant="h5" className="font-semibold mb-4 text-gray-800">
             Resumen del pedido
           </Typography>
 
           <Divider sx={{ mb: 3 }} />
 
-          {cart.map((item) => (
+          {cart.map((item: any) => (
             <div
               key={item._id}
               className="flex justify-between py-2 border-b text-gray-700"
@@ -186,7 +235,7 @@ export default function CheckoutPage() {
             {Object.entries(subtotalesPorMoneda).map(([moneda, total]) => (
               <div key={moneda} className="flex justify-between text-lg font-semibold text-gray-900 mb-2">
                 <span>Total:</span>
-                <span>{formatPrice(total, moneda)}</span>
+                <span>{formatPrice(total as number, moneda)}</span>
               </div>
             ))}
           </div>
@@ -317,6 +366,8 @@ export default function CheckoutPage() {
                 py: 1.5,
                 fontSize: "1rem",
                 borderRadius: "10px",
+                textTransform: "none",
+                fontWeight: "bold"
               }}
             >
               {isSubmitting ? "Procesando..." : "Finalizar compra"}
@@ -324,6 +375,54 @@ export default function CheckoutPage() {
           </form>
         </Card>
       </div>
+
+      {/* --- MODAL DE ÉXITO --- */}
+      <Dialog
+        open={openModal}
+        TransitionComponent={Transition}
+        keepMounted
+        onClose={handleCloseModal}
+        aria-describedby="alert-dialog-slide-description"
+        PaperProps={{
+          style: { borderRadius: 20, padding: "20px", maxWidth: "400px" }
+        }}
+      >
+        <DialogContent className="flex flex-col items-center text-center">
+          {/* Icono SVG de Check Animado o Estático */}
+          <Box className="bg-green-100 rounded-full p-4 mb-4">
+            <svg 
+              xmlns="http://www.w3.org/2000/svg" 
+              fill="none" 
+              viewBox="0 0 24 24" 
+              strokeWidth={2} 
+              stroke="currentColor" 
+              className="w-12 h-12 text-green-600"
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+            </svg>
+          </Box>
+          
+          <Typography variant="h5" className="font-bold text-gray-800 mb-2">
+            ¡Pedido Exitoso!
+          </Typography>
+          
+          <Typography variant="body1" className="text-gray-600 mb-4">
+            Hemos recibido tu orden correctamente. Te enviaremos un correo con los detalles.
+          </Typography>
+        </DialogContent>
+        
+        <DialogActions sx={{ justifyContent: "center", pb: 2 }}>
+          <Button 
+            onClick={handleCloseModal}
+            variant="contained" 
+            color="primary"
+            sx={{ px: 4, borderRadius: 10, textTransform: "none" }}
+          >
+            Volver al inicio
+          </Button>
+        </DialogActions>
+      </Dialog>
+
     </div>
   );
 }

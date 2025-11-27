@@ -9,11 +9,13 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  DialogContentText,
   DialogActions,
   Button,
   MenuItem,
   Snackbar,
-  Alert
+  Alert,
+  CircularProgress
 } from "@mui/material";
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
@@ -37,10 +39,13 @@ export default function MisProductosView() {
   const [alerta, setAlerta] = useState({ open: false, tipo: "success", mensaje: "" });
   const [products, setProducts] = useState<Product[]>([]);
   const [totalPages, setTotalPages] = useState(1);
-  const [openDialog, setOpenDialog] = useState(false);
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [categorias, setCategorias] = useState<Categoria[]>([]);
-  
+  const [openDialog, setOpenDialog] = useState(false);
+  const [openDeleteDialog, setOpenDeleteDialog] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [nuevoProducto, setNuevoProducto] = useState({
     titulo: "",
     descripcion: "",
@@ -52,7 +57,6 @@ export default function MisProductosView() {
     activo: true,
   });
 
-  // Cargar categorías desde el backend
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
@@ -123,15 +127,19 @@ export default function MisProductosView() {
     }
   };
 
-  const handleDelete = async (productId: string) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este producto?")) {
-      return;
-    }
+  const handleDeleteRequest = (productId: string) => {
+    setProductToDelete(productId);
+    setOpenDeleteDialog(true);
+  };
 
+  const handleConfirmDelete = async () => {
+    if (!productToDelete) return;
+    
+    setIsDeleting(true);
     try {
       const token = await getToken();
       const res = await axios.delete(
-        `${process.env.NEXT_PUBLIC_API_URL}/productos/${productId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/productos/${productToDelete}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -140,7 +148,7 @@ export default function MisProductosView() {
       );
 
       if (res.status === 200 || res.status === 204) {
-        setProducts((prev) => prev.filter((p) => p._id !== productId));
+        setProducts((prev) => prev.filter((p) => p._id !== productToDelete));
         setAlerta({
           open: true,
           tipo: "success",
@@ -154,7 +162,16 @@ export default function MisProductosView() {
         tipo: "error",
         mensaje: error.response?.data?.message || "Error al eliminar el producto",
       });
+    } finally {
+      setIsDeleting(false);
+      setOpenDeleteDialog(false);
+      setProductToDelete(null);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setOpenDeleteDialog(false);
+    setProductToDelete(null);
   };
 
   const handleSaveChanges = async () => {
@@ -237,22 +254,17 @@ export default function MisProductosView() {
         if (creado && creado._id) {
           setProducts((prev) => [creado, ...prev]);
         } else {
-          const token = await getToken();
-          const refetch = await fetch(
-            `${process.env.NEXT_PUBLIC_API_URL}/usuarios/productos?page=${currentPage}&limit=${pageSize}`,
-            {
-              headers: {
-                'Authorization': `Bearer ${token}`
+            const token = await getToken();
+            const refetch = await fetch(
+              `${process.env.NEXT_PUBLIC_API_URL}/usuarios/productos?page=1&limit=${pageSize}`,
+              {
+                headers: { 'Authorization': `Bearer ${token}` }
               }
-            }
-          );
-          const data = await refetch.json();
-          const lista =
-            Array.isArray(data) ? data :
-            Array.isArray(data.data) ? data.data :
-            Array.isArray(data.productos) ? data.productos :
-            [];
-          setProducts(lista);
+            );
+            const data = await refetch.json();
+            const lista = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+            setProducts(lista);
+            setCurrentPage(1);
         }
 
         setOpenDialog(false);
@@ -308,7 +320,7 @@ export default function MisProductosView() {
             product={prod}
             userType="seller"
             onEdit={() => handleEdit(prod._id)}
-            onDelete={() => handleDelete(prod._id)}
+            onDelete={() => handleDeleteRequest(prod._id)}
           />
         ))}
       </div>
@@ -320,6 +332,31 @@ export default function MisProductosView() {
           onPageChange={handlePageChange}
         />
       </Box>
+
+      {/* --- DIALOG DE CONFIRMACIÓN DE ELIMINAR --- */}
+      <Dialog
+        open={openDeleteDialog}
+        onClose={handleCancelDelete}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          {"¿Eliminar producto?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText id="alert-dialog-description">
+            Esta acción no se puede deshacer. ¿Estás seguro de que deseas eliminar este producto permanentemente?
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCancelDelete} color="primary" disabled={isDeleting}>
+            Cancelar
+          </Button>
+          <Button onClick={handleConfirmDelete} color="error" variant="contained" autoFocus disabled={isDeleting}>
+            {isDeleting ? <CircularProgress size={24} color="inherit" /> : "Eliminar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Dialog para crear producto */}
       <Dialog open={openDialog} onClose={() => setOpenDialog(false)} fullWidth maxWidth="sm">
