@@ -15,8 +15,11 @@ import {
   MenuItem,
   Snackbar,
   Alert,
-  CircularProgress
+  CircularProgress,
+  IconButton
 } from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import axios from "axios";
 import { useAuth } from "@clerk/nextjs";
 
@@ -99,13 +102,13 @@ export default function MisProductosView() {
           Array.isArray(payload)
             ? payload
             : Array.isArray(payload.data)
-            ? payload.data
-            : Array.isArray(payload.productos)
-            ? payload.productos
-            : [];
+              ? payload.data
+              : Array.isArray(payload.productos)
+                ? payload.productos
+                : [];
 
         setProducts(productsArray);
-        setTotalPages(payload.totalPaginas || Math.ceil(productsArray.length / pageSize) || 1);
+        setTotalPages(payload.totalPaginas || 1);
       } catch (err) {
         console.error("Error al obtener productos:", err);
         setProducts([]);
@@ -134,7 +137,7 @@ export default function MisProductosView() {
 
   const handleConfirmDelete = async () => {
     if (!productToDelete) return;
-    
+
     setIsDeleting(true);
     try {
       const token = await getToken();
@@ -254,17 +257,17 @@ export default function MisProductosView() {
         if (creado && creado._id) {
           setProducts((prev) => [creado, ...prev]);
         } else {
-            const token = await getToken();
-            const refetch = await fetch(
-              `${process.env.NEXT_PUBLIC_API_URL}/usuarios/productos?page=1&limit=${pageSize}`,
-              {
-                headers: { 'Authorization': `Bearer ${token}` }
-              }
-            );
-            const data = await refetch.json();
-            const lista = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
-            setProducts(lista);
-            setCurrentPage(1);
+          const token = await getToken();
+          const refetch = await fetch(
+            `${process.env.NEXT_PUBLIC_API_URL}/usuarios/productos?page=1&limit=${pageSize}`,
+            {
+              headers: { 'Authorization': `Bearer ${token}` }
+            }
+          );
+          const data = await refetch.json();
+          const lista = Array.isArray(data) ? data : Array.isArray(data.data) ? data.data : [];
+          setProducts(lista);
+          setCurrentPage(1);
         }
 
         setOpenDialog(false);
@@ -309,21 +312,129 @@ export default function MisProductosView() {
         Agregar producto
       </Button>
 
-      <div
+      <Box
         role="region"
         aria-label="Listado de productos"
-        className="grid grid-cols-[repeat(auto-fit,minmax(250px,1fr))] gap-10 place-items-center"
+        sx={{
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1,
+          overflow: 'hidden',
+          bgcolor: 'white'
+        }}
       >
-        {products.map((prod) => (
-          <ProductCard
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: '60px 80px 2fr 3fr 120px 100px 100px 120px',
+            gap: 2,
+            p: 2,
+            bgcolor: 'grey.200',
+            fontWeight: 'bold',
+            borderBottom: '2px solid',
+            borderColor: 'divider'
+          }}
+        >
+          <Typography variant="body2" fontWeight="bold">#</Typography>
+          <Typography variant="body2" fontWeight="bold">Imagen</Typography>
+          <Typography variant="body2" fontWeight="bold">Nombre</Typography>
+          <Typography variant="body2" fontWeight="bold">Descripción</Typography>
+          <Typography variant="body2" fontWeight="bold">Precio</Typography>
+          <Typography variant="body2" fontWeight="bold">Stock</Typography>
+          <Typography variant="body2" fontWeight="bold">Vendidos</Typography>
+          <Typography variant="body2" fontWeight="bold" textAlign="center">Acciones</Typography>
+        </Box>
+        {products.map((prod, index) => (
+          <Box
             key={prod._id}
-            product={prod}
-            userType="seller"
-            onEdit={() => handleEdit(prod._id)}
-            onDelete={() => handleDeleteRequest(prod._id)}
-          />
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: '60px 80px 2fr 3fr 120px 100px 100px 120px',
+              gap: 2,
+              p: 2,
+              alignItems: 'center',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              '&:hover': {
+                bgcolor: 'action.hover'
+              }
+            }}
+          >
+            <Typography variant="body2">{(currentPage - 1) * pageSize + index + 1}</Typography>
+            <Box
+              component="img"
+              src={prod.fotos?.[0] || '/placeholder.png'}
+              alt={prod.titulo}
+              sx={{
+                width: 60,
+                height: 60,
+                objectFit: 'cover',
+                borderRadius: 1,
+                border: '1px solid',
+                borderColor: 'divider'
+              }}
+            />
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>{prod.titulo}</Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                color: 'text.secondary'
+              }}
+            >
+              {prod.descripcion}
+            </Typography>
+            <Typography variant="body2">
+              {prod.moneda === 'PESO_ARG' ? '$' : prod.moneda === 'DOLAR_USA' ? 'USD ' : 'R$ '}
+              {prod.precio.toLocaleString()}
+            </Typography>
+            <Typography variant="body2">{prod.stock}</Typography>
+            <Typography variant="body2">{prod.totalVendido || 0}</Typography>
+
+            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'center' }}>
+              {/* Botón EDITAR */}
+              <IconButton
+                size="small"
+                onClick={() => handleEdit(prod._id)}
+                sx={{
+                  bgcolor: "#e8852a",
+                  color: "white",
+                  borderRadius: 1.5,
+                  width: 34,
+                  height: 34,
+                  '&:hover': {
+                    bgcolor: "#cf741f"
+                  }
+                }}
+              >
+                <EditIcon fontSize="small" />
+              </IconButton>
+
+              {/* Botón BORRAR */}
+              <IconButton
+                size="small"
+                onClick={() => handleDeleteRequest(prod._id)}
+                sx={{
+                  bgcolor: "#D32F2F",
+                  color: "white",
+                  borderRadius: 1.5,
+                  width: 34,
+                  height: 34,
+                  '&:hover': {
+                    bgcolor: "#b32727"
+                  }
+                }}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+
+            </Box>
+
+          </Box>
         ))}
-      </div>
+      </Box>
 
       <Box sx={{ marginTop: 4 }} aria-label="Paginación de productos">
         <Pagination
@@ -400,6 +511,7 @@ export default function MisProductosView() {
             <MenuItem value={Moneda.DOLAR_USA}>Dólar Estadounidense</MenuItem>
             <MenuItem value={Moneda.REAL}>Real Brasileño</MenuItem>
           </TextField>
+
           <TextField
             label="Stock"
             type="number"
@@ -409,6 +521,7 @@ export default function MisProductosView() {
               setNuevoProducto((prev) => ({ ...prev, stock: Number(e.target.value) }))
             }
           />
+
           <TextField
             select
             label="Categoría"
@@ -498,12 +611,14 @@ export default function MisProductosView() {
               }
             />
           </DialogContent>
+
           <DialogActions>
             <Button onClick={() => setEditingProduct(null)}>Cancelar</Button>
             <Button variant="contained" onClick={handleSaveChanges}>
               Guardar
             </Button>
           </DialogActions>
+
         </Dialog>
       )}
 

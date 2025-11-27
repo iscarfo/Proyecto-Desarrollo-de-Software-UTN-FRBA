@@ -5,9 +5,8 @@ import Footer from '@/components/Footer/Footer';
 import {
   Container,
   Box,
-  Typography,
-  ToggleButtonGroup,
-  ToggleButton,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { FiPackage, FiShoppingCart } from 'react-icons/fi';
 import { withRole } from '@/src/hocs';
@@ -17,86 +16,59 @@ import MisProductosView from '@/components/SellerViews/MisProductosView';
 import AdministrarPedidosView from '@/components/SellerViews/AdministrarPedidosView';
 
 function SellerDashboardPage() {
-  const [selectedView, setSelectedView] = useState<'orders' | 'products'>('orders');
+  const [selectedView, setSelectedView] = useState<number>(0);
 
-  const handleViewChange = (
-    event: React.MouseEvent<HTMLElement>,
-    newView: 'orders' | 'products' | null
-  ) => {
-    if (newView !== null) {
-      setSelectedView(newView);
-    }
+  const handleViewChange = (event: React.SyntheticEvent, newValue: number) => {
+    setSelectedView(newValue);
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-platinum">
       <Navbar />
 
-      <main role="main" aria-label="Panel de vendedor" className="flex-grow py-12">
+      <main role="main" aria-label="Panel de vendedor" className="flex-grow py-6">
         <Container maxWidth="lg">
-          {/* Header con título y selector */}
-          <Box sx={{ mb: 4 }}>
-            <Typography
-              variant="h4"
+          {/* Tabs como solapas superiores */}
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Tabs
+              value={selectedView}
+              onChange={handleViewChange}
+              aria-label="navegación del panel"
               sx={{
-                fontWeight: 'bold',
-                color: 'primary.main',
-                mb: 3,
-                textAlign: 'center'
+                minHeight: 48,
+                '& .MuiTab-root': {
+                  minHeight: 48,
+                  textTransform: 'none',
+                  fontSize: '0.95rem',
+                  fontWeight: 500,
+                  color: 'text.secondary',
+                  gap: 1,
+                  px: 3,
+                  '&.Mui-selected': {
+                    color: 'primary.main',
+                    fontWeight: 600,
+                  }
+                },
+                '& .MuiTabs-indicator': {
+                  height: 3,
+                }
               }}
             >
-              Panel de Vendedor
-            </Typography>
-
-            {/* Toggle Button Group como Slider */}
-            <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-              <ToggleButtonGroup
-                value={selectedView}
-                exclusive
-                onChange={handleViewChange}
-                aria-label="selector de vista"
-                sx={{
-                  bgcolor: 'background.paper',
-                  borderRadius: 2,
-                  boxShadow: 2,
-                  '& .MuiToggleButton-root': {
-                    px: 4,
-                    py: 1.5,
-                    border: 'none',
-                    textTransform: 'none',
-                    fontSize: '1rem',
-                    fontWeight: 500,
-                    gap: 1,
-                    '&.Mui-selected': {
-                      bgcolor: 'primary.main',
-                      color: 'white',
-                      '&:hover': {
-                        bgcolor: 'primary.dark',
-                      }
-                    },
-                    '&:not(.Mui-selected)': {
-                      color: 'text.secondary',
-                      '&:hover': {
-                        bgcolor: 'action.hover',
-                      }
-                    }
-                  }
-                }}
-              >
-                <ToggleButton value="orders" aria-label="administrar pedidos">
-                  <FiShoppingCart size={20} />
-                  Administrar Pedidos
-                </ToggleButton>
-                <ToggleButton value="products" aria-label="mis productos">
-                  <FiPackage size={20} />
-                  Mis Productos
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Box>
+              <Tab 
+                icon={<FiShoppingCart size={18} />} 
+                iconPosition="start" 
+                label="Administrar Pedidos"
+              />
+              <Tab 
+                icon={<FiPackage size={18} />} 
+                iconPosition="start" 
+                label="Mis Productos"
+              />
+            </Tabs>
           </Box>
 
           {/* Renderizado condicional de componentes */}
-          {selectedView === 'orders' ? (
+          {selectedView === 0 ? (
             <AdministrarPedidosView />
           ) : (
             <MisProductosView />
