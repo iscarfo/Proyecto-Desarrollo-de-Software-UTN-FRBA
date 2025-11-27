@@ -4,7 +4,9 @@ import { Poppins } from "next/font/google";
 import theme from "@/theme";
 import { ThemeProvider } from '@mui/material/styles';
 import { ClerkProvider } from '@clerk/nextjs';
+import { esES } from '@clerk/localizations';
 import { CartProvider } from "../store/CartContext";
+import { CartPanelProvider } from "../store/CartPanelContext";
 
 const poppins = Poppins({
   weight: ["300", "400", "500", "600", "700", "800", "900"],
@@ -27,13 +29,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <ClerkProvider>
-      <html lang="en" className={poppins.variable}>
+    <ClerkProvider localization={esES}>
+      <html lang="es" className={poppins.variable}>
         <head />
         <body>
           <AppRouterCacheProvider options={{ key: "css", enableCssLayer: true }}>
             <ThemeProvider theme={theme}>
-              <CartProvider>{children}</CartProvider>
+              <CartProvider>
+                <CartPanelProvider>
+                  {children}
+                </CartPanelProvider>
+              </CartProvider>
             </ThemeProvider>
           </AppRouterCacheProvider>
         </body>

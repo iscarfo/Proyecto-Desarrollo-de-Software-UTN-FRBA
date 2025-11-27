@@ -20,6 +20,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Slider,
 } from "@mui/material";
 
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -27,6 +28,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 
 import axios from "axios";
 import { useCart } from "../../store/CartContext";
+import { formatNumber } from "../../utils/formatPrice";
 
 // --- Componente para sincronizar "search" en query params ---
 function SearchParamsHandler({ onSearchTermChange }: { onSearchTermChange: (term: string) => void }) {
@@ -55,6 +57,11 @@ function ProductosPageContent() {
   const [precioMax, setPrecioMax] = useState("");
   const [categoria, setCategoria] = useState("");
   const [sort, setSort] = useState("");
+
+  // rango de precios dinámico del backend
+  const [precioRangoMin, setPrecioRangoMin] = useState<number | null>(null);
+  const [precioRangoMax, setPrecioRangoMax] = useState<number | null>(null);
+  const [precioSliderValue, setPrecioSliderValue] = useState<number[]>([0, 0]);
 
   const pageSize = 6;
   const [searchTerm, setSearchTerm] = useState("");
@@ -105,6 +112,33 @@ function ProductosPageContent() {
     fetchCategorias();
   }, []);
 
+  // --- obtener rango de precios dinámico del backend ---
+  useEffect(() => {
+    const fetchPriceRange = async () => {
+      try {
+        // Query para obtener el precio mínimo (ordenar ascendente)
+        const resMin = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/productos`, {
+          params: { sort: 'precio_asc', limit: 1 }
+        });
+
+        // Query para obtener el precio máximo (ordenar descendente)
+        const resMax = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/productos`, {
+          params: { sort: 'precio_desc', limit: 1 }
+        });
+
+        const minPrice = resMin.data.data?.[0]?.precio ?? 0;
+        const maxPrice = resMax.data.data?.[0]?.precio ?? 0;
+
+        setPrecioRangoMin(minPrice);
+        setPrecioRangoMax(maxPrice);
+        setPrecioSliderValue([minPrice, maxPrice]);
+      } catch (err) {
+        console.error("Error al cargar rango de precios", err);
+      }
+    };
+    fetchPriceRange();
+  }, []);
+
   // --- busqueda ---
   useEffect(() => {
     const delay = setTimeout(() => {
@@ -115,6 +149,9 @@ function ProductosPageContent() {
   }, [searchTerm]);
 
   const handleApplyFilters = () => {
+    // Actualizar los valores de filtro desde el slider
+    setPrecioMin(precioSliderValue[0].toString());
+    setPrecioMax(precioSliderValue[1].toString());
     setCurrentPage(1);
     fetchProducts(1);
   };
@@ -125,8 +162,16 @@ function ProductosPageContent() {
     setCategoria("");
     setSort("");
     setSearchTerm("");
+    // Resetear slider a valores originales
+    if (precioRangoMin !== null && precioRangoMax !== null) {
+      setPrecioSliderValue([precioRangoMin, precioRangoMax]);
+    }
     setCurrentPage(1);
     fetchProducts(1, "");
+  };
+
+  const handleSliderChange = (event: Event, newValue: number | number[]) => {
+    setPrecioSliderValue(newValue as number[]);
   };
 
   const handlePageChange = (page: number) => {
@@ -141,16 +186,28 @@ function ProductosPageContent() {
     <>
       <Typography variant="h6" fontWeight={700} mb={2}>Precio</Typography>
 
-      <TextField
-        fullWidth size="small" label="Min" type="number"
-        value={precioMin} onChange={(e) => setPrecioMin(e.target.value)}
-        sx={{ mb: 1 }}
-      />
-
-      <TextField
-        fullWidth size="small" label="Max" type="number"
-        value={precioMax} onChange={(e) => setPrecioMax(e.target.value)}
-      />
+      {precioRangoMin !== null && precioRangoMax !== null ? (
+        <Box sx={{ px: 1 }}>
+          <Slider
+            value={precioSliderValue}
+            onChange={handleSliderChange}
+            valueLabelDisplay="auto"
+            min={precioRangoMin}
+            max={precioRangoMax}
+            sx={{ color: "#ff9800" }}
+          />
+          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              ${formatNumber(precioSliderValue[0])}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              ${formatNumber(precioSliderValue[1])}
+            </Typography>
+          </Box>
+        </Box>
+      ) : (
+        <Typography variant="body2" color="text.secondary">Cargando precios...</Typography>
+      )}
 
       <Divider sx={{ my: 3 }} />
 
