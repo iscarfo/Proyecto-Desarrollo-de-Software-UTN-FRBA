@@ -1,9 +1,11 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import Badge from '@mui/material/Badge';
 import { useCart } from '../../src/store/CartContext';
+import { useCartPanel } from '../../src/store/CartPanelContext';
 import NotificationPanel from '@/components/NotificationPanel/NotificationPanel';
+import CartPanel from '@/components/CartPanel/CartPanel';
 import {
   AppBar,
   Toolbar,
@@ -55,11 +57,23 @@ const MainNavbar: React.FC<MainNavbarProps> = ({
   const [searchText, setSearchText] = useState('');
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [unreadCount, setUnreadCount] = useState(0);
+  const { cartAnchorEl, openCartPanel, closeCartPanel, setCartIconRef } = useCartPanel();
   const { user, isLoaded } = useUser();
   const { getToken } = useAuth();
   const [links, setLinks] = useState<NavLink[]>([
     { name: 'MIS PEDIDOS', link: '/mis-pedidos' }
   ]);
+
+  const cartIconMobileRef = useRef<HTMLButtonElement>(null);
+  const cartIconDesktopRef = useRef<HTMLButtonElement>(null);
+
+  // Registrar el ícono del carrito apropiado cuando cambia el tamaño de pantalla
+  useEffect(() => {
+    const activeRef = isMobile ? cartIconMobileRef.current : cartIconDesktopRef.current;
+    if (activeRef) {
+      setCartIconRef(activeRef);
+    }
+  }, [isMobile, setCartIconRef]);
 
   useEffect(() => {
     if (linksProp) {
@@ -144,6 +158,10 @@ const MainNavbar: React.FC<MainNavbarProps> = ({
 
   const handleNotifClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleCartClick = (event: React.MouseEvent<HTMLElement>) => {
+    openCartPanel(event.currentTarget);
   };
 
   const toggleDrawer = (open: boolean) => () => {
@@ -282,23 +300,24 @@ const MainNavbar: React.FC<MainNavbarProps> = ({
                   <NotificationPanel
                     anchorEl={anchorEl}
                     onClose={handleNotifClose}
-                    onUnreadCountChange={setUnreadCount} 
+                    onUnreadCountChange={setUnreadCount}
                   />
 
                   <IconButton
-                  aria-label="Ver carrito"
-                  component={NextLink}
-                  href="/carrito"
+                    ref={cartIconMobileRef}
+                    aria-label="Ver carrito"
+                    title="Carrito"
+                    onClick={handleCartClick}
                   >
-                  <Badge
-                  badgeContent={totalItems}
-                  color="error"
-                  overlap="circular"
-                  invisible={totalItems === 0}
-  >
-                  <FiShoppingCart size={20} />
-                </Badge>
-                </IconButton>
+                    <Badge
+                      badgeContent={totalItems}
+                      color="error"
+                      overlap="circular"
+                      invisible={totalItems === 0}
+                    >
+                      <FiShoppingCart size={20} />
+                    </Badge>
+                  </IconButton>
 
                   {isLoaded ? (
                     <UsuarioMenu />
@@ -360,19 +379,20 @@ const MainNavbar: React.FC<MainNavbarProps> = ({
                     onUnreadCountChange={setUnreadCount}
                   />
                   <IconButton
-                  aria-label="Ver carrito"
-                  component={NextLink}
-                  href="/carrito"
+                    ref={cartIconDesktopRef}
+                    aria-label="Ver carrito"
+                    title="Carrito"
+                    onClick={handleCartClick}
                   >
-                  <Badge
-                  badgeContent={totalItems}
-                  color="error"
-                  overlap="circular"
-                  invisible={totalItems === 0}
-  >
-                  <FiShoppingCart size={20} />
-                </Badge>
-                </IconButton>
+                    <Badge
+                      badgeContent={totalItems}
+                      color="error"
+                      overlap="circular"
+                      invisible={totalItems === 0}
+                    >
+                      <FiShoppingCart size={20} />
+                    </Badge>
+                  </IconButton>
 
                 {isLoaded ? (
                   <UsuarioMenu />
@@ -404,6 +424,12 @@ const MainNavbar: React.FC<MainNavbarProps> = ({
           </List>
         </Box>
       </Drawer>
+
+      {/* CartPanel global - renderizado una sola vez */}
+      <CartPanel
+        anchorEl={cartAnchorEl}
+        onClose={closeCartPanel}
+      />
     </>
   );
 };

@@ -8,13 +8,12 @@ import {
   Typography,
   Box,
   IconButton,
-  Snackbar,
-  Alert
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import { useCart } from "../../src/store/CartContext";
+import { useCartPanel } from "../../src/store/CartPanelContext";
 import { formatPrice } from "../../src/utils/formatPrice";
 
 export interface Product {
@@ -35,18 +34,20 @@ interface Props {
   userType?: 'buyer' | 'seller';
   onEdit?: () => void;
   onDelete?: () => void;
+  onAddToCart?: () => void;
 }
 
 const ProductCard: React.FC<Props> = ({
   product,
   userType = 'buyer',
   onEdit,
-  onDelete
+  onDelete,
+  onAddToCart
 }) => {
 
   const { addToCart } = useCart();
+  const { openCartPanel } = useCartPanel();
   const [quantity, setQuantity] = useState(1);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
 
   const increase = () => {
@@ -60,7 +61,14 @@ const ProductCard: React.FC<Props> = ({
   const handleAddToCart = () => {
     setIsAdding(true);
     addToCart(product, quantity);
-    setShowSuccess(true);
+
+    // Abrir el CartPanel automáticamente
+    openCartPanel();
+
+    // Llamar al callback si existe
+    if (onAddToCart) {
+      onAddToCart();
+    }
 
     setTimeout(() => {
       setIsAdding(false);
@@ -185,22 +193,6 @@ const ProductCard: React.FC<Props> = ({
         </Box>
       )}
       </Card>
-
-      <Snackbar
-        open={showSuccess}
-        autoHideDuration={2000}
-        onClose={() => setShowSuccess(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setShowSuccess(false)}
-          severity="success"
-          variant="filled"
-          sx={{ width: "100%" }}
-        >
-          Producto agregado al carrito
-        </Alert>
-      </Snackbar>
     </>
   );
 };
