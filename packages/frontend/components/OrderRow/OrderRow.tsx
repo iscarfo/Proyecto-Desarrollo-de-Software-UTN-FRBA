@@ -242,8 +242,10 @@ const OrderRow: React.FC<OrderRowProps> = ({
               fontWeight: 500,
             }}
           >
-            Pedido nro: {orderId} • {deliveryAddress} • {new Date(fechaCreacion).toLocaleDateString('es-AR')}
-          </Typography>
+          {userType === 'seller'
+              ? `Pedido nro: ${orderId.slice(0, 6)} • ${deliveryAddress} • ${new Date(fechaCreacion).toLocaleDateString('es-AR')}`
+              : `${deliveryAddress} • ${new Date(fechaCreacion).toLocaleDateString('es-AR')}`}          
+    </Typography>
         </Box>
 
         {/* LISTA DE PRODUCTOS DENTRO DEL PEDIDO */}
