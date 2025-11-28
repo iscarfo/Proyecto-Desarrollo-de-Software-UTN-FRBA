@@ -22,7 +22,7 @@ function Home() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/productos?page=1&limit=3&sort=mas_vendidos`);
+        const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/productos?page=1&limit=8&sort=mas_vendidos`);
         setProducts(res.data.data || []);
       } catch (err) {
         console.error(err);
@@ -86,31 +86,41 @@ function Home() {
               sx={{
                 fontWeight: 'bold',
                 color: 'var(--oxford-blue)',
-                mb: 4,
+                mb: -1, // antes 4
                 fontSize: { xs: '2rem', sm: '2.5rem', md: '3rem' },
               }}
             >
-              Bienvenido a Tienda Sol
+              Te damos la bienvenida a Tienda Sol
             </Typography>
-            <Typography variant="h5" className="text-oxford-blue mb-4">
+
+            <Typography
+              variant="h5"
+              className="text-oxford-blue"
+              sx={{ mb: 0 }} // antes mb-4
+            >
               Tu tienda online de confianza
             </Typography>
           </Box>
 
           {/* Sección Lo más vendido */}
-          <Box className="text-center mb-14" role="region" aria-label="Sección Lo más vendido">
+          <Box className="text-center mb-2" role="region" aria-label="Sección Lo más vendido">            
             <Typography
               component="h2"
               sx={{
                 fontWeight: 'bold',
                 color: 'var(--oxford-blue)',
-                mb: 2,
+                mb: 0.5, // antes 2
                 fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
               }}
             >
               Lo más vendido
             </Typography>
-            <Typography variant="subtitle1" className="text-gray-600">
+
+            <Typography
+              variant="subtitle1"
+              className="text-gray-600"
+              sx={{ mt: 0 }} // sin aire extra
+            >
               Súmate a la tendencia con nuestra cuidada selección de los estilos más vendidos.
             </Typography>
           </Box>
