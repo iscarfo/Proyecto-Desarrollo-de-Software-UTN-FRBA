@@ -99,14 +99,15 @@ const OrderRow: React.FC<OrderRowProps> = ({
       fontWeight: 700,
       textTransform: 'none',
       whiteSpace: 'nowrap',
-      backgroundColor: disabled ? '#B0B0B0' : '#E53935',
+      // color: slightly darker red for better contrast and page consistency
+      backgroundColor: disabled ? '#B0B0B0' : '#C62828',
       color: '#FFFFFF',
       border: 'none',
       borderRadius: '6px',
       boxShadow: 'none',
       cursor: disabled ? 'not-allowed' : 'pointer',
       '&:hover': {
-        backgroundColor: disabled ? '#B0B0B0' : '#D32F2F',
+        backgroundColor: disabled ? '#B0B0B0' : '#B71C1C',
         boxShadow: 'none',
       },
     });
@@ -185,12 +186,13 @@ const OrderRow: React.FC<OrderRowProps> = ({
             fontWeight: 700,
             textTransform: 'none',
             whiteSpace: 'nowrap',
-            backgroundColor: isCancelDisabled ? '#B0B0B0' : '#E53935',
+            // darker red tone to match seller cancel button
+            backgroundColor: isCancelDisabled ? '#B0B0B0' : '#C62828',
             color: '#FFFFFF',
             cursor: isCancelDisabled ? 'not-allowed' : 'pointer',
             borderRadius: '6px',
             '&:hover': {
-              backgroundColor: isCancelDisabled ? '#B0B0B0' : '#D32F2F',
+              backgroundColor: isCancelDisabled ? '#B0B0B0' : '#B71C1C',
             },
           }}
         >
