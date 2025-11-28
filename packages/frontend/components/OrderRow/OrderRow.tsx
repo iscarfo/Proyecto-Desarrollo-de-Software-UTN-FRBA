@@ -90,6 +90,27 @@ const OrderRow: React.FC<OrderRowProps> = ({
       },
     });
 
+    // Green style specifically for the `Confirmar` button.
+    const confirmButtonSx = (disabled: boolean) => ({
+      width: '100%',
+      padding: '10px 18px',
+      fontSize: '14px',
+      fontWeight: 700,
+      textTransform: 'none',
+      whiteSpace: 'nowrap',
+      // green base & slightly darker hover
+      backgroundColor: disabled ? '#B0B0B0' : '#388E3C',
+      color: '#FFFFFF',
+      border: 'none',
+      borderRadius: '6px',
+      boxShadow: 'none',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      '&:hover': {
+        backgroundColor: disabled ? '#B0B0B0' : '#2E7D32',
+        boxShadow: 'none',
+      },
+    });
+
     // Estilo para el botón de cancelar (rojo), mantiene mismo rojo usado
     // para los botones de cancelar del comprador para consistencia.
     const cancelButtonSx = (disabled: boolean) => ({
@@ -118,7 +139,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
           variant="contained"
           onClick={() => onConfirm?.(orderId)}
           disabled={!isPending}
-          sx={adminButtonSx(!isPending)}
+          sx={confirmButtonSx(!isPending)}
         >
           Confirmar
         </Button>
