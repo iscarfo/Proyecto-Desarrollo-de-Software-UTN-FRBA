@@ -68,16 +68,20 @@ const OrderRow: React.FC<OrderRowProps> = ({
     const isConfirmed = status === 'CONFIRMADO';
     const isFinished = status === 'ENVIADO' || status === 'CANCELADO';
 
-    // Estilo de los botones del admin (naranja)
+    // Estilo de los botones del vendedor — más consistente con los
+    // botones del comprador: anchura completa en móvil, nowrap, padding y
+    // bordes ligeramente redondeados.
     const adminButtonSx = (disabled: boolean) => ({
+      width: '100%',
+      padding: '10px 18px',
+      fontSize: '14px',
+      fontWeight: 700,
+      textTransform: 'none',
+      whiteSpace: 'nowrap',
       backgroundColor: disabled ? '#B0B0B0' : '#FB9635',
       color: '#FFFFFF',
-      textTransform: 'none',
-      fontSize: '13px',
-      fontWeight: 'bold',
-      padding: '8px 16px',
       border: 'none',
-      borderRadius: '3px',
+      borderRadius: '6px',
       boxShadow: 'none',
       cursor: disabled ? 'not-allowed' : 'pointer',
       '&:hover': {
@@ -86,8 +90,29 @@ const OrderRow: React.FC<OrderRowProps> = ({
       },
     });
 
+    // Estilo para el botón de cancelar (rojo), mantiene mismo rojo usado
+    // para los botones de cancelar del comprador para consistencia.
+    const cancelButtonSx = (disabled: boolean) => ({
+      width: '100%',
+      padding: '10px 18px',
+      fontSize: '14px',
+      fontWeight: 700,
+      textTransform: 'none',
+      whiteSpace: 'nowrap',
+      backgroundColor: disabled ? '#B0B0B0' : '#E53935',
+      color: '#FFFFFF',
+      border: 'none',
+      borderRadius: '6px',
+      boxShadow: 'none',
+      cursor: disabled ? 'not-allowed' : 'pointer',
+      '&:hover': {
+        backgroundColor: disabled ? '#B0B0B0' : '#D32F2F',
+        boxShadow: 'none',
+      },
+    });
+
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0, minWidth: '140px' }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0, minWidth: { xs: '100%', sm: '140px' } }}>
         <Button
           variant="contained"
           onClick={() => onConfirm?.(orderId)}
@@ -108,7 +133,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
           variant="contained"
           onClick={() => onCancelSeller?.(orderId)}
           disabled={isFinished}
-          sx={adminButtonSx(isFinished)}
+          sx={cancelButtonSx(isFinished)}
         >
           Cancelar
         </Button>
@@ -119,37 +144,25 @@ const OrderRow: React.FC<OrderRowProps> = ({
   // --- LÓGICA DE BOTONES DEL COMPRADOR ---
   const renderBuyerButtons = () => {
     const isCancelDisabled = status === 'ENVIADO' || status === 'CANCELADO';
+
+    // Make room for the full label and keep layout responsive
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0, minWidth: '140px' }}>
-        <Button
-          variant="contained"
-          onClick={() => onCancel?.(orderId)}
-          disabled={isCancelDisabled}
-          sx={{
-            backgroundColor: isCancelDisabled ? '#B0B0B0' : '#E53935',
-            color: '#FFFFFF',
-            textTransform: 'none',
-            cursor: isCancelDisabled ? 'not-allowed' : 'pointer',
-            '&:hover': {
-              backgroundColor: isCancelDisabled ? '#B0B0B0' : '#D32F2F',
-            },
-          }}
-        >
-          Cancelar pedido
-        </Button>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0, minWidth: { xs: '100%', sm: '220px' } }}>
+        {/* Volver a Comprar first (top) */}
         <Button
           variant="contained"
           onClick={() => onRepurchase?.(orderId)}
-          size="small"
           sx={{
-            padding: '8px 16px',
-            fontSize: '13px',
-            fontWeight: 'bold',
+            width: '100%',
+            padding: '10px 18px',
+            fontSize: '14px',
+            fontWeight: 700,
             textTransform: 'none',
+            whiteSpace: 'nowrap',
             backgroundColor: '#FB9635',
             color: '#FFFFFF',
             border: 'none',
-            borderRadius: '3px',
+            borderRadius: '6px',
             boxShadow: 'none',
             '&:hover': {
               backgroundColor: '#e8852a',
@@ -158,6 +171,30 @@ const OrderRow: React.FC<OrderRowProps> = ({
           }}
         >
           Volver a Comprar
+        </Button>
+
+        {/* Cancelar pedido below */}
+        <Button
+          variant="contained"
+          onClick={() => onCancel?.(orderId)}
+          disabled={isCancelDisabled}
+          sx={{
+            width: '100%',
+            padding: '10px 18px',
+            fontSize: '14px',
+            fontWeight: 700,
+            textTransform: 'none',
+            whiteSpace: 'nowrap',
+            backgroundColor: isCancelDisabled ? '#B0B0B0' : '#E53935',
+            color: '#FFFFFF',
+            cursor: isCancelDisabled ? 'not-allowed' : 'pointer',
+            borderRadius: '6px',
+            '&:hover': {
+              backgroundColor: isCancelDisabled ? '#B0B0B0' : '#D32F2F',
+            },
+          }}
+        >
+          Cancelar pedido
         </Button>
       </Box>
     );
@@ -174,7 +211,9 @@ const OrderRow: React.FC<OrderRowProps> = ({
         display: 'flex',
         flexDirection: { xs: 'column', sm: 'row' }, // Apilable en móvil
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        // Mantener alineación en la parte alta en móvil, pero centrar verticalmente
+        // cuando la pantalla alcance el breakpoint sm (>= 600px).
+        alignItems: { xs: 'flex-start', sm: 'center' },
         gap: 2,
         border: '1px solid',
         borderColor: 'divider',
@@ -253,7 +292,15 @@ const OrderRow: React.FC<OrderRowProps> = ({
       </Box>
 
       {/* --- RENDERIZADO CONDICIONAL DE BOTONES --- */}
-      <Box sx={{ width: { xs: '100%', sm: 'auto' } }}>
+      <Box sx={{
+        width: { xs: '100%', sm: 'auto' },
+        // Evitamos un espacio superior cuando la vista es móvil (botones apilados)
+        // y permitimos mantener mejor la separación en pantallas grandes.
+        mt: { xs: 0, sm: 0 },
+        // Si necesitas un pequeño nudging hacia abajo en pantallas grandes,
+        // puedes ajustar este valor a sm: 1 o sm: 2. Por ahora usamos centering
+        // en el contenedor padre (alignItems: 'center').
+      }}>
         {userType === 'seller' ? renderSellerButtons() : renderBuyerButtons()}
       </Box>
     </Box>
