@@ -112,7 +112,7 @@ const OrderRow: React.FC<OrderRowProps> = ({
     });
 
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0, minWidth: { xs: '100%', sm: '140px' } }}>
+      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, flexShrink: 0, minWidth: { xs: '100%', sm: '220px' } }}>
         <Button
           variant="contained"
           onClick={() => onConfirm?.(orderId)}
